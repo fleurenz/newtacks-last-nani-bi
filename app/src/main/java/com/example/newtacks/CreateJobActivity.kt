@@ -1,12 +1,14 @@
 package com.example.newtacks
 
 import android.app.DatePickerDialog
+import android.app.Dialog
 import android.app.TimePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
 import android.widget.*
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import com.example.newtacks.models.Job
 import com.example.newtacks.models.User
@@ -77,8 +79,62 @@ class CreateJobActivity : AppCompatActivity() {
         setupDatePicker()
         setupTimePicker()
 
-        btnCancel.setOnClickListener { finish() }
+        btnCancel.setOnClickListener { handleBackPress() }
         btnSubmit.setOnClickListener { submitJob() }
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                handleBackPress()
+            }
+        })
+    }
+
+    private fun handleBackPress() {
+        if (isFormDirty()) {
+            showDiscardDialog()
+        } else {
+            finish()
+        }
+    }
+
+    private fun isFormDirty(): Boolean {
+        return etJobTitle.text.isNotEmpty() ||
+                etDescription.text.isNotEmpty() ||
+                etOfferAmount.text.isNotEmpty() ||
+                selectedImages.isNotEmpty() ||
+                selectedDate.isNotEmpty() ||
+                selectedTime.isNotEmpty()
+    }
+
+    private fun showDiscardDialog() {
+        val dialog = Dialog(this)
+        dialog.setContentView(R.layout.dialog_role_select)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.88).toInt(),
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        dialog.findViewById<ImageView>(R.id.dialogIcon).setImageResource(R.drawable.ic_close)
+        dialog.findViewById<TextView>(R.id.dialogTitle).text = "Discard Changes?"
+        dialog.findViewById<TextView>(R.id.dialogMessage).text = "Are you sure you want to discard this job post?"
+
+        dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnPositive).apply {
+            this.text = "Discard"
+            this.setOnClickListener {
+                dialog.dismiss()
+                finish()
+            }
+        }
+
+        dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnNegative).apply {
+            this.text = "Keep Editing"
+            this.setOnClickListener {
+                dialog.dismiss()
+            }
+        }
+
+        dialog.show()
     }
 
 

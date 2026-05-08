@@ -24,11 +24,13 @@
             android:paddingBottom="28dp">
 
             <ImageView
+                android:id="@+id/ivProfile"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:src="@drawable/ic_person_placeholder"
                 android:background="@drawable/bg_circle_translucent"
-                android:padding="14dp"
+                android:padding="0dp"
+                android:scaleType="centerCrop"
                 android:layout_marginBottom="14dp"
                 android:contentDescription="Profile icon" />
 

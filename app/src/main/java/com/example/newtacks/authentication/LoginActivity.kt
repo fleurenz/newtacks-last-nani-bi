@@ -71,12 +71,17 @@ class LoginActivity : AppCompatActivity() {
         val email    = findViewById<EditText>(R.id.etEmail)
         val password = findViewById<EditText>(R.id.etPassword)
         val btn      = findViewById<Button>(R.id.btnLogin)
+        val signUp   = findViewById<android.widget.TextView>(R.id.goToSignup)
 
         btn.setOnClickListener {
             viewModel.login(
                 email.text.toString(),
                 password.text.toString()
             )
+        }
+
+        signUp.setOnClickListener {
+            startActivity(Intent(this, RoleSelectionActivity::class.java))
         }
 
         observeState()

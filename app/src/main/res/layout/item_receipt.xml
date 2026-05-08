@@ -63,13 +63,35 @@
             android:textColor="#94A3B8"
             android:textSize="12sp" />
 
-        <TextView
-            android:id="@+id/tvReceiptWorker"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#1E293B"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvReceiptWorker"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#1E293B"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvVerificationBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_badge_blue"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="1dp"
+                android:text="NC3"
+                android:textColor="#FFFFFF"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+        </LinearLayout>
     </LinearLayout>
 
     <!-- View Receipt hint -->

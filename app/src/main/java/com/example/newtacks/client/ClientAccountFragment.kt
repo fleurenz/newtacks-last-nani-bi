@@ -12,8 +12,11 @@ import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import coil.load
+import coil.transform.CircleCropTransformation
 import com.example.newtacks.authentication.OnboardingActivity
 import com.example.newtacks.R
+import com.example.newtacks.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -26,6 +29,7 @@ class ClientAccountFragment : Fragment() {
     private lateinit var tvAddress: TextView
     private lateinit var tvTotalRequests: TextView
     private lateinit var tvCompletedRequests: TextView
+    private lateinit var ivProfile: ImageView
     private lateinit var btnLogout: Button
     private lateinit var layoutHeader: LinearLayout
 
@@ -41,6 +45,7 @@ class ClientAccountFragment : Fragment() {
         tvAddress           = view.findViewById(R.id.tvAddress)
         tvTotalRequests     = view.findViewById(R.id.tvTotalRequests)
         tvCompletedRequests = view.findViewById(R.id.tvCompletedRequests)
+        ivProfile           = view.findViewById(R.id.ivProfile)
         btnLogout           = view.findViewById(R.id.btnLogout)
         layoutHeader        = view.findViewById(R.id.layoutHeader)
 
@@ -70,9 +75,19 @@ class ClientAccountFragment : Fragment() {
             .document(uid)
             .get()
             .addOnSuccessListener { doc ->
-                tvName.text    = doc.getString("name") ?: "Client"
-                tvEmail.text   = doc.getString("email") ?: ""
-                tvAddress.text = doc.getString("address") ?: ""
+                val user = doc.toObject(User::class.java) ?: return@addOnSuccessListener
+                tvName.text    = user.name
+                tvEmail.text   = user.email
+                tvAddress.text = user.address
+
+                if (user.profileImage.isNotEmpty()) {
+                    ivProfile.load(user.profileImage) {
+                        crossfade(true)
+                        placeholder(R.drawable.ic_person_placeholder)
+                        error(R.drawable.ic_person_placeholder)
+                        transformations(CircleCropTransformation())
+                    }
+                }
             }
     }
 

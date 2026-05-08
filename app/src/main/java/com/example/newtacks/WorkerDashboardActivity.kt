@@ -1,6 +1,8 @@
 package com.example.newtacks
 
 import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -14,6 +16,8 @@ class WorkerDashboardActivity : AppCompatActivity() {
     companion object {
         const val OPEN_FRAGMENT = "OPEN_FRAGMENT"
     }
+
+    private var backPressedTime: Long = 0
 
     // ✅ Create fragment instances once — never recreated on tab switch
     private val fragmentFeed    = WorkerFeedFragment()
@@ -92,5 +96,17 @@ class WorkerDashboardActivity : AppCompatActivity() {
 
             true
         }
+
+        // Handle double back to exit
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (backPressedTime + 2000 > System.currentTimeMillis()) {
+                    finishAffinity()
+                } else {
+                    Toast.makeText(this@WorkerDashboardActivity, "Press back again to exit", Toast.LENGTH_SHORT).show()
+                }
+                backPressedTime = System.currentTimeMillis()
+            }
+        })
     }
 }

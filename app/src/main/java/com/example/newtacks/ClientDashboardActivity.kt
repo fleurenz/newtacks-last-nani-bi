@@ -1,6 +1,8 @@
 package com.example.newtacks
 
 import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -13,6 +15,8 @@ import com.example.newtacks.client.ClientRequestsFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class ClientDashboardActivity : AppCompatActivity() {
+
+    private var backPressedTime: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,8 +45,10 @@ class ClientDashboardActivity : AppCompatActivity() {
 
         val fragmentToOpen = intent.getStringExtra(OPEN_FRAGMENT)
         if (fragmentToOpen == "REQUESTS") {
+            bottomNav.selectedItemId = R.id.nav_requests
             replaceFragment(ClientRequestsFragment())
         } else {
+            bottomNav.selectedItemId = R.id.nav_home
             replaceFragment(ClientHomeFragment())
         }
 
@@ -67,6 +73,18 @@ class ClientDashboardActivity : AppCompatActivity() {
                 else -> false
             }
         }
+
+        // Handle double back to exit
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (backPressedTime + 2000 > System.currentTimeMillis()) {
+                    finishAffinity()
+                } else {
+                    Toast.makeText(this@ClientDashboardActivity, "Press back again to exit", Toast.LENGTH_SHORT).show()
+                }
+                backPressedTime = System.currentTimeMillis()
+            }
+        })
     }
 
     private fun replaceFragment(fragment: Fragment) {

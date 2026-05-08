@@ -1,10 +1,12 @@
 package com.example.newtacks.authentication
 
+import android.app.Dialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.*
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -153,8 +155,59 @@ class SignupActivity : AppCompatActivity() {
         observeState()
 
         findViewById<Button>(R.id.btnCancel).setOnClickListener {
+            handleBackPress()
+        }
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                handleBackPress()
+            }
+        })
+    }
+
+    private fun handleBackPress() {
+        if (isFormDirty()) {
+            showDiscardDialog()
+        } else {
             finish()
         }
+    }
+
+    private fun isFormDirty(): Boolean {
+        val email = findViewById<EditText>(R.id.etEmail).text.toString()
+        val password = findViewById<EditText>(R.id.etPassword).text.toString()
+        return email.isNotEmpty() || password.isNotEmpty() || imageUri != null
+    }
+
+    private fun showDiscardDialog() {
+        val dialog = Dialog(this)
+        dialog.setContentView(R.layout.dialog_role_select)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.88).toInt(),
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        dialog.findViewById<ImageView>(R.id.dialogIcon).setImageResource(R.drawable.ic_close)
+        dialog.findViewById<TextView>(R.id.dialogTitle).text = "Discard Changes?"
+        dialog.findViewById<TextView>(R.id.dialogMessage).text = "Are you sure you want to discard your registration progress?"
+
+        dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnPositive).apply {
+            this.text = "Discard"
+            this.setOnClickListener {
+                dialog.dismiss()
+                finish()
+            }
+        }
+
+        dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnNegative).apply {
+            this.text = "Keep Filling"
+            this.setOnClickListener {
+                dialog.dismiss()
+            }
+        }
+
+        dialog.show()
     }
 
     private fun setupUIByRole() {

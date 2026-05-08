@@ -15,6 +15,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import coil.load
+import coil.transform.CircleCropTransformation
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
@@ -33,6 +35,7 @@ class WorkerAccountFragment : Fragment() {
     private lateinit var tvWorkerRating: TextView
     private lateinit var tvAcceptedJobs: TextView
     private lateinit var tvCompletedJobs: TextView
+    private lateinit var ivWorkerProfile: ImageView
     private lateinit var reviewContainer: LinearLayout
     private lateinit var tvSeeAllReviews: TextView
     private lateinit var filterAll: TextView
@@ -71,6 +74,7 @@ class WorkerAccountFragment : Fragment() {
         tvWorkerRating  = view.findViewById(R.id.tvWorkerRating)
         tvAcceptedJobs  = view.findViewById(R.id.tvAcceptedJobs)
         tvCompletedJobs = view.findViewById(R.id.tvCompletedJobs)
+        ivWorkerProfile = view.findViewById(R.id.ivWorkerProfile)
         reviewContainer = view.findViewById(R.id.reviewContainer)
         tvSeeAllReviews = view.findViewById(R.id.tvSeeAllReviews)
         filterAll       = view.findViewById(R.id.filterAll)
@@ -183,6 +187,15 @@ class WorkerAccountFragment : Fragment() {
                 
                 tvWorkerName.text   = name
                 tvWorkerRating.text = "%.1f (%d reviews)".format(avg, count)
+
+                if (user.profileImage.isNotEmpty()) {
+                    ivWorkerProfile.load(user.profileImage) {
+                        crossfade(true)
+                        placeholder(R.drawable.ic_person_placeholder)
+                        error(R.drawable.ic_person_placeholder)
+                        transformations(CircleCropTransformation())
+                    }
+                }
 
                 updateVerificationUI(user.verificationStatus)
             }

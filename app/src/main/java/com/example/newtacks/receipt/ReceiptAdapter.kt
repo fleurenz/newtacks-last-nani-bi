@@ -7,6 +7,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.newtacks.R
 import com.example.newtacks.models.Receipt
+import com.example.newtacks.models.User
+import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -91,11 +93,27 @@ class ReceiptAdapter(
         private val title: TextView = itemView.findViewById(R.id.tvReceiptTitle)
         private val amount: TextView = itemView.findViewById(R.id.tvReceiptAmount)
         private val worker: TextView = itemView.findViewById(R.id.tvReceiptWorker)
+        private val badge: TextView = itemView.findViewById(R.id.tvVerificationBadge)
 
         fun bind(receipt: Receipt) {
             title.text = receipt.jobTitle
             amount.text = "₱${receipt.amount}"
             worker.text = receipt.workerName
+
+            // Fetch worker verification status for the badge
+            FirebaseFirestore.getInstance().collection("users")
+                .document(receipt.workerId)
+                .get()
+                .addOnSuccessListener { doc ->
+                    val user = doc.toObject(User::class.java)
+                    val status = user?.verificationStatus ?: 0
+                    if (status > 0) {
+                        badge.visibility = View.VISIBLE
+                        badge.text = "NC$status"
+                    } else {
+                        badge.visibility = View.GONE
+                    }
+                }
 
             itemView.setOnClickListener {
                 onClick(receipt)
