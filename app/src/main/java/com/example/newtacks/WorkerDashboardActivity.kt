@@ -1,0 +1,96 @@
+package com.example.newtacks
+
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.Fragment
+import com.example.newtacks.worker.*
+import com.google.android.material.bottomnavigation.BottomNavigationView
+
+class WorkerDashboardActivity : AppCompatActivity() {
+
+    companion object {
+        const val OPEN_FRAGMENT = "OPEN_FRAGMENT"
+    }
+
+    // ✅ Create fragment instances once — never recreated on tab switch
+    private val fragmentFeed    = WorkerFeedFragment()
+    private val fragmentJob     = WorkerJobFragment()
+    private val fragmentHistory = WorkerHistoryFragment()
+    private val fragmentAccount = WorkerAccountFragment()
+
+    private var activeFragment: Fragment = fragmentFeed
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        setContentView(R.layout.activity_worker_dashboard)
+
+        val bottomNav = findViewById<BottomNavigationView>(R.id.workerBottomNav)
+
+        // ✅ Apply insets
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.workerRootLayout)) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            bottomNav.setPadding(
+                bottomNav.paddingLeft,
+                bottomNav.paddingTop,
+                bottomNav.paddingRight,
+                systemBars.bottom
+            )
+            insets
+        }
+
+        // ✅ Determine which fragment to start on
+        val startFragment = intent.getStringExtra(OPEN_FRAGMENT)
+        activeFragment = when (startFragment) {
+            "JOB"     -> fragmentJob
+            "HISTORY" -> fragmentHistory
+            "ACCOUNT" -> fragmentAccount
+            else      -> fragmentFeed
+        }
+
+        // ✅ Add ALL fragments once, hide all except the active one
+        supportFragmentManager.beginTransaction().apply {
+            add(R.id.workerFragmentContainer, fragmentAccount, "account")
+            hide(fragmentAccount)
+            add(R.id.workerFragmentContainer, fragmentHistory, "history")
+            hide(fragmentHistory)
+            add(R.id.workerFragmentContainer, fragmentJob, "job")
+            hide(fragmentJob)
+            add(R.id.workerFragmentContainer, fragmentFeed, "feed")
+            hide(fragmentFeed)
+            show(activeFragment)
+        }.commit()
+
+        // ✅ Sync bottom nav selected item to match start fragment
+        bottomNav.selectedItemId = when (startFragment) {
+            "JOB"     -> R.id.nav_job
+            "HISTORY" -> R.id.nav_history
+            "ACCOUNT" -> R.id.nav_account
+            else      -> R.id.nav_feed
+        }
+
+        bottomNav.setOnItemSelectedListener { item ->
+            val target = when (item.itemId) {
+                R.id.nav_feed    -> fragmentFeed
+                R.id.nav_job     -> fragmentJob
+                R.id.nav_history -> fragmentHistory
+                R.id.nav_account -> fragmentAccount
+                else             -> return@setOnItemSelectedListener false
+            }
+
+            // ✅ Only switch if tapping a DIFFERENT tab
+            if (target !== activeFragment) {
+                supportFragmentManager.beginTransaction()
+                    .hide(activeFragment)
+                    .show(target)
+                    .commit()
+                activeFragment = target
+            }
+
+            true
+        }
+    }
+}

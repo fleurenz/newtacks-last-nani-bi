@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="header_padding_top">36dp</dimen>
+    <dimen name="spacing_24">24dp</dimen>
+    <dimen name="spacing_20">20dp</dimen>
+    <dimen name="preview_image_size">100dp</dimen>
+</resources>

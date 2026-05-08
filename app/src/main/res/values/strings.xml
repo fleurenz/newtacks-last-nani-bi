@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">newtacks</string>
+    <string name="your_information">YOUR INFORMATION</string>
+    <string name="job_title">Job Title</string>
+    <string name="client_name">Client Name</string>
+    <string name="address">Address</string>
+    <string name="service_details">SERVICE DETAILS</string>
+    <string name="service_type">Service Type</string>
+    <string name="date">Date</string>
+    <string name="select_date">Select Date</string>
+    <string name="time">Time</string>
+    <string name="select_time">Select Time</string>
+    <string name="estimated_duration">Estimated Duration (Hours)</string>
+    <string name="payment">PAYMENT</string>
+    <string name="offer_amount">Offer Amount</string>
+    <string name="description">DESCRIPTION</string>
+    <string name="describe_job">Describe the job in detail...</string>
+    <string name="cancel">Cancel</string>
+    <string name="submit_request">Submit Request</string>
+
+</resources>

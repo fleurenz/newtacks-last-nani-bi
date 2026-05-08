@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Default person avatar placeholder.
+     Usage: android:src="@drawable/ic_person_placeholder" -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Circle background -->
+    <path
+        android:fillColor="#D1D9E6"
+        android:pathData="M24,24m-24,0a24,24 0,1 1,48 0a24,24 0,1 1,-48 0" />
+
+    <!-- Head -->
+    <path
+        android:fillColor="#9BA3AF"
+        android:pathData="M24,14m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+
+    <!-- Body -->
+    <path
+        android:fillColor="#9BA3AF"
+        android:pathData="M12,38 C12,30 17,26 24,26 C31,26 36,30 36,38 Z" />
+
+</vector>

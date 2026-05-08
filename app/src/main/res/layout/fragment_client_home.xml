@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F0F4F8"
+    android:gravity="center"
+    android:paddingStart="32dp"
+    android:paddingEnd="32dp">
+
+    <!-- ===== PUSH BUTTON ===== -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCreateJob"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        android:text="REQUEST&#10;SERVICE"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:letterSpacing="0.05"
+        android:lineSpacingExtra="4dp"
+        android:background="@drawable/bg_button_push"
+        android:stateListAnimator="@null"
+        android:elevation="12dp"
+        app:backgroundTint="@null"
+        app:cornerRadius="90dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="What do you need today?\nTap to request a service"
+        android:textColor="#94A3B8"
+        android:textSize="13sp"
+        android:letterSpacing="0.03"
+        android:layout_marginTop="28dp"
+        android:layout_marginBottom="48dp" />
+
+
+</LinearLayout>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "237893040942",
+    "project_id": "tacks-ddccb",
+    "storage_bucket": "tacks-ddccb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237893040942:android:53b7474972bd02bd1718bf",
+        "android_client_info": {
+          "package_name": "com.example.newtacks"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB64BUvL_AJvclC-8-J-ZoAoSuAraKyySk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

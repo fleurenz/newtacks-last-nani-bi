@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="dialogIcon" type="id" />
+    <item name="dialogTitle" type="id" />
+    <item name="dialogMessage" type="id" />
+    <item name="dialogBtnPositive" type="id" />
+    <item name="dialogBtnNegative" type="id" />
+</resources>
