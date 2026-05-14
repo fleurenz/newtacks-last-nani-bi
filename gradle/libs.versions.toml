@@ -3,6 +3,7 @@ agp = "9.1.1"
 cloudinaryAndroid = "3.1.2"
 coil = "2.7.0"
 kotlin = "2.3.21"
+lifecycle = "2.8.7"
 
 coreKtx = "1.18.0"
 appcompat = "1.7.1"
@@ -13,6 +14,9 @@ constraintlayout = "2.2.1"
 firebaseBom = "34.12.0"
 
 kotlinxCoroutinesAndroid = "1.10.2"
+retrofit = "2.11.0"
+gson = "2.11.0"
+okhttp = "4.12.0"
 
 junit = "4.13.2"
 junitVersion = "1.3.0"
@@ -26,6 +30,7 @@ cloudinary-android = { module = "com.cloudinary:cloudinary-android", version.ref
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 coil = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
 
 # Firebase (BoM handles versions)
@@ -35,6 +40,13 @@ firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
 
 # Coroutines
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
+
+# Retrofit
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }

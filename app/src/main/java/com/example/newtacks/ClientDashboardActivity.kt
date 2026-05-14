@@ -12,7 +12,9 @@ import com.example.newtacks.client.ClientAccountFragment
 import com.example.newtacks.client.ClientHistoryFragment
 import com.example.newtacks.client.ClientHomeFragment
 import com.example.newtacks.client.ClientRequestsFragment
+import com.example.newtacks.chatbot.presentation.ui.ChatActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class ClientDashboardActivity : AppCompatActivity() {
 
@@ -50,6 +52,10 @@ class ClientDashboardActivity : AppCompatActivity() {
         } else {
             bottomNav.selectedItemId = R.id.nav_home
             replaceFragment(ClientHomeFragment())
+        }
+
+        findViewById<FloatingActionButton>(R.id.fabChat).setOnClickListener {
+            startActivity(android.content.Intent(this, ChatActivity::class.java))
         }
 
         bottomNav.setOnItemSelectedListener {
