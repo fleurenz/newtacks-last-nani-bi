@@ -33,8 +33,8 @@ class LoginActivity : AppCompatActivity() {
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val imeInsets  = insets.getInsets(WindowInsetsCompat.Type.ime())
 
-            // Push top section down for status bar
             topSection.setPadding(
                 topSection.paddingLeft,
                 systemBars.top,
@@ -42,12 +42,15 @@ class LoginActivity : AppCompatActivity() {
                 topSection.paddingBottom
             )
 
-            // Push bottom card up for navigation bar
+            // ✅ When keyboard is open imeInsets.bottom > 0, push card up
+            val bottomPadding = maxOf(systemBars.bottom, imeInsets.bottom) +
+                    resources.getDimensionPixelSize(R.dimen.spacing_24)
+
             bottomCard.setPadding(
                 bottomCard.paddingLeft,
                 bottomCard.paddingTop,
                 bottomCard.paddingRight,
-                systemBars.bottom + resources.getDimensionPixelSize(R.dimen.spacing_24)
+                bottomPadding
             )
 
             insets
