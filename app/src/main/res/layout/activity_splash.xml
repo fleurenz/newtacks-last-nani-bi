@@ -4,20 +4,72 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical"
-    android:background="#FFFFFF">
+    android:background="#004A99">
 
-    <ImageView
-        android:layout_width="150dp"
-        android:layout_height="150dp"
-        android:src="@drawable/tacks_logo"
-        android:contentDescription="App Logo" />
+    <!-- Logo circle -->
+    <FrameLayout
+        android:layout_width="160dp"
+        android:layout_height="160dp"
+        android:layout_marginBottom="24dp">
 
+        <View
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            android:background="@drawable/circle_white" />
+
+        <ImageView
+            android:layout_width="110dp"
+            android:layout_height="110dp"
+            android:layout_gravity="center"
+            android:src="@drawable/tacks_logo"
+            android:scaleType="fitCenter"
+            android:contentDescription="App Logo" />
+
+    </FrameLayout>
+
+    <!-- App name -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="BLUE COLLAR SERVICES"
+        android:text="TACKS"
+        android:textColor="#FFFFFF"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.2"
+        android:layout_marginBottom="6dp" />
+
+    <!-- Tagline -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Blue Collar Services"
+        android:textColor="#AACDE8"
         android:textSize="14sp"
-        android:layout_marginTop="8dp"
-        android:textColor="#888888" />
+        android:letterSpacing="0.05"
+        android:layout_marginBottom="48dp" />
+
+    <!-- ✅ Realistic loading -->
+    <ProgressBar
+        android:id="@+id/splashProgress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="120dp"
+        android:layout_height="4dp"
+        android:max="100"
+        android:progress="0"
+        android:indeterminate="false"
+        android:progressTint="#F59E0B"
+        android:progressBackgroundTint="#1AFFFFFF"
+        android:background="@drawable/bg_progress_track" />
+
+    <!-- Status text -->
+    <TextView
+        android:id="@+id/tvSplashStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Initializing..."
+        android:textColor="#AACDE8"
+        android:textSize="12sp"
+        android:layout_marginTop="12dp"
+        android:letterSpacing="0.03" />
 
 </LinearLayout>
