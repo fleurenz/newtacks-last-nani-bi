@@ -2,6 +2,7 @@ package com.example.newtacks.authentication
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -12,6 +13,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import com.example.newtacks.ClientDashboardActivity
 import com.example.newtacks.CompanyDashboardActivity
 import com.example.newtacks.R
@@ -91,17 +93,28 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun observeState() {
+        val btnLogin      = findViewById<com.google.android.material.button.MaterialButton>(R.id.btnLogin)
+        val loginProgress = findViewById<ProgressBar>(R.id.loginProgress)
+
         viewModel.loginState.observe(this) { state ->
             when (state) {
                 is LoginState.Loading -> {
-                    Toast.makeText(this, "Logging in...", Toast.LENGTH_SHORT).show()
+                    btnLogin.text      = ""           // ✅ hide text so spinner is centered
+                    btnLogin.isEnabled = false        // ✅ prevent double tap
+                    loginProgress.visibility = View.VISIBLE
                 }
                 is LoginState.Success -> {
+                    loginProgress.visibility = View.GONE
+                    btnLogin.isEnabled = true
+                    btnLogin.text      = "Log In"
                     Toast.makeText(this, "Welcome!", Toast.LENGTH_SHORT).show()
                     routeUser(state.role)
                     finish()
                 }
                 is LoginState.Error -> {
+                    loginProgress.visibility = View.GONE
+                    btnLogin.isEnabled = true
+                    btnLogin.text      = "Log In"
                     Toast.makeText(this, state.message, Toast.LENGTH_SHORT).show()
                 }
                 else -> {}

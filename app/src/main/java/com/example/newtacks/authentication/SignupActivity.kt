@@ -242,25 +242,30 @@ class SignupActivity : AppCompatActivity() {
     }
 
     private fun observeState() {
+        val btnRegister   = findViewById<com.google.android.material.button.MaterialButton>(R.id.btnRegister)
+        val signupProgress = findViewById<ProgressBar>(R.id.signupProgress)
 
         viewModel.signupState.observe(this) { state ->
-
             when (state) {
-
                 is SignupState.Loading -> {
-                    Toast.makeText(this, "Creating account...", Toast.LENGTH_SHORT).show()
+                    btnRegister.text      = ""
+                    btnRegister.isEnabled = false
+                    signupProgress.visibility = View.VISIBLE
                 }
-
                 is SignupState.Success -> {
+                    signupProgress.visibility = View.GONE
+                    btnRegister.isEnabled     = true
+                    btnRegister.text          = "Register"
                     Toast.makeText(this, "Account created", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this, LoginActivity::class.java))
                     finish()
                 }
-
                 is SignupState.Error -> {
+                    signupProgress.visibility = View.GONE
+                    btnRegister.isEnabled     = true
+                    btnRegister.text          = "Register"
                     Toast.makeText(this, state.message, Toast.LENGTH_SHORT).show()
                 }
-
                 else -> {}
             }
         }
