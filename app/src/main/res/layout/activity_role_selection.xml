@@ -45,6 +45,7 @@
             android:textSize="13sp"
             android:alpha="0.8"
             android:layout_marginTop="6dp" />
+
     </LinearLayout>
 
     <!-- ===== LABEL ===== -->
@@ -88,7 +89,7 @@
                 android:backgroundTint="#EBF2FF"
                 android:padding="10dp"
                 android:contentDescription="Client icon"
-                app:tint="#004A99" />
+                app:tint="#F59E0B" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -114,15 +115,17 @@
                     android:textSize="12sp"
                     android:layout_marginTop="3dp"
                     android:lineSpacingExtra="2dp" />
+
             </LinearLayout>
 
             <RadioButton
                 android:id="@+id/rbClient"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:buttonTint="#004A99"
+                android:buttonTint="#F59E0B"
                 android:clickable="false"
                 android:focusable="false" />
+
         </LinearLayout>
 
         <!-- WORKER CARD -->
@@ -146,7 +149,7 @@
                 android:backgroundTint="#EBF2FF"
                 android:padding="10dp"
                 android:contentDescription="Worker icon"
-                app:tint="#004A99" />
+                app:tint="#F59E0B" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -172,6 +175,7 @@
                     android:textSize="12sp"
                     android:layout_marginTop="3dp"
                     android:lineSpacingExtra="2dp" />
+
             </LinearLayout>
 
             <RadioButton
@@ -181,6 +185,7 @@
                 android:buttonTint="#004A99"
                 android:clickable="false"
                 android:focusable="false" />
+
         </LinearLayout>
 
         <!-- COMPANY CARD -->
@@ -204,7 +209,7 @@
                 android:backgroundTint="#EBF2FF"
                 android:padding="10dp"
                 android:contentDescription="Company icon"
-                app:tint="#004A99" />
+                app:tint="#F59E0B" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -230,6 +235,7 @@
                     android:textSize="12sp"
                     android:layout_marginTop="3dp"
                     android:lineSpacingExtra="2dp" />
+
             </LinearLayout>
 
             <RadioButton
@@ -239,7 +245,9 @@
                 android:buttonTint="#004A99"
                 android:clickable="false"
                 android:focusable="false" />
+
         </LinearLayout>
+
     </RadioGroup>
 
     <!-- ===== SPACER ===== -->
@@ -248,13 +256,14 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <!-- ===== BOTTOM BUTTONS CONTAINER ===== -->
+    <!-- ===== BOTTOM BUTTONS ===== -->
     <LinearLayout
         android:id="@+id/bottomButtons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- ✅ amber accent on Continue -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnContinue"
             android:layout_width="match_parent"
@@ -263,10 +272,10 @@
             android:layout_marginEnd="24dp"
             android:layout_marginBottom="12dp"
             android:text="Continue"
-            android:textColor="#FFFFFF"
+            android:textColor="#412402"
             android:textSize="15sp"
             android:textStyle="bold"
-            app:backgroundTint="#004A99"
+            app:backgroundTint="#F59E0B"
             app:cornerRadius="10dp" />
 
         <com.google.android.material.button.MaterialButton
@@ -296,6 +305,7 @@
             android:textColor="#1E88E5"
             android:clickable="true"
             android:focusable="true" />
+
     </LinearLayout>
 
 </LinearLayout>
