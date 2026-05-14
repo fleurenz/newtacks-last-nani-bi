@@ -212,42 +212,6 @@
                 android:textColor="#94A3B8"
                 android:textSize="13sp" />
 
-            <!-- ===== LOADING OVERLAY ===== -->
-            <FrameLayout
-                android:id="@+id/loadingOverlay"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="#80000000"
-                android:visibility="gone"
-                android:elevation="10dp">
-
-                <LinearLayout
-                    android:layout_width="160dp"
-                    android:layout_height="160dp"
-                    android:layout_gravity="center"
-                    android:background="@drawable/bg_role_card"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:elevation="12dp">
-
-                    <ProgressBar
-                        android:id="@+id/loginProgress"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:indeterminateTint="#004A99"
-                        android:layout_marginBottom="16dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Logging in..."
-                        android:textColor="#004A99"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                </LinearLayout>
-            </FrameLayout>
-
         </LinearLayout>
     </ScrollView>
 </LinearLayout>
