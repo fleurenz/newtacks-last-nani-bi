@@ -3,6 +3,7 @@ package com.example.newtacks.chatbot.presentation.ui
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AnimationUtils
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.newtacks.R
@@ -42,6 +43,10 @@ class ChatAdapter : RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
 
         fun bind(message: ChatMessage) {
             messageText.text = message.text
+            
+            // Subtle pop-in animation for new messages
+            val animation = AnimationUtils.loadAnimation(itemView.context, R.anim.pop_in)
+            itemView.startAnimation(animation)
         }
     }
 

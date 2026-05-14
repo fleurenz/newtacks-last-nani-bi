@@ -8,8 +8,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import com.example.newtacks.chatbot.presentation.ui.ChatActivity
 import com.example.newtacks.worker.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class WorkerDashboardActivity : AppCompatActivity() {
 
@@ -76,6 +78,10 @@ class WorkerDashboardActivity : AppCompatActivity() {
             else      -> R.id.nav_feed
         }
 
+        findViewById<FloatingActionButton>(R.id.fabChat).setOnClickListener {
+            startActivity(android.content.Intent(this, ChatActivity::class.java))
+        }
+
         bottomNav.setOnItemSelectedListener { item ->
             val target = when (item.itemId) {
                 R.id.nav_feed    -> fragmentFeed
@@ -88,6 +94,7 @@ class WorkerDashboardActivity : AppCompatActivity() {
             // ✅ Only switch if tapping a DIFFERENT tab
             if (target !== activeFragment) {
                 supportFragmentManager.beginTransaction()
+                    .setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
                     .hide(activeFragment)
                     .show(target)
                     .commit()

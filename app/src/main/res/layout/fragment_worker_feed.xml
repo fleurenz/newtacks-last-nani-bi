@@ -92,6 +92,7 @@
         android:layout_weight="1"
         android:clipToPadding="false"
         android:paddingTop="8dp"
-        android:paddingBottom="16dp" />
+        android:paddingBottom="16dp"
+        android:layoutAnimation="@anim/layout_animation_fall_down" />
 
 </LinearLayout>
