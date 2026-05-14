@@ -8,11 +8,28 @@
     android:orientation="vertical"
     android:background="#F0F4F8">
 
-    <FrameLayout
-        android:id="@+id/workerFragmentContainer"
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1">
+
+        <FrameLayout
+            android:id="@+id/workerFragmentContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabChat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
+            android:src="@android:drawable/stat_notify_chat"
+            app:backgroundTint="?attr/colorPrimary"
+            app:tint="@android:color/white"
+            android:contentDescription="Chat with AI" />
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/workerBottomNav"

@@ -8,8 +8,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import com.example.newtacks.chatbot.presentation.ui.ChatActivity
 import com.example.newtacks.worker.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class WorkerDashboardActivity : AppCompatActivity() {
 
@@ -74,6 +76,10 @@ class WorkerDashboardActivity : AppCompatActivity() {
             "HISTORY" -> R.id.nav_history
             "ACCOUNT" -> R.id.nav_account
             else      -> R.id.nav_feed
+        }
+
+        findViewById<FloatingActionButton>(R.id.fabChat).setOnClickListener {
+            startActivity(android.content.Intent(this, ChatActivity::class.java))
         }
 
         bottomNav.setOnItemSelectedListener { item ->
