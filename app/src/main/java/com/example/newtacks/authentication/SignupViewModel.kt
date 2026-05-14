@@ -24,27 +24,17 @@ class SignupViewModel(
         categories: List<String>? = null,
         experience: Int? = null
     ) {
-
-        // VALIDATION
         if (email.isEmpty() || password.isEmpty()) {
-
-            signupState.value =
-                SignupState.Error("Fields cannot be empty")
-
+            signupState.value = SignupState.Error("Fields cannot be empty")
             return
         }
-
         if (password != confirmPassword) {
-
-            signupState.value =
-                SignupState.Error("Passwords do not match")
-
+            signupState.value = SignupState.Error("Passwords do not match")
             return
         }
 
         signupState.value = SignupState.Loading
 
-        // CALL REPOSITORY
         repo.register(
             imageUri = imageUri,
             email = email,
@@ -56,21 +46,16 @@ class SignupViewModel(
             companyName = companyName,
             hrName = hrName,
             categories = categories,
-            experience = experience
-        ) { result ->
-
-            result.onSuccess {
-
-                signupState.value =
-                    SignupState.Success
+            experience = experience,
+            onProgress = { message ->
+                signupState.postValue(SignupState.Progress(message)) // ✅
             }
-
+        ) { result ->
+            result.onSuccess {
+                signupState.value = SignupState.Success
+            }
             result.onFailure {
-
-                signupState.value =
-                    SignupState.Error(
-                        it.message ?: "Signup failed"
-                    )
+                signupState.value = SignupState.Error(it.message ?: "Signup failed")
             }
         }
     }

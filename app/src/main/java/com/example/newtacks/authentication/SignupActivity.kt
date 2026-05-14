@@ -242,13 +242,19 @@ class SignupActivity : AppCompatActivity() {
     }
 
     private fun observeState() {
-        val btnRegister   = findViewById<com.google.android.material.button.MaterialButton>(R.id.btnRegister)
+        val btnRegister    = findViewById<com.google.android.material.button.MaterialButton>(R.id.btnRegister)
         val signupProgress = findViewById<ProgressBar>(R.id.signupProgress)
 
         viewModel.signupState.observe(this) { state ->
             when (state) {
                 is SignupState.Loading -> {
                     btnRegister.text      = ""
+                    btnRegister.isEnabled = false
+                    signupProgress.visibility = View.VISIBLE
+                }
+                is SignupState.Progress -> {
+                    // ✅ Show step message inside the button
+                    btnRegister.text      = state.message
                     btnRegister.isEnabled = false
                     signupProgress.visibility = View.VISIBLE
                 }
@@ -266,7 +272,6 @@ class SignupActivity : AppCompatActivity() {
                     btnRegister.text          = "Register"
                     Toast.makeText(this, state.message, Toast.LENGTH_SHORT).show()
                 }
-                else -> {}
             }
         }
     }
