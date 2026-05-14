@@ -12,6 +12,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import android.view.animation.AnimationUtils
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import com.example.newtacks.ClientDashboardActivity
@@ -32,6 +33,10 @@ class LoginActivity : AppCompatActivity() {
 
         val topSection = findViewById<LinearLayout>(R.id.topSection)
         val bottomCard = findViewById<LinearLayout>(R.id.bottomCard)
+
+        // Animate bottom card entry
+        val slideUp = AnimationUtils.loadAnimation(this, R.anim.fade_in_slide_up)
+        bottomCard.startAnimation(slideUp)
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())

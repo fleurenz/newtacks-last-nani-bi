@@ -126,6 +126,7 @@ class SplashActivity : AppCompatActivity() {
     // --------------------------------------------------
     private fun navigateToOnboarding() {
         startActivity(Intent(this, OnboardingActivity::class.java))
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
         finish()
     }
 
@@ -137,6 +138,7 @@ class SplashActivity : AppCompatActivity() {
             else      -> Intent(this, OnboardingActivity::class.java)
         }
         startActivity(intent)
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
         finish()
     }
 

@@ -4,7 +4,10 @@ import android.app.Dialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.transition.TransitionManager
 import android.view.View
+import android.view.ViewGroup
+import android.view.animation.AnimationUtils
 import android.widget.*
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
@@ -48,6 +51,11 @@ class SignupActivity : AppCompatActivity() {
         selectedRole = intent.getStringExtra("ROLE") ?: "CLIENT"
 
         val topSection = findViewById<LinearLayout>(R.id.topSection)
+        val bottomCard = findViewById<LinearLayout>(R.id.bottomCard)
+
+        // Animate bottom card entry
+        val slideUp = AnimationUtils.loadAnimation(this, R.anim.fade_in_slide_up)
+        bottomCard.startAnimation(slideUp)
 
         val rootLayout = findViewById<LinearLayout>(R.id.signupRoot)
 
@@ -228,6 +236,10 @@ class SignupActivity : AppCompatActivity() {
         val clientGroup = findViewById<View>(R.id.clientGroup)
         val workerGroup = findViewById<View>(R.id.workerGroup)
         val companyGroup = findViewById<View>(R.id.companyGroup)
+        val bottomCard = findViewById<ViewGroup>(R.id.bottomCard)
+
+        // Use TransitionManager for smooth visibility changes
+        TransitionManager.beginDelayedTransition(bottomCard)
 
         clientGroup.visibility = View.GONE
         workerGroup.visibility = View.GONE

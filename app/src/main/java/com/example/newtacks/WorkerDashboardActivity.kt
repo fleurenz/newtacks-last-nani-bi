@@ -94,6 +94,7 @@ class WorkerDashboardActivity : AppCompatActivity() {
             // ✅ Only switch if tapping a DIFFERENT tab
             if (target !== activeFragment) {
                 supportFragmentManager.beginTransaction()
+                    .setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
                     .hide(activeFragment)
                     .show(target)
                     .commit()
