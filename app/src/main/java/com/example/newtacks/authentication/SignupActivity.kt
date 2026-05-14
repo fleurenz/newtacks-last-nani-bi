@@ -49,15 +49,28 @@ class SignupActivity : AppCompatActivity() {
 
         val topSection = findViewById<LinearLayout>(R.id.topSection)
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.signupRoot)) { _, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+        val rootLayout = findViewById<LinearLayout>(R.id.signupRoot)
 
+        ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val imeInsets  = insets.getInsets(WindowInsetsCompat.Type.ime())
+
+            // ✅ Push top section down for status bar
             topSection.setPadding(
                 topSection.paddingLeft,
                 systemBars.top,
                 topSection.paddingRight,
                 topSection.paddingBottom
             )
+
+            // ✅ Push root bottom up for keyboard OR nav bar, whichever is taller
+            rootLayout.setPadding(
+                rootLayout.paddingLeft,
+                rootLayout.paddingTop,
+                rootLayout.paddingRight,
+                maxOf(systemBars.bottom, imeInsets.bottom)
+            )
+
             insets
         }
 
