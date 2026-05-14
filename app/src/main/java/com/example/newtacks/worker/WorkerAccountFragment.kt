@@ -9,6 +9,7 @@ import android.net.Uri
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,6 +25,7 @@ import com.example.newtacks.R
 import com.example.newtacks.authentication.OnboardingActivity
 import com.example.newtacks.models.Review
 import com.example.newtacks.models.User
+import com.example.newtacks.worker.account.WorkerReviewsActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -36,27 +38,19 @@ class WorkerAccountFragment : Fragment() {
     private lateinit var tvAcceptedJobs: TextView
     private lateinit var tvCompletedJobs: TextView
     private lateinit var ivWorkerProfile: ImageView
-    private lateinit var reviewContainer: LinearLayout
-    private lateinit var tvSeeAllReviews: TextView
-    private lateinit var filterAll: TextView
-    private lateinit var filter5: TextView
-    private lateinit var filter4: TextView
-    private lateinit var filter3: TextView
-    private lateinit var filter2: TextView
-    private lateinit var filter1: TextView
-    private lateinit var btnLogout: Button
     private lateinit var layoutHeader: LinearLayout
-
     private lateinit var tvVerificationBadge: TextView
     private lateinit var tvVerificationLevel: TextView
     private lateinit var btnUploadNC1: Button
     private lateinit var btnUploadNC2: Button
     private lateinit var btnUploadNC3: Button
-
     private var isShowingAllReviews = false
     private var currentRatingFilter: Int? = null
-
     private var pendingNCLevel: Int = 0
+    private lateinit var menuLogout: LinearLayout
+    private lateinit var menuCertificates: LinearLayout
+    private lateinit var layoutNCButtons: LinearLayout
+    private lateinit var menuReviews: LinearLayout
 
     private val pickCertificate =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -70,37 +64,32 @@ class WorkerAccountFragment : Fragment() {
     ): View {
         val view = inflater.inflate(R.layout.fragment_worker_account, container, false)
 
-        tvWorkerName    = view.findViewById(R.id.tvWorkerName)
-        tvWorkerRating  = view.findViewById(R.id.tvWorkerRating)
-        tvAcceptedJobs  = view.findViewById(R.id.tvAcceptedJobs)
+        tvWorkerName = view.findViewById(R.id.tvWorkerName)
+        tvWorkerRating = view.findViewById(R.id.tvWorkerRating)
+        tvAcceptedJobs = view.findViewById(R.id.tvAcceptedJobs)
         tvCompletedJobs = view.findViewById(R.id.tvCompletedJobs)
         ivWorkerProfile = view.findViewById(R.id.ivWorkerProfile)
-        reviewContainer = view.findViewById(R.id.reviewContainer)
-        tvSeeAllReviews = view.findViewById(R.id.tvSeeAllReviews)
-        filterAll       = view.findViewById(R.id.filterAll)
-        filter5         = view.findViewById(R.id.filter5)
-        filter4         = view.findViewById(R.id.filter4)
-        filter3         = view.findViewById(R.id.filter3)
-        filter2         = view.findViewById(R.id.filter2)
-        filter1         = view.findViewById(R.id.filter1)
-        btnLogout       = view.findViewById(R.id.btnLogout)
-        layoutHeader    = view.findViewById(R.id.layoutHeader)
+        menuLogout = view.findViewById(R.id.menuLogout)
+        menuCertificates = view.findViewById(R.id.menuCertificates)
+        layoutNCButtons = view.findViewById(R.id.layoutNCButtons)
+        menuReviews = view.findViewById(R.id.menuReviews)
+        layoutHeader = view.findViewById(R.id.layoutHeader)
 
         tvVerificationBadge = view.findViewById(R.id.tvVerificationBadge)
         tvVerificationLevel = view.findViewById(R.id.tvVerificationLevel)
-        btnUploadNC1        = view.findViewById(R.id.btnUploadNC1)
-        btnUploadNC2        = view.findViewById(R.id.btnUploadNC2)
-        btnUploadNC3        = view.findViewById(R.id.btnUploadNC3)
+        btnUploadNC1 = view.findViewById(R.id.btnUploadNC1)
+        btnUploadNC2 = view.findViewById(R.id.btnUploadNC2)
+        btnUploadNC3 = view.findViewById(R.id.btnUploadNC3)
 
-        btnUploadNC1.setOnClickListener { 
+        btnUploadNC1.setOnClickListener {
             pendingNCLevel = 1
             pickCertificate.launch("image/*")
         }
-        btnUploadNC2.setOnClickListener { 
+        btnUploadNC2.setOnClickListener {
             pendingNCLevel = 2
             pickCertificate.launch("image/*")
         }
-        btnUploadNC3.setOnClickListener { 
+        btnUploadNC3.setOnClickListener {
             pendingNCLevel = 3
             pickCertificate.launch("image/*")
         }
@@ -119,46 +108,11 @@ class WorkerAccountFragment : Fragment() {
         // ✅ First load when fragment is created
         loadProfile()
         loadStats()
-        loadReviews()
         setupLogout()
-        setupSeeAll()
-        setupFilters()
+        setupCertificatesMenu()
+        setupReviewsMenu()
 
         return view
-    }
-
-    private fun setupFilters() {
-        val filters = listOf(filterAll, filter5, filter4, filter3, filter2, filter1)
-        val ratings = listOf(null, 5, 4, 3, 2, 1)
-
-        filters.forEachIndexed { index, textView ->
-            textView.setOnClickListener {
-                currentRatingFilter = ratings[index]
-                isShowingAllReviews = false
-                tvSeeAllReviews.text = "See all"
-
-                // Update UI selection
-                filters.forEach { 
-                    it.setBackgroundResource(R.drawable.bg_badge_white)
-                    it.setTextColor(android.graphics.Color.parseColor("#64748B"))
-                    it.setTypeface(null, android.graphics.Typeface.NORMAL)
-                }
-
-                textView.setBackgroundResource(R.drawable.bg_badge_blue)
-                textView.setTextColor(android.graphics.Color.parseColor("#FFFFFF"))
-                textView.setTypeface(null, android.graphics.Typeface.BOLD)
-
-                loadReviews()
-            }
-        }
-    }
-
-    private fun setupSeeAll() {
-        tvSeeAllReviews.setOnClickListener {
-            isShowingAllReviews = !isShowingAllReviews
-            tvSeeAllReviews.text = if (isShowingAllReviews) "Show less" else "See all"
-            loadReviews()
-        }
     }
 
     // ✅ Fires every time this fragment is shown via show() in add/hide/show pattern
@@ -167,7 +121,6 @@ class WorkerAccountFragment : Fragment() {
         if (!hidden) {
             loadProfile()
             loadStats()
-            loadReviews()
         }
     }
 
@@ -181,11 +134,11 @@ class WorkerAccountFragment : Fragment() {
             .get()
             .addOnSuccessListener { doc ->
                 val user = doc.toObject(User::class.java) ?: return@addOnSuccessListener
-                val name  = user.name
-                val avg   = doc.getDouble("ratingAverage") ?: user.rating
+                val name = user.name
+                val avg = doc.getDouble("ratingAverage") ?: user.rating
                 val count = doc.getLong("ratingCount") ?: user.totalRatings.toLong()
-                
-                tvWorkerName.text   = name
+
+                tvWorkerName.text = name
                 tvWorkerRating.text = "%.1f (%d reviews)".format(avg, count)
 
                 if (user.profileImage.isNotEmpty()) {
@@ -225,8 +178,9 @@ class WorkerAccountFragment : Fragment() {
 
     private fun uploadCertificate(uri: Uri, level: Int) {
         val uid = auth.currentUser?.uid ?: return
-        Toast.makeText(requireContext(), "Uploading NC$level certificate...", Toast.LENGTH_SHORT).show()
-        
+        Toast.makeText(requireContext(), "Uploading NC$level certificate...", Toast.LENGTH_SHORT)
+            .show()
+
         MediaManager.get().upload(uri)
             .option("folder", "worker_certificates")
             .callback(object : UploadCallback {
@@ -236,9 +190,15 @@ class WorkerAccountFragment : Fragment() {
                     val imageUrl = resultData?.get("secure_url").toString()
                     saveCertificateUrl(uid, imageUrl, level)
                 }
+
                 override fun onError(requestId: String?, error: ErrorInfo?) {
-                    Toast.makeText(requireContext(), "Upload failed: ${error?.description}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Upload failed: ${error?.description}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
+
                 override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
             }).dispatch()
     }
@@ -261,7 +221,11 @@ class WorkerAccountFragment : Fragment() {
                     "verificationStatus" to newStatus
                 )
             ).addOnSuccessListener {
-                Toast.makeText(requireContext(), "NC$level Certificate Uploaded!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    "NC$level Certificate Uploaded!",
+                    Toast.LENGTH_SHORT
+                ).show()
                 loadProfile()
             }
         }
@@ -288,70 +252,27 @@ class WorkerAccountFragment : Fragment() {
     }
 
     // --------------------------------------------------
-    // REVIEWS
-    // --------------------------------------------------
-    @SuppressLint("MissingInflatedId")
-    private fun loadReviews() {
-        val uid = auth.currentUser?.uid ?: return
-        
-        var query = firestore.collection("reviews")
-            .whereEqualTo("workerId", uid)
-        
-        currentRatingFilter?.let {
-            query = query.whereEqualTo("rating", it.toDouble())
-        }
-
-        query.get().addOnSuccessListener { snapshot ->
-                reviewContainer.removeAllViews()
-                if (snapshot.isEmpty) {
-                    val empty = TextView(requireContext())
-                    empty.text      = if (currentRatingFilter == null) "No reviews yet." else "No $currentRatingFilter star reviews yet."
-                    empty.textSize  = 13f
-                    empty.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
-                    reviewContainer.addView(empty)
-                    tvSeeAllReviews.visibility = View.GONE
-                    return@addOnSuccessListener
-                }
-
-                val allReviews = snapshot.documents
-                val displayReviews = if (isShowingAllReviews) allReviews else allReviews.take(5)
-
-                if (allReviews.size > 5) {
-                    tvSeeAllReviews.visibility = View.VISIBLE
-                } else {
-                    tvSeeAllReviews.visibility = View.GONE
-                }
-
-                for (doc in displayReviews) {
-                    val review = doc.toObject(Review::class.java) ?: continue
-                    val isAnonymous = review.isAnonymous
-                    val clientName = if (isAnonymous) "Anonymous User" else review.clientName
-                    val comment    = review.comment
-                    val rating     = review.rating
-                    val card = layoutInflater.inflate(
-                        R.layout.item_review_card,
-                        reviewContainer,
-                        false
-                    )
-                    card.findViewById<TextView>(R.id.tvReviewRating).text =
-                        "⭐ %.1f".format(rating)
-                    card.findViewById<TextView>(R.id.tvReviewClient).text =
-                        clientName
-                    card.findViewById<TextView>(R.id.tvReviewComment).text =
-                        comment
-                    reviewContainer.addView(card)
-                }
-            }
-    }
-
-    // --------------------------------------------------
     // LOGOUT
     // --------------------------------------------------
+    private fun setupReviewsMenu() {
+        menuReviews.setOnClickListener {
+            startActivity(Intent(requireContext(), WorkerReviewsActivity::class.java))
+        }
+    }
+
     private fun setupLogout() {
-        btnLogout.setOnClickListener {
+        menuLogout.setOnClickListener {
             showLogoutConfirmDialog()
         }
     }
+
+    private fun setupCertificatesMenu() {
+        menuCertificates.setOnClickListener {
+            layoutNCButtons.visibility =
+                if (layoutNCButtons.visibility == View.GONE) View.VISIBLE else View.GONE
+        }
+    }
+
 
     private fun showLogoutConfirmDialog() {
         val dialog = Dialog(requireContext())
@@ -363,7 +284,7 @@ class WorkerAccountFragment : Fragment() {
         )
 
         dialog.findViewById<ImageView>(R.id.dialogIcon).setImageResource(R.drawable.ic_nav_account)
-        dialog.findViewById<TextView>(R.id.dialogTitle).text   = "Logout"
+        dialog.findViewById<TextView>(R.id.dialogTitle).text = "Logout"
         dialog.findViewById<TextView>(R.id.dialogMessage).text = "Are you sure you want to log out?"
 
         dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnPositive)

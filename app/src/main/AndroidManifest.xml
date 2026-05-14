@@ -29,6 +29,9 @@
         <activity
             android:name=".authentication.SignupActivity"
             android:windowSoftInputMode="adjustPan" />
+        <activity
+            android:name=".worker.account.WorkerReviewsActivity"
+            android:windowSoftInputMode="adjustPan" />
         <activity android:name=".ClientDashboardActivity" />
         <activity android:name=".WorkerDashboardActivity" />
         <activity android:name=".CompanyDashboardActivity" />
