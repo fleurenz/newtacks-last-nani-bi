@@ -49,15 +49,28 @@ class SignupActivity : AppCompatActivity() {
 
         val topSection = findViewById<LinearLayout>(R.id.topSection)
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.signupRoot)) { _, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+        val rootLayout = findViewById<LinearLayout>(R.id.signupRoot)
 
+        ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val imeInsets  = insets.getInsets(WindowInsetsCompat.Type.ime())
+
+            // ✅ Push top section down for status bar
             topSection.setPadding(
                 topSection.paddingLeft,
                 systemBars.top,
                 topSection.paddingRight,
                 topSection.paddingBottom
             )
+
+            // ✅ Push root bottom up for keyboard OR nav bar, whichever is taller
+            rootLayout.setPadding(
+                rootLayout.paddingLeft,
+                rootLayout.paddingTop,
+                rootLayout.paddingRight,
+                maxOf(systemBars.bottom, imeInsets.bottom)
+            )
+
             insets
         }
 
@@ -229,26 +242,36 @@ class SignupActivity : AppCompatActivity() {
     }
 
     private fun observeState() {
+        val btnRegister    = findViewById<com.google.android.material.button.MaterialButton>(R.id.btnRegister)
+        val signupProgress = findViewById<ProgressBar>(R.id.signupProgress)
 
         viewModel.signupState.observe(this) { state ->
-
             when (state) {
-
                 is SignupState.Loading -> {
-                    Toast.makeText(this, "Creating account...", Toast.LENGTH_SHORT).show()
+                    btnRegister.text      = ""
+                    btnRegister.isEnabled = false
+                    signupProgress.visibility = View.VISIBLE
                 }
-
+                is SignupState.Progress -> {
+                    // ✅ Show step message inside the button
+                    btnRegister.text      = state.message
+                    btnRegister.isEnabled = false
+                    signupProgress.visibility = View.VISIBLE
+                }
                 is SignupState.Success -> {
+                    signupProgress.visibility = View.GONE
+                    btnRegister.isEnabled     = true
+                    btnRegister.text          = "Register"
                     Toast.makeText(this, "Account created", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this, LoginActivity::class.java))
                     finish()
                 }
-
                 is SignupState.Error -> {
+                    signupProgress.visibility = View.GONE
+                    btnRegister.isEnabled     = true
+                    btnRegister.text          = "Register"
                     Toast.makeText(this, state.message, Toast.LENGTH_SHORT).show()
                 }
-
-                else -> {}
             }
         }
     }

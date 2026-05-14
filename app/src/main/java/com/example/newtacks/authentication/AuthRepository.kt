@@ -25,92 +25,77 @@ class AuthRepository(
         hrName: String?,
         categories: List<String>?,
         experience: Int?,
+        onProgress: (String) -> Unit,       // ✅ new
         onResult: (Result<Unit>) -> Unit
     ) {
-
-        // IF USER SELECTED PROFILE IMAGE
         if (imageUri != null) {
-
+            onProgress("Uploading photo...") // ✅
             MediaManager.get().upload(imageUri)
                 .option("folder", "newtacks_profiles")
                 .callback(object : UploadCallback {
-
-                    override fun onStart(requestId: String?) {
-                    }
+                    override fun onStart(requestId: String?) {}
 
                     override fun onProgress(
                         requestId: String?,
                         bytes: Long,
                         totalBytes: Long
                     ) {
+                        val percent = if (totalBytes > 0)
+                            ((bytes * 100) / totalBytes).toInt()
+                        else 0
+                        onProgress("Uploading photo... $percent%") // ✅
                     }
 
                     override fun onSuccess(
                         requestId: String?,
                         resultData: MutableMap<Any?, Any?>?
                     ) {
-
-                        val imageUrl =
-                            resultData?.get("secure_url").toString()
-
+                        val imageUrl = resultData?.get("secure_url").toString()
+                        onProgress("Creating your account...") // ✅
                         createFirebaseUser(
-                            email = email,
-                            password = password,
-                            role = role,
-                            name = name,
-                            phone = phone,
-                            address = address,
+                            email       = email,
+                            password    = password,
+                            role        = role,
+                            name        = name,
+                            phone       = phone,
+                            address     = address,
                             companyName = companyName,
-                            hrName = hrName,
-                            categories = categories,
-                            experience = experience,
+                            hrName      = hrName,
+                            categories  = categories,
+                            experience  = experience,
                             profileImage = imageUrl,
-                            onResult = onResult
+                            onProgress  = onProgress,
+                            onResult    = onResult
                         )
                     }
 
-                    override fun onError(
-                        requestId: String?,
-                        error: ErrorInfo?
-                    ) {
-
-                        onResult(
-                            Result.failure(
-                                Exception("Image upload failed")
-                            )
-                        )
+                    override fun onError(requestId: String?, error: ErrorInfo?) {
+                        onResult(Result.failure(Exception("Image upload failed")))
                     }
 
-                    override fun onReschedule(
-                        requestId: String?,
-                        error: ErrorInfo?
-                    ) {
-                    }
+                    override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
                 })
                 .dispatch()
-        }
-
-        // NO PROFILE IMAGE
-        else {
-
+        } else {
+            onProgress("Creating your account...") // ✅
             createFirebaseUser(
-                email = email,
-                password = password,
-                role = role,
-                name = name,
-                phone = phone,
-                address = address,
-                companyName = companyName,
-                hrName = hrName,
-                categories = categories,
-                experience = experience,
+                email        = email,
+                password     = password,
+                role         = role,
+                name         = name,
+                phone        = phone,
+                address      = address,
+                companyName  = companyName,
+                hrName       = hrName,
+                categories   = categories,
+                experience   = experience,
                 profileImage = "",
-                onResult = onResult
+                onProgress   = onProgress,
+                onResult     = onResult
             )
         }
     }
 
-    // CREATE FIREBASE USER + SAVE TO FIRESTORE
     private fun createFirebaseUser(
         email: String,
         password: String,
@@ -123,65 +108,37 @@ class AuthRepository(
         categories: List<String>?,
         experience: Int?,
         profileImage: String,
+        onProgress: (String) -> Unit,       // ✅ new
         onResult: (Result<Unit>) -> Unit
     ) {
-
         auth.createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener { result ->
-
-                val uid =
-                    result.user?.uid
-                        ?: return@addOnSuccessListener
-
+                val uid = result.user?.uid ?: return@addOnSuccessListener
+                onProgress("Saving your profile...") // ✅
                 val user = User(
-                    uid = uid,
-                    role = role,
-                    name = name,
-                    email = email,
-                    phone = phone,
-                    address = address,
-
-                    profileImage = profileImage,
-
-                    companyName =
-                        if (role == "COMPANY")
-                            companyName
-                        else
-                            null,
-
-                    hrName =
-                        if (role == "COMPANY")
-                            hrName
-                        else
-                            null,
-
-                    serviceCategories =
-                        if (role == "WORKER")
-                            categories
-                        else
-                            null,
-
-                    serviceExperience =
-                        if (role == "WORKER")
-                            experience
-                        else
-                            null
+                    uid              = uid,
+                    role             = role,
+                    name             = name,
+                    email            = email,
+                    phone            = phone,
+                    address          = address,
+                    profileImage     = profileImage,
+                    companyName      = if (role == "COMPANY") companyName else null,
+                    hrName           = if (role == "COMPANY") hrName else null,
+                    serviceCategories = if (role == "WORKER") categories else null,
+                    serviceExperience = if (role == "WORKER") experience else null
                 )
-
                 db.collection("users")
                     .document(uid)
                     .set(user)
                     .addOnSuccessListener {
-
                         onResult(Result.success(Unit))
                     }
                     .addOnFailureListener {
-
                         onResult(Result.failure(it))
                     }
             }
             .addOnFailureListener {
-
                 onResult(Result.failure(it))
             }
     }
@@ -191,26 +148,16 @@ class AuthRepository(
         password: String,
         onResult: (Result<String>) -> Unit
     ) {
-
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener { result ->
-
                 val uid = result.user?.uid
-
                 if (uid != null) {
-
                     onResult(Result.success(uid))
                 } else {
-
-                    onResult(
-                        Result.failure(
-                            Exception("User ID is null")
-                        )
-                    )
+                    onResult(Result.failure(Exception("User ID is null")))
                 }
             }
             .addOnFailureListener {
-
                 onResult(Result.failure(it))
             }
     }
@@ -219,28 +166,18 @@ class AuthRepository(
         uid: String,
         onResult: (Result<String>) -> Unit
     ) {
-
         db.collection("users")
             .document(uid)
             .get()
             .addOnSuccessListener { document ->
-
                 val role = document.getString("role")
-
                 if (role != null) {
-
                     onResult(Result.success(role))
                 } else {
-
-                    onResult(
-                        Result.failure(
-                            Exception("Role not found")
-                        )
-                    )
+                    onResult(Result.failure(Exception("Role not found")))
                 }
             }
             .addOnFailureListener {
-
                 onResult(Result.failure(it))
             }
     }

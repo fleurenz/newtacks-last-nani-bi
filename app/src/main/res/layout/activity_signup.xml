@@ -342,18 +342,32 @@
             </LinearLayout>
 
             <!-- ===== REGISTER BUTTON ===== -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnRegister"
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="8dp"
-                android:layout_marginBottom="12dp"
-                android:text="Register"
-                android:textColor="#FFFFFF"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:backgroundTint="#004A99"
-                app:cornerRadius="10dp" />
+                android:layout_marginBottom="12dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRegister"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:text="Register"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="#004A99"
+                    app:cornerRadius="10dp" />
+
+                <ProgressBar
+                    android:id="@+id/signupProgress"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:indeterminateTint="#FFFFFF"
+                    android:visibility="gone" />
+
+            </FrameLayout>
 
             <!-- ===== CANCEL BUTTON ===== -->
             <com.google.android.material.button.MaterialButton
