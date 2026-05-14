@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#F8FAFC">
+    android:background="#F8FAFC"
+    android:orientation="vertical">
 
     <!-- ===== TOP NAVY HERO ===== -->
     <LinearLayout
@@ -14,18 +13,37 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:orientation="vertical"
+        android:background="#004A99"
         android:gravity="center"
-        android:background="#004A99">
+        android:orientation="vertical">
 
         <ImageView
             android:layout_width="180dp"
             android:layout_height="180dp"
-            android:src="@drawable/tacks_logo"
             android:background="@drawable/bg_circle"
             android:backgroundTint="#FFFFFF"
+            android:contentDescription="Tacks logo"
             android:padding="16dp"
-            android:contentDescription="Tacks logo" />
+            android:src="@drawable/tacks_logo" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:letterSpacing="0.15"
+            android:text="TACKS"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Your neighborhood service hub"
+            android:textColor="#AACDE8"
+            android:textSize="13sp" />
+
     </LinearLayout>
 
     <!-- ===== BOTTOM WHITE CARD ===== -->
@@ -33,34 +51,35 @@
         android:id="@+id/bottomCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
         android:background="@drawable/bg_bottom_sheet"
+        android:gravity="center"
+        android:orientation="vertical"
         android:paddingStart="24dp"
-        android:paddingEnd="24dp"
         android:paddingTop="32dp"
+        android:paddingEnd="24dp"
         android:paddingBottom="24dp">
 
+        <!-- Description -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Connect with blue-collar workers&#10;right in your neighborhood."
-            android:textColor="@color/text_primary"
-            android:textSize="16sp"
+            android:layout_marginBottom="28dp"
             android:gravity="center"
             android:lineSpacingExtra="4dp"
-            android:layout_marginBottom="28dp" />
+            android:text="Connect with blue-collar workers&#10;right in your neighborhood."
+            android:textColor="#1E293B"
+            android:textSize="16sp" />
 
-        <!-- GET STARTED -->
+        <!-- ✅ GET STARTED — amber accent -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnGetStarted"
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:text="Get Started"
-            android:textColor="#FFFFFF"
+            android:textColor="#412402"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:backgroundTint="#004A99"
+            app:backgroundTint="#F59E0B"
             app:cornerRadius="10dp" />
 
         <!-- ALREADY HAVE ACCOUNT -->
@@ -84,13 +103,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="By continuing, you agree to our Terms of Service and Privacy Policy"
-            android:textColor="@color/hint"
-            android:textSize="12sp"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center"
             android:lineSpacingExtra="2dp"
-            android:clickable="true"
-            android:focusable="true" />
+            android:text="By continuing, you agree to our Terms of Service and Privacy Policy"
+            android:textColor="#94A3B8"
+            android:textSize="12sp" />
 
     </LinearLayout>
 
