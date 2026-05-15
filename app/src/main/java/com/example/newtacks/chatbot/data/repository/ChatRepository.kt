@@ -9,9 +9,9 @@ import retrofit2.Response
 
 class ChatRepository(private val apiService: ChatApiService) {
 
-    suspend fun sendMessage(message: String): Result<ChatResponse> = withContext(Dispatchers.IO) {
+    suspend fun sendMessage(message: String, role: String): Result<ChatResponse> = withContext(Dispatchers.IO) {
         try {
-            val response = apiService.sendMessage(ChatRequest(message))
+            val response = apiService.sendMessage(ChatRequest(message, role))
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {

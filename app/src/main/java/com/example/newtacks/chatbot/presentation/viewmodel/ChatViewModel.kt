@@ -16,10 +16,10 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
-    fun sendMessage(message: String) {
+    fun sendMessage(message: String, role: String) {
         viewModelScope.launch {
             _isLoading.value = true
-            val result = repository.sendMessage(message)
+            val result = repository.sendMessage(message, role)
             _chatResponse.value = result
             _isLoading.value = false
         }
