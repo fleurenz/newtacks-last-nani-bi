@@ -55,7 +55,9 @@ class ClientDashboardActivity : AppCompatActivity() {
         }
 
         findViewById<FloatingActionButton>(R.id.fabChat).setOnClickListener {
-            startActivity(android.content.Intent(this, ChatActivity::class.java))
+            val intent = android.content.Intent(this, ChatActivity::class.java)
+            intent.putExtra("USER_ROLE", "client")
+            startActivity(intent)
         }
 
         bottomNav.setOnItemSelectedListener {

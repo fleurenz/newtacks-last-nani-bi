@@ -12,7 +12,9 @@ class CompanyDashboardActivity : AppCompatActivity() {
         setContentView(R.layout.activity_company_dashboard)
 
         findViewById<FloatingActionButton>(R.id.fabChat).setOnClickListener {
-            startActivity(Intent(this, ChatActivity::class.java))
+            val intent = Intent(this, ChatActivity::class.java)
+            intent.putExtra("USER_ROLE", "company")
+            startActivity(intent)
         }
     }
 }

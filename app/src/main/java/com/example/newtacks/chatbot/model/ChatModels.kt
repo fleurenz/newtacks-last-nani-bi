@@ -4,7 +4,9 @@ import com.google.gson.annotations.SerializedName
 
 data class ChatRequest(
     @SerializedName("message")
-    val message: String
+    val message: String,
+    @SerializedName("role")
+    val role: String
 )
 
 data class ChatResponse(

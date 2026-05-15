@@ -79,7 +79,9 @@ class WorkerDashboardActivity : AppCompatActivity() {
         }
 
         findViewById<FloatingActionButton>(R.id.fabChat).setOnClickListener {
-            startActivity(android.content.Intent(this, ChatActivity::class.java))
+            val intent = android.content.Intent(this, ChatActivity::class.java)
+            intent.putExtra("USER_ROLE", "worker")
+            startActivity(intent)
         }
 
         bottomNav.setOnItemSelectedListener { item ->
