@@ -48,6 +48,7 @@ class ChatActivity : AppCompatActivity() {
     private fun setupUI() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = "" // Clear default title to use our custom layout
         binding.toolbar.setNavigationOnClickListener { finish() }
 
         binding.chatRecyclerView.adapter = adapter
