@@ -36,7 +36,7 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun setupViewModel() {
-        val repository = ChatRepository(RetrofitClient.chatApiService)
+        val repository = ChatRepository.getInstance(RetrofitClient.chatApiService)
         val factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 return ChatViewModel(repository) as T
@@ -54,6 +54,13 @@ class ChatActivity : AppCompatActivity() {
         binding.chatRecyclerView.adapter = adapter
         binding.chatRecyclerView.layoutManager = LinearLayoutManager(this).apply {
             stackFromEnd = true
+        }
+
+        // Load existing session messages
+        val existingMessages = viewModel.sessionMessages
+        if (existingMessages.isNotEmpty()) {
+            adapter.setMessages(existingMessages)
+            binding.chatRecyclerView.scrollToPosition(adapter.itemCount - 1)
         }
 
         binding.sendButton.setOnClickListener {

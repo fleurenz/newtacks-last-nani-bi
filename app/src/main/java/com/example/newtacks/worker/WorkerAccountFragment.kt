@@ -23,6 +23,8 @@ import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
 import com.example.newtacks.R
 import com.example.newtacks.authentication.OnboardingActivity
+import com.example.newtacks.chatbot.data.remote.RetrofitClient
+import com.example.newtacks.chatbot.data.repository.ChatRepository
 import com.example.newtacks.models.Review
 import com.example.newtacks.models.User
 import com.example.newtacks.worker.account.WorkerReviewsActivity
@@ -290,6 +292,8 @@ class WorkerAccountFragment : Fragment() {
         dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnPositive)
             .setOnClickListener {
                 dialog.dismiss()
+                // Clear Tey's memory on logout
+                ChatRepository.getInstance(RetrofitClient.chatApiService).clearSession()
                 auth.signOut()
                 Toast.makeText(requireContext(), "Logged out", Toast.LENGTH_SHORT).show()
                 val intent = Intent(requireContext(), OnboardingActivity::class.java)
