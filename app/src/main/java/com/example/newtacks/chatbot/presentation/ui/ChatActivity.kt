@@ -2,8 +2,14 @@ package com.example.newtacks.chatbot.presentation.ui
 
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.widget.LinearLayout
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,10 +30,33 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // ✅ Edge-to-edge
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         userRole = intent.getStringExtra("USER_ROLE") ?: "unknown"
+
+        // ✅ Optimized Insets handling
+        ViewCompat.setOnApplyWindowInsetsListener(binding.chatRoot) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+
+            // 1. Status Bar: Push the AppBar down
+            binding.appBarLayout.updatePadding(top = systemBars.top)
+
+            // 2. Navigation & Keyboard: Move the floating card
+            // We use margins instead of padding to keep the "floating pill" look
+            binding.inputCard.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                val bottomInset = maxOf(systemBars.bottom, ime.bottom)
+                // Maintain the original 12dp margin (approx 32px on many screens, better to use resources)
+                bottomMargin = bottomInset + (resources.displayMetrics.density * 12).toInt()
+            }
+
+            insets
+        }
 
         setupViewModel()
         setupUI()

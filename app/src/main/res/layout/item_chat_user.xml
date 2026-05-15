@@ -4,16 +4,28 @@
     android:layout_height="wrap_content"
     android:gravity="end"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:paddingStart="48dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
 
     <TextView
         android:id="@+id/messageText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="48dp"
         android:background="@drawable/bg_bubble_user"
         android:padding="12dp"
-        android:textColor="@android:color/white"
-        android:textSize="15sp" />
+        android:textColor="#412402"
+        android:textSize="14sp"
+        android:lineSpacingExtra="3dp" />
+
+    <TextView
+        android:id="@+id/tvTimestamp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#AACDE8"
+        android:textSize="10sp"
+        android:layout_marginTop="3dp"
+        android:layout_marginEnd="4dp" />
 
 </LinearLayout>

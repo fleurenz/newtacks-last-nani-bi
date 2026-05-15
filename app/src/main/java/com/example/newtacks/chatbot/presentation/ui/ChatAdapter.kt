@@ -5,24 +5,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.newtacks.R
 import com.example.newtacks.chatbot.presentation.state.ChatMessage
 
-class ChatAdapter : RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
-
-    private val messages = mutableListOf<ChatMessage>()
-
-    fun setMessages(newMessages: List<ChatMessage>) {
-        messages.clear()
-        messages.addAll(newMessages)
-        notifyDataSetChanged()
-    }
-
-    fun addMessage(message: ChatMessage) {
-        messages.add(message)
-        notifyItemInserted(messages.size - 1)
-    }
+class ChatAdapter : ListAdapter<ChatMessage, ChatAdapter.ChatViewHolder>(DiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
         val layout = if (viewType == VIEW_TYPE_USER) {
@@ -35,13 +24,21 @@ class ChatAdapter : RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
     }
 
     override fun onBindViewHolder(holder: ChatViewHolder, position: Int) {
-        holder.bind(messages[position])
+        holder.bind(getItem(position))
     }
 
-    override fun getItemCount(): Int = messages.size
-
     override fun getItemViewType(position: Int): Int {
-        return if (messages[position].isUser) VIEW_TYPE_USER else VIEW_TYPE_BOT
+        return if (getItem(position).isUser) VIEW_TYPE_USER else VIEW_TYPE_BOT
+    }
+
+    fun addMessage(chatMessage: ChatMessage) {
+        val newList = currentList.toMutableList()
+        newList.add(chatMessage)
+        submitList(newList)
+    }
+
+    fun setMessages(existingMessages: List<ChatMessage>) {
+        submitList(existingMessages)
     }
 
     class ChatViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -53,6 +50,16 @@ class ChatAdapter : RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
             // Subtle pop-in animation for new messages
             val animation = AnimationUtils.loadAnimation(itemView.context, R.anim.pop_in)
             itemView.startAnimation(animation)
+        }
+    }
+
+    class DiffCallback : DiffUtil.ItemCallback<ChatMessage>() {
+        override fun areItemsTheSame(oldItem: ChatMessage, newItem: ChatMessage): Boolean {
+            return oldItem.timestamp == newItem.timestamp && oldItem.text == newItem.text
+        }
+
+        override fun areContentsTheSame(oldItem: ChatMessage, newItem: ChatMessage): Boolean {
+            return oldItem == newItem
         }
     }
 
