@@ -19,6 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
+import com.example.newtacks.chatbot.presentation.ui.ChatActivity
 import java.util.Locale
 import java.util.*
 
@@ -164,6 +165,12 @@ class CreateJobActivity : AppCompatActivity() {
 
         btnAddPhoto.setOnClickListener {
             pickImage.launch("image/*")
+        }
+
+        findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabChat).setOnClickListener {
+            val intent = Intent(this, ChatActivity::class.java)
+            intent.putExtra("USER_ROLE", "client")
+            startActivity(intent)
         }
 
         // detect manual editing
