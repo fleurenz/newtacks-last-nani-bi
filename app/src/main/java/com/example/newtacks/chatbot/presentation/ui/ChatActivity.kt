@@ -109,18 +109,15 @@ class ChatActivity : AppCompatActivity() {
                 "How can I get jobs",
                 "What to do when I accepted a job"
             )
-
             "client" -> listOf(
                 "What is my project status",
                 "How can I request for a fix in my home",
                 "Are the information within the job creation necessary to be filled up",
                 "How can I make sure that I get the best work for my requests"
             )
-
             "company" -> listOf(
                 "How is the company performance"
             )
-
             else -> emptyList()
         }
 
@@ -138,13 +135,14 @@ class ChatActivity : AppCompatActivity() {
                 text = prompt
                 textSize = 12f
                 isAllCaps = false
-                val params = LinearLayout.LayoutParams(
+                isSingleLine = true  // ✅ prevent text wrapping
+                ellipsize = android.text.TextUtils.TruncateAt.END
+                layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
+                    dpToPx(40)  // ✅ fixed height
                 ).apply {
-                    setMargins(8, 0, 8, 0)
+                    marginEnd = dpToPx(8)  // ✅ space between buttons
                 }
-                layoutParams = params
                 setOnClickListener {
                     sendMessage(prompt)
                 }
@@ -152,6 +150,10 @@ class ChatActivity : AppCompatActivity() {
             binding.prePromptContainer.addView(button)
         }
     }
+    private fun dpToPx(dp: Int): Int {
+        return (dp * resources.displayMetrics.density).toInt()
+    }
+
 
     private fun sendMessage(message: String) {
         adapter.addMessage(ChatMessage(message, true))
