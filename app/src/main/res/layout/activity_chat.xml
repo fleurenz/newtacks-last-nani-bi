@@ -1,67 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/chatRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#f0fbff"
     android:animateLayoutChanges="true"
+    android:background="#F6F8FC"
     tools:context=".chatbot.presentation.ui.ChatActivity">
 
-    <!-- ===== MODERN APP BAR ===== -->
+    <!-- ================= APP BAR ================= -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#002E6B"
-        app:elevation="4dp"
+        android:background="#0F172A"
+        app:elevation="0dp"
         app:layout_constraintTop_toTopOf="parent">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="#002E6B"
-            app:contentInsetStart="0dp">
+            android:background="#2563EB"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            app:contentInsetStart="0dp"
+            app:navigationIconTint="#FFFFFF">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <!-- Avatar & Status -->
+                <!-- Avatar -->
                 <FrameLayout
                     android:id="@+id/avatarContainer"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
                     android:layout_marginStart="16dp"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent">
 
                     <com.google.android.material.imageview.ShapeableImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:elevation="0dp"
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_tey"
                         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
 
-                    <!-- Online status dot -->
+                    <!-- Online Dot -->
                     <View
+                        android:id="@+id/onlineDot"
                         android:layout_width="12dp"
                         android:layout_height="12dp"
                         android:layout_gravity="bottom|end"
-                        android:background="@drawable/bg_online_dot" />
+                        android:layout_marginEnd="1dp"
+                        android:layout_marginBottom="1dp"
+                        android:background="@drawable/bg_online_dot"
+                        android:elevation="5dp"
+                        android:translationZ="5dp" />
+
                 </FrameLayout>
 
+                <!-- Name + Status -->
+                <!-- Name + Status -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
                     android:orientation="vertical"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/btnBack"
+                    app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@id/avatarContainer"
                     app:layout_constraintTop_toTopOf="parent">
 
@@ -70,29 +82,18 @@
                         android:layout_height="wrap_content"
                         android:text="Tey"
                         android:textColor="#FFFFFF"
-                        android:textSize="17sp"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
                         android:text="Online Assistant"
-                        android:textColor="#AACDE8"
-                        android:textSize="12sp" />
-                </LinearLayout>
+                        android:textColor="#94A3B8"
+                        android:textSize="11sp" />
 
-                <!-- Close / Finish Button -->
-                <ImageButton
-                    android:id="@+id/btnBack"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Close"
-                    android:src="@drawable/ic_close"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:tint="#AACDE8" />
+                </LinearLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -100,27 +101,32 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- ===== CHAT AREA ===== -->
+    <!-- ================= CHAT AREA ================= -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chatRecyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:clipToPadding="false"
-        android:padding="8dp"
+        android:paddingStart="12dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="6dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toTopOf="@+id/prePromptScroll"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/appBarLayout" />
 
-    <!-- ===== PRE-PROMPT CHIPS ===== -->
+    <!-- ================= PRE PROMPTS ================= -->
     <HorizontalScrollView
         android:id="@+id/prePromptScroll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:clipToPadding="false"
         android:scrollbars="none"
         app:layout_constraintBottom_toTopOf="@+id/inputCard">
 
@@ -129,22 +135,27 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingTop="8dp"
-            android:paddingBottom="12dp" />
+            android:paddingStart="4dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="20dp" />
 
     </HorizontalScrollView>
 
-    <!-- ===== FLOATING PILL INPUT ===== -->
+    <!-- ================= INPUT AREA ================= -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/inputCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="12dp"
-        app:cardBackgroundColor="#002E6B"
-        app:cardCornerRadius="18dp"
-        app:cardElevation="8dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="12dp"
+        app:cardBackgroundColor="#FFFFFF"
+        app:cardCornerRadius="26dp"
+        app:cardElevation="2dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:strokeWidth="0dp">
+        app:strokeColor="#E2E8F0"
+        app:strokeWidth="1dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -153,17 +164,17 @@
             android:orientation="horizontal"
             android:padding="6dp">
 
-            <!-- Nested card for input background -->
+            <!-- Input Container -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginStart="4dp"
                 android:layout_marginEnd="10dp"
-                app:cardBackgroundColor="#003580"
-                app:cardCornerRadius="14dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="#F8FAFC"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="0dp"
-                app:strokeColor="#185FA5"
+                app:strokeColor="#CBD5E1"
                 app:strokeWidth="1dp">
 
                 <EditText
@@ -172,39 +183,45 @@
                     android:layout_height="wrap_content"
                     android:background="@null"
                     android:hint="Ask Tey something..."
-                    android:textColor="#FFFFFF"
-                    android:textColorHint="#80AACDE8"
-                    android:maxLines="2"
-                    android:padding="12dp"
-                    android:textSize="15sp"
-                    android:inputType="textCapSentences|textMultiLine" />
+                    android:inputType="textCapSentences|textMultiLine"
+                    android:maxLines="4"
+                    android:minHeight="48dp"
+                    android:paddingStart="14dp"
+                    android:paddingTop="12dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="12dp"
+                    android:textColor="#0F172A"
+                    android:textColorHint="#94A3B8"
+                    android:textSize="15sp" />
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Send FAB -->
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/sendButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="2dp"
-                android:src="@android:drawable/ic_menu_send"
-                app:fabCustomSize="44dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="4dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
                 app:backgroundTint="#F59E0B"
-                app:tint="#412402"
+                app:cornerRadius="20dp"
                 app:elevation="0dp"
-                app:pressedTranslationZ="0dp" />
-
+                app:icon="@drawable/ic_send"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="18dp" />
         </LinearLayout>
 
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- ===== PROGRESS LOADING ===== -->
+    <!-- ================= LOADING ================= -->
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:indeterminateTint="#2563EB"
         android:visibility="gone"
-        android:indeterminateTint="#F59E0B"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

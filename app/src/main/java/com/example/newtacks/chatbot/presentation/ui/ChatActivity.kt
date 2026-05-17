@@ -31,27 +31,29 @@ class ChatActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ✅ Edge-to-edge
+        // ✅ Step 1 — status bar color FIRST (before inflation)
+        window.statusBarColor = android.graphics.Color.parseColor("#002E6B")
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowCompat.getInsetsController(window, window.decorView)
+            .isAppearanceLightStatusBars = false
 
+        // ✅ Step 2 — inflate BEFORE any findViewById or binding
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         userRole = intent.getStringExtra("USER_ROLE") ?: "unknown"
 
-        // ✅ Optimized Insets handling
+        // ✅ Step 3 — insets AFTER setContentView
         ViewCompat.setOnApplyWindowInsetsListener(binding.chatRoot) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
 
-            // 1. Status Bar: Push the AppBar down
+            // Status bar → push AppBar down
             binding.appBarLayout.updatePadding(top = systemBars.top)
 
-            // 2. Navigation & Keyboard: Move the floating card
-            // We use margins instead of padding to keep the "floating pill" look
+            // Nav bar + keyboard → move input card up
             binding.inputCard.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 val bottomInset = maxOf(systemBars.bottom, ime.bottom)
-                // Maintain the original 12dp margin (approx 32px on many screens, better to use resources)
                 bottomMargin = bottomInset + (resources.displayMetrics.density * 12).toInt()
             }
 
@@ -107,15 +109,18 @@ class ChatActivity : AppCompatActivity() {
                 "How can I get jobs",
                 "What to do when I accepted a job"
             )
+
             "client" -> listOf(
                 "What is my project status",
                 "How can I request for a fix in my home",
                 "Are the information within the job creation necessary to be filled up",
                 "How can I make sure that I get the best work for my requests"
             )
+
             "company" -> listOf(
                 "How is the company performance"
             )
+
             else -> emptyList()
         }
 
@@ -125,7 +130,11 @@ class ChatActivity : AppCompatActivity() {
         }
 
         prompts.forEach { prompt ->
-            val button = MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            val button = MaterialButton(
+                this,
+                null,
+                com.google.android.material.R.attr.materialButtonOutlinedStyle
+            ).apply {
                 text = prompt
                 textSize = 12f
                 isAllCaps = false
