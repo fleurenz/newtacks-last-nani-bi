@@ -141,7 +141,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="12dp"
         app:cardBackgroundColor="#002E6B"
-        app:cardCornerRadius="32dp"
+        app:cardCornerRadius="18dp"
         app:cardElevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:strokeWidth="0dp">
@@ -159,8 +159,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
+                android:layout_marginEnd="10dp"
                 app:cardBackgroundColor="#003580"
-                app:cardCornerRadius="24dp"
+                app:cardCornerRadius="14dp"
                 app:cardElevation="0dp"
                 app:strokeColor="#185FA5"
                 app:strokeWidth="1dp">
@@ -173,7 +174,7 @@
                     android:hint="Ask Tey something..."
                     android:textColor="#FFFFFF"
                     android:textColorHint="#80AACDE8"
-                    android:maxLines="4"
+                    android:maxLines="2"
                     android:padding="12dp"
                     android:textSize="15sp"
                     android:inputType="textCapSentences|textMultiLine" />
