@@ -20,6 +20,10 @@ class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
     // Expose session messages from repository
     val sessionMessages: List<ChatMessage> get() = repository.getSessionMessages()
 
+    fun addLocalMessage(message: String, isUser: Boolean) {
+        repository.addMessageToSession(ChatMessage(message, isUser))
+    }
+
     fun sendMessage(message: String, role: String) {
         // Save user message to session immediately for UI consistency
         repository.addMessageToSession(ChatMessage(message, true))
