@@ -94,7 +94,8 @@ class ChatActivity : AppCompatActivity() {
             binding.chatRecyclerView.scrollToPosition(adapter.itemCount - 1)
         } else {
             // Add a welcome message if it's a new session
-            val welcomeMsg = "Hey! im Tey.\nYour TACKS's AI assistant ready to help you at any time of the day!\nSo, how can I help you?"
+            val welcomeMsg =
+                "Hey! im Tey.\nYour TACKS's AI assistant ready to help you at any time of the day!\nSo, how can I help you?"
             viewModel.addLocalMessage(welcomeMsg, false)
             adapter.addMessage(ChatMessage(welcomeMsg, false))
         }
@@ -114,15 +115,18 @@ class ChatActivity : AppCompatActivity() {
                 "How can I get jobs",
                 "What to do when I accepted a job"
             )
+
             "client" -> listOf(
                 "What is my project status",
                 "How can I request for a fix in my home",
                 "Are the information within the job creation necessary to be filled up",
                 "How can I make sure that I get the best work for my requests"
             )
+
             "company" -> listOf(
                 "How is the company performance"
             )
+
             else -> emptyList()
         }
 
@@ -140,13 +144,13 @@ class ChatActivity : AppCompatActivity() {
                 text = prompt
                 textSize = 12f
                 isAllCaps = false
-                isSingleLine = true  // ✅ prevent text wrapping
-                ellipsize = android.text.TextUtils.TruncateAt.END
+                isSingleLine = false        // ✅ allow text to wrap
+                maxLines = 2                // ✅ max 2 lines, keeps it compact
                 layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    dpToPx(40)  // ✅ fixed height
+                    dpToPx(160),            // ✅ fixed width so chips are uniform
+                    LinearLayout.LayoutParams.WRAP_CONTENT  // ✅ height adapts to text
                 ).apply {
-                    marginEnd = dpToPx(8)  // ✅ space between buttons
+                    marginEnd = dpToPx(8)
                 }
                 setOnClickListener {
                     sendMessage(prompt)
@@ -155,6 +159,7 @@ class ChatActivity : AppCompatActivity() {
             binding.prePromptContainer.addView(button)
         }
     }
+
     private fun dpToPx(dp: Int): Int {
         return (dp * resources.displayMetrics.density).toInt()
     }
