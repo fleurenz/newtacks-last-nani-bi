@@ -90,6 +90,11 @@ class ChatActivity : AppCompatActivity() {
         if (existingMessages.isNotEmpty()) {
             adapter.setMessages(existingMessages)
             binding.chatRecyclerView.scrollToPosition(adapter.itemCount - 1)
+        } else {
+            // Add a welcome message if it's a new session
+            val welcomeMsg = "Hey! im Tey.\nYour TACKS's AI assistant ready to help you at any time of the day!\nSo, how can I help you?"
+            viewModel.addLocalMessage(welcomeMsg, false)
+            adapter.addMessage(ChatMessage(welcomeMsg, false))
         }
 
         binding.sendButton.setOnClickListener {
