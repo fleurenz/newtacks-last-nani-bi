@@ -26,6 +26,7 @@ class ClientRequestsFragment : Fragment() {
     private val auth = FirebaseAuth.getInstance()
 
     private var listener: ListenerRegistration? = null
+    private var workerLocationListener: ListenerRegistration? = null
 
     private lateinit var tvTitle: TextView
     private lateinit var tvDetails: TextView
@@ -117,7 +118,7 @@ class ClientRequestsFragment : Fragment() {
         val clientId = auth.currentUser?.uid ?: return
         listener = firestore.collection("jobs")
             .whereEqualTo("clientId", clientId)
-            .whereIn("status", listOf("AVAILABLE", "IN_PROGRESS", "PENDING_VERIFICATION"))
+            .whereIn("status", listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION"))
             .limit(1)
             .addSnapshotListener { snapshots, error ->
                 if (error != null) return@addSnapshotListener
@@ -136,6 +137,12 @@ class ClientRequestsFragment : Fragment() {
     // --------------------------------------------------
     private fun showActiveJob(job: Job) {
         currentJob = job
+        
+        if (job.status != "HEADING_TO_CLIENT") {
+            workerLocationListener?.remove()
+            workerLocationListener = null
+        }
+
         layoutContent.visibility        = View.VISIBLE
         layoutEmptyState.visibility     = View.GONE
         progressText.visibility         = View.VISIBLE
@@ -162,9 +169,29 @@ class ClientRequestsFragment : Fragment() {
                 btnReject.visibility = View.GONE
             }
             "IN_PROGRESS" -> {
-                progressText.text = "Worker is working"
+                progressText.text = "Worker Accepted"
                 progressText.setTextColor(android.graphics.Color.parseColor("#D97706"))
                 progressText.setBackgroundResource(R.drawable.bg_badge_yellow)
+                btnCancelJob.visibility = View.GONE
+                btnConfirm.visibility = View.GONE
+                btnReject.visibility = View.GONE
+            }
+            "HEADING_TO_CLIENT" -> {
+                progressText.text = "Worker is on the way!"
+                progressText.setTextColor(android.graphics.Color.parseColor("#2563EB"))
+                progressText.setBackgroundResource(R.drawable.bg_badge_blue)
+                btnCancelJob.visibility = View.GONE
+                btnConfirm.visibility = View.GONE
+                btnReject.visibility = View.GONE
+                
+                // Track worker distance
+                startTrackingWorkerDistance(job)
+            }
+            "ARRIVED" -> {
+                workerLocationListener?.remove()
+                progressText.text = "Worker has arrived"
+                progressText.setTextColor(android.graphics.Color.parseColor("#16A34A"))
+                progressText.setBackgroundResource(R.drawable.bg_badge_green)
                 btnCancelJob.visibility = View.GONE
                 btnConfirm.visibility = View.GONE
                 btnReject.visibility = View.GONE
@@ -188,8 +215,10 @@ class ClientRequestsFragment : Fragment() {
         }
 
         progressBar.progress = when (job.status) {
-            "AVAILABLE"            -> 25
-            "IN_PROGRESS"          -> 60
+            "AVAILABLE"            -> 20
+            "IN_PROGRESS"          -> 40
+            "HEADING_TO_CLIENT"    -> 60
+            "ARRIVED"              -> 80
             "PENDING_VERIFICATION" -> 100
             else                   -> 0
         }
@@ -199,6 +228,30 @@ class ClientRequestsFragment : Fragment() {
         } else {
             cardWorkerInfo.visibility = View.GONE
         }
+    }
+
+    private fun startTrackingWorkerDistance(job: Job) {
+        val workerId = job.workerId ?: return
+        if (workerLocationListener != null) return // Already tracking
+
+        workerLocationListener = firestore.collection("users").document(workerId)
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot != null && snapshot.exists()) {
+                    val wLat = snapshot.getDouble("latitude")
+                    val wLng = snapshot.getDouble("longitude")
+                    
+                    if (wLat != null && wLng != null) {
+                        val results = FloatArray(1)
+                        android.location.Location.distanceBetween(
+                            wLat, wLng,
+                            job.latitude, job.longitude,
+                            results
+                        )
+                        val distanceKm = results[0] / 1000
+                        progressText.text = String.format(Locale.getDefault(), "Worker is %.1f km away", distanceKm)
+                    }
+                }
+            }
     }
 
     private fun fetchWorkerDetails(workerId: String) {
@@ -547,5 +600,6 @@ class ClientRequestsFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         listener?.remove()
+        workerLocationListener?.remove()
     }
 }

@@ -12,6 +12,8 @@ import coil.transform.CircleCropTransformation
 import com.example.newtacks.R
 import com.example.newtacks.models.Job
 import com.example.newtacks.models.User
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
 import java.util.Locale
@@ -21,11 +23,15 @@ class WorkerJobFragment : Fragment() {
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private var listener: ListenerRegistration? = null
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private lateinit var tvTitle: TextView
     private lateinit var tvDetails: TextView
     private lateinit var tvStatus: TextView
     private lateinit var btnDone: Button
+    private lateinit var btnStartHeading: Button
+    private lateinit var btnArrived: Button
+    private lateinit var btnCancelJob: Button
     private lateinit var layoutContent: LinearLayout
     private lateinit var layoutEmptyState: LinearLayout
     private lateinit var layoutBottomButtons: LinearLayout
@@ -44,11 +50,15 @@ class WorkerJobFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         val view = inflater.inflate(R.layout.fragment_worker_job, container, false)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
 
         tvTitle             = view.findViewById(R.id.tvJobTitle)
         tvDetails           = view.findViewById(R.id.tvJobDetails)
         tvStatus            = view.findViewById(R.id.tvJobStatus)
         btnDone             = view.findViewById(R.id.btnRequestDone)
+        btnStartHeading     = view.findViewById(R.id.btnStartHeading)
+        btnArrived          = view.findViewById(R.id.btnArrived)
+        btnCancelJob        = view.findViewById(R.id.btnCancelActiveJob)
         layoutContent       = view.findViewById(R.id.layoutContent)
         layoutEmptyState    = view.findViewById(R.id.layoutEmptyState)
         layoutBottomButtons = view.findViewById(R.id.layoutBottomButtons)
@@ -75,6 +85,9 @@ class WorkerJobFragment : Fragment() {
 
         listenForActiveJob()
         btnDone.setOnClickListener { requestDone() }
+        btnStartHeading.setOnClickListener { updateJobStatus("HEADING_TO_CLIENT") }
+        btnArrived.setOnClickListener { updateJobStatus("ARRIVED") }
+        btnCancelJob.setOnClickListener { showCancelDialog() }
 
         cardJobDetails.setOnClickListener {
             currentJob?.let { showJobDetailsDialog(it) }
@@ -94,7 +107,7 @@ class WorkerJobFragment : Fragment() {
         val workerId = auth.currentUser?.uid ?: return
         listener = firestore.collection("jobs")
             .whereEqualTo("workerId", workerId)
-            .whereIn("status", listOf("IN_PROGRESS", "PENDING_VERIFICATION"))
+            .whereIn("status", listOf("IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION"))
             .limit(1)
             .addSnapshotListener { snapshots, _ ->
                 val job = snapshots?.documents?.firstOrNull()?.toObject(Job::class.java)
@@ -119,25 +132,125 @@ class WorkerJobFragment : Fragment() {
         tvClientDetailPhone.text = "Tap to view contact"
 
         tvStatus.visibility = View.VISIBLE
+        
+        // Default visibility
+        btnStartHeading.visibility = View.GONE
+        btnArrived.visibility      = View.GONE
+        btnDone.visibility         = View.GONE
+        btnCancelJob.visibility    = View.VISIBLE // Can cancel anytime before verification
+
         when (job.status) {
             "IN_PROGRESS" -> {
-                tvStatus.text = "Working on job..."
+                tvStatus.text = "Job Accepted"
                 tvStatus.setTextColor(android.graphics.Color.parseColor("#D97706"))
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_yellow)
+                btnStartHeading.visibility = View.VISIBLE
+            }
+            "HEADING_TO_CLIENT" -> {
+                tvStatus.text = "Heading to Location..."
+                tvStatus.setTextColor(android.graphics.Color.parseColor("#2563EB"))
+                tvStatus.setBackgroundResource(R.drawable.bg_badge_blue)
+                btnArrived.visibility = View.VISIBLE
+                
+                // Show live distance
+                showLiveDistance(job.latitude, job.longitude)
+            }
+            "ARRIVED" -> {
+                tvStatus.text = "Arrived at Location"
+                tvStatus.setTextColor(android.graphics.Color.parseColor("#16A34A"))
+                tvStatus.setBackgroundResource(R.drawable.bg_badge_green)
+                btnDone.visibility = View.VISIBLE
             }
             "PENDING_VERIFICATION" -> {
                 tvStatus.text = "Waiting for client confirmation"
                 tvStatus.setTextColor(android.graphics.Color.parseColor("#16A34A"))
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_green)
+                btnCancelJob.visibility = View.GONE
             }
             else -> {
-                tvStatus.text = "Active"
+                tvStatus.text = job.status
                 tvStatus.setTextColor(android.graphics.Color.parseColor("#FFFFFF"))
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_blue)
             }
         }
+    }
 
-        btnDone.visibility = if (job.status == "IN_PROGRESS") View.VISIBLE else View.GONE
+    private fun showLiveDistance(jobLat: Double, jobLng: Double) {
+        if (androidx.core.content.ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) 
+            != android.content.pm.PackageManager.PERMISSION_GRANTED) return
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+                val results = FloatArray(1)
+                android.location.Location.distanceBetween(
+                    location.latitude, location.longitude,
+                    jobLat, jobLng,
+                    results
+                )
+                val distanceKm = results[0] / 1000
+                tvStatus.text = String.format(Locale.getDefault(), "Heading to Location... (%.1f km away)", distanceKm)
+            }
+        }
+    }
+
+    private fun updateJobStatus(newStatus: String) {
+        val jobId = currentJobId ?: return
+        firestore.collection("jobs").document(jobId)
+            .update("status", newStatus)
+            .addOnSuccessListener {
+                Toast.makeText(requireContext(), "Status updated: $newStatus", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun showCancelDialog() {
+        val dialog = android.app.Dialog(requireContext())
+        dialog.setContentView(R.layout.dialog_role_select)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.88).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        dialog.findViewById<ImageView>(R.id.dialogIcon).setImageResource(R.drawable.ic_close)
+        dialog.findViewById<TextView>(R.id.dialogTitle).text = "Cancel Job?"
+        dialog.findViewById<TextView>(R.id.dialogMessage).text = "Are you sure you want to cancel? This job will be returned to the feed for others."
+
+        dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnPositive).apply {
+            text = "Yes, Cancel"
+            setOnClickListener {
+                dialog.dismiss()
+                cancelJobByWorker()
+            }
+        }
+
+        dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnNegative).apply {
+            text = "Keep Working"
+            setOnClickListener { dialog.dismiss() }
+        }
+
+        dialog.show()
+    }
+
+    private fun cancelJobByWorker() {
+        val jobId = currentJobId ?: return
+        
+        // Set back to AVAILABLE and clear worker info
+        val update = mapOf(
+            "status" to "AVAILABLE",
+            "workerId" to FieldValue.delete(),
+            "workerName" to FieldValue.delete(),
+            "acceptedAt" to FieldValue.delete()
+        )
+
+        firestore.collection("jobs").document(jobId)
+            .update(update)
+            .addOnSuccessListener {
+                Toast.makeText(requireContext(), "Job cancelled and returned to feed", Toast.LENGTH_SHORT).show()
+                showEmptyState()
+            }
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "Failed to cancel: ${it.message}", Toast.LENGTH_SHORT).show()
+            }
     }
 
     // --------------------------------------------------
