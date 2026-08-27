@@ -38,41 +38,31 @@ class ClientHomeFragment : Fragment() {
             val currentUser = auth.currentUser ?: return@setOnClickListener
 
             // --------------------------------------------------
-            // CHECK ACTIVE JOB FIRST
+            // CHECK ACTIVE JOB FIRST (FORCE SERVER CHECK)
             // --------------------------------------------------
 
             firestore.collection("jobs")
                 .whereEqualTo("clientId", currentUser.uid)
-                .whereIn(
-                    "status",
-                    listOf(
-                        "AVAILABLE",
-                        "IN_PROGRESS",
-                        "PENDING_VERIFICATION"
-                    )
-                )
-                .get()
+                .get(com.google.firebase.firestore.Source.SERVER) // Force latest data
                 .addOnSuccessListener { snapshots ->
 
-                    // CLIENT HAS ACTIVE JOB
-                    if (!snapshots.isEmpty) {
+                    val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
+                    val hasActiveJob = snapshots.documents.any { 
+                        val status = it.getString("status") ?: ""
+                        status in activeStatuses 
+                    }
 
+                    if (hasActiveJob) {
                         Toast.makeText(
                             requireContext(),
                             "Finish your active request first",
                             Toast.LENGTH_LONG
                         ).show()
-
                         return@addOnSuccessListener
                     }
 
                     // OPEN CREATE JOB SCREEN
-
-                    val intent = Intent(
-                        requireContext(),
-                        CreateJobActivity::class.java
-                    )
-
+                    val intent = Intent(requireContext(), CreateJobActivity::class.java)
                     startActivity(intent)
                 }
         }

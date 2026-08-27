@@ -446,19 +446,18 @@ class CreateJobActivity : AppCompatActivity() {
 
         firestore.collection("jobs")
             .whereEqualTo("clientId", currentUser.uid)
-            .whereIn(
-                "status",
-                listOf(
-                    "AVAILABLE",
-                    "IN_PROGRESS",
-                    "PENDING_VERIFICATION"
-                )
-            )
-            .get()
+            .get(com.google.firebase.firestore.Source.SERVER) // Force latest data
             .addOnSuccessListener { snapshots ->
 
+                // Filter active statuses locally to avoid index issues
+                val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
+                val hasActiveJob = snapshots.documents.any { 
+                    val status = it.getString("status") ?: ""
+                    status in activeStatuses 
+                }
+
                 // CLIENT ALREADY HAS ACTIVE JOB
-                if (!snapshots.isEmpty) {
+                if (hasActiveJob) {
                     Toast.makeText(
                         this,
                         "You already have an active request",

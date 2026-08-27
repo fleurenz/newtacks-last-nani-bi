@@ -31,6 +31,7 @@ class WorkerJobFragment : Fragment() {
     private lateinit var btnDone: Button
     private lateinit var btnStartHeading: Button
     private lateinit var btnArrived: Button
+    private lateinit var btnMessageClient: Button
     private lateinit var btnCancelJob: Button
     private lateinit var layoutContent: LinearLayout
     private lateinit var layoutEmptyState: LinearLayout
@@ -58,6 +59,7 @@ class WorkerJobFragment : Fragment() {
         btnDone             = view.findViewById(R.id.btnRequestDone)
         btnStartHeading     = view.findViewById(R.id.btnStartHeading)
         btnArrived          = view.findViewById(R.id.btnArrived)
+        btnMessageClient    = view.findViewById(R.id.btnMessageClient)
         btnCancelJob        = view.findViewById(R.id.btnCancelActiveJob)
         layoutContent       = view.findViewById(R.id.layoutContent)
         layoutEmptyState    = view.findViewById(R.id.layoutEmptyState)
@@ -87,6 +89,7 @@ class WorkerJobFragment : Fragment() {
         btnDone.setOnClickListener { requestDone() }
         btnStartHeading.setOnClickListener { updateJobStatus("HEADING_TO_CLIENT") }
         btnArrived.setOnClickListener { updateJobStatus("ARRIVED") }
+        btnMessageClient.setOnClickListener { openChat() }
         btnCancelJob.setOnClickListener { showCancelDialog() }
 
         cardJobDetails.setOnClickListener {
@@ -105,12 +108,22 @@ class WorkerJobFragment : Fragment() {
     // --------------------------------------------------
     private fun listenForActiveJob() {
         val workerId = auth.currentUser?.uid ?: return
+        
+        // Query only by workerId to avoid composite index requirements
         listener = firestore.collection("jobs")
             .whereEqualTo("workerId", workerId)
-            .whereIn("status", listOf("IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION"))
-            .limit(1)
-            .addSnapshotListener { snapshots, _ ->
-                val job = snapshots?.documents?.firstOrNull()?.toObject(Job::class.java)
+            .addSnapshotListener { snapshots, error ->
+                if (error != null) {
+                    android.util.Log.e("Firestore", "Error: ${error.message}")
+                    return@addSnapshotListener
+                }
+
+                // Filter locally for the active handshake statuses
+                val activeStatuses = listOf("IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
+                val job = snapshots?.documents
+                    ?.mapNotNull { it.toObject(Job::class.java) }
+                    ?.firstOrNull { it.status in activeStatuses }
+
                 if (job == null) showEmptyState() else showActiveJob(job)
             }
     }
@@ -137,6 +150,7 @@ class WorkerJobFragment : Fragment() {
         btnStartHeading.visibility = View.GONE
         btnArrived.visibility      = View.GONE
         btnDone.visibility         = View.GONE
+        btnMessageClient.visibility = View.VISIBLE
         btnCancelJob.visibility    = View.VISIBLE // Can cancel anytime before verification
 
         when (job.status) {
@@ -193,6 +207,16 @@ class WorkerJobFragment : Fragment() {
         }
     }
 
+    private fun openChat() {
+        val job = currentJob ?: return
+        val intent = android.content.Intent(requireContext(), com.example.newtacks.chatbot.presentation.ui.TransactionChatActivity::class.java)
+        intent.putExtra("JOB_ID", job.jobId)
+        intent.putExtra("WORKER_ID", job.workerId) // Pass the worker ID for session isolation
+        intent.putExtra("OTHER_USER_ID", job.clientId)
+        intent.putExtra("JOB_TITLE", job.jobTitle)
+        startActivity(intent)
+    }
+
     private fun updateJobStatus(newStatus: String) {
         val jobId = currentJobId ?: return
         firestore.collection("jobs").document(jobId)
@@ -245,6 +269,7 @@ class WorkerJobFragment : Fragment() {
         firestore.collection("jobs").document(jobId)
             .update(update)
             .addOnSuccessListener {
+                com.example.newtacks.utils.ChatUtils.deleteChatHistory(jobId) // Maintain privacy & save space
                 Toast.makeText(requireContext(), "Job cancelled and returned to feed", Toast.LENGTH_SHORT).show()
                 showEmptyState()
             }

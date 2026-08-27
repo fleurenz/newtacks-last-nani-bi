@@ -41,7 +41,6 @@ class WorkerFeedFragment : Fragment() {
     private var mapLibreMap: MapLibreMap? = null
 
     private lateinit var btnWorkerProfile: MaterialButton
-    private lateinit var switchLocation: SwitchMaterial
     private lateinit var fabZoomIn: FloatingActionButton
     private lateinit var fabZoomOut: FloatingActionButton
 
@@ -68,7 +67,6 @@ class WorkerFeedFragment : Fragment() {
         mapView             = view.findViewById(R.id.mapView)
 
         btnWorkerProfile    = view.findViewById(R.id.btnWorkerProfile)
-        switchLocation      = view.findViewById(R.id.switchLocation)
         fabZoomIn           = view.findViewById(R.id.fabZoomIn)
         fabZoomOut          = view.findViewById(R.id.fabZoomOut)
 
@@ -96,17 +94,6 @@ class WorkerFeedFragment : Fragment() {
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {}
         })
-
-        // --------------------------------------------------
-        // ✅ LOCATION TOGGLE
-        // --------------------------------------------------
-        switchLocation.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                enableLocationTracking()
-            } else {
-                disableLocationTracking()
-            }
-        }
 
         // --------------------------------------------------
         // ✅ ZOOM CONTROLS
@@ -147,47 +134,11 @@ class WorkerFeedFragment : Fragment() {
         }
     }
 
-    private fun enableLocationTracking() {
-        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) 
-            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            @Suppress("DEPRECATION")
-            requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1001)
-            return
-        }
-
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location: android.location.Location? ->
-                if (location != null) {
-                    val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@addOnSuccessListener
-                    val update = mapOf(
-                        "latitude" to location.latitude,
-                        "longitude" to location.longitude,
-                        "lastActive" to System.currentTimeMillis(),
-                        "isOnline" to true
-                    )
-                    db.collection("users").document(uid).update(update)
-                    
-                    // Center map on worker if on map tab
-                    if (tabLayout.selectedTabPosition == 1) {
-                        mapLibreMap?.animateCamera(
-                            CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 15.0)
-                        )
-                    }
-                }
-            }
-    }
-
-    private fun disableLocationTracking() {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        db.collection("users").document(uid).update("isOnline", false)
-    }
-
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        if (requestCode == 1001 && grantResults.isNotEmpty() && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            enableLocationTracking()
+        if (requestCode == 1002 && grantResults.isNotEmpty() && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(requireContext(), "Permission granted! Tap Accept again to confirm.", Toast.LENGTH_SHORT).show()
         } else {
-            switchLocation.isChecked = false
-            Toast.makeText(requireContext(), "Location permission denied", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Location permission is required to accept jobs", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -319,15 +270,44 @@ class WorkerFeedFragment : Fragment() {
     // ACCEPT JOB (FIRESTORE TRANSACTION)
     // --------------------------------------------------
     private fun acceptJob(job: Job) {
+        // --------------------------------------------------
+        // ✅ ENFORCE LOCATION RESTRICTION
+        // --------------------------------------------------
+        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) 
+            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            @Suppress("DEPRECATION")
+            requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1002)
+            return
+        }
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location == null) {
+                Toast.makeText(requireContext(), "Please turn on your GPS to accept jobs", Toast.LENGTH_LONG).show()
+                return@addOnSuccessListener
+            }
+
+            // Continue with job acceptance
+            processJobAcceptance(job, location)
+        }
+    }
+
+    private fun processJobAcceptance(job: Job, location: android.location.Location) {
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
         val workerId = currentUser.uid
 
         db.collection("jobs")
             .whereEqualTo("workerId", workerId)
-            .whereIn("status", listOf("IN_PROGRESS", "PENDING_VERIFICATION"))
             .get()
             .addOnSuccessListener { snapshots ->
-                if (!snapshots.isEmpty) {
+                
+                // Filter active statuses locally to avoid index issues
+                val activeStatuses = listOf("IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
+                val hasActiveJob = snapshots.documents.any { 
+                    val status = it.getString("status") ?: ""
+                    status in activeStatuses 
+                }
+
+                if (hasActiveJob) {
                     android.widget.Toast.makeText(
                         requireContext(),
                         "Finish your current job first",
@@ -351,6 +331,7 @@ class WorkerFeedFragment : Fragment() {
                                 throw Exception("Job already taken")
                             }
 
+                            // Update job with worker info
                             transaction.update(
                                 ref,
                                 mapOf(
@@ -360,6 +341,15 @@ class WorkerFeedFragment : Fragment() {
                                     "acceptedAt" to System.currentTimeMillis()
                                 )
                             )
+                            
+                            // Also update worker's location in their profile
+                            val workerRef = db.collection("users").document(workerId)
+                            transaction.update(workerRef, mapOf(
+                                "latitude" to location.latitude,
+                                "longitude" to location.longitude,
+                                "isOnline" to true,
+                                "lastActive" to System.currentTimeMillis()
+                            ))
                         }
                     }
             }

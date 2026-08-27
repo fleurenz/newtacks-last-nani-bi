@@ -33,6 +33,7 @@ class ClientRequestsFragment : Fragment() {
     private lateinit var btnConfirm: Button
     private lateinit var btnCancelJob: Button
     private lateinit var btnReject: Button
+    private lateinit var btnMessageWorker: Button
     private lateinit var progressText: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var layoutContent: LinearLayout
@@ -63,6 +64,7 @@ class ClientRequestsFragment : Fragment() {
         btnConfirm           = view.findViewById(R.id.btnConfirm)
         btnCancelJob          = view.findViewById(R.id.btnCancelJob)
         btnReject            = view.findViewById(R.id.btnReject)
+        btnMessageWorker     = view.findViewById(R.id.btnMessageWorker)
         progressText         = view.findViewById(R.id.tvProgress)
         progressBar          = view.findViewById(R.id.progressBar)
         layoutContent        = view.findViewById(R.id.layoutContent)
@@ -99,6 +101,7 @@ class ClientRequestsFragment : Fragment() {
         btnConfirm.setOnClickListener { confirmJob() }
         btnCancelJob.setOnClickListener { showCancelConfirmationDialog() }
         btnReject.setOnClickListener { rejectJob() }
+        btnMessageWorker.setOnClickListener { openChat() }
 
         cardJobDetails.setOnClickListener {
             currentJob?.let { showJobDetailsDialog(it) }
@@ -116,13 +119,22 @@ class ClientRequestsFragment : Fragment() {
     // --------------------------------------------------
     private fun listenForActiveJob() {
         val clientId = auth.currentUser?.uid ?: return
+        
+        // Query only by clientId to avoid the need for composite indexes
         listener = firestore.collection("jobs")
             .whereEqualTo("clientId", clientId)
-            .whereIn("status", listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION"))
-            .limit(1)
             .addSnapshotListener { snapshots, error ->
-                if (error != null) return@addSnapshotListener
-                val job = snapshots?.documents?.firstOrNull()?.toObject(Job::class.java)
+                if (error != null) {
+                    android.util.Log.e("Firestore", "Error: ${error.message}")
+                    return@addSnapshotListener
+                }
+
+                // Filter for active statuses locally
+                val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
+                val job = snapshots?.documents
+                    ?.mapNotNull { it.toObject(Job::class.java) }
+                    ?.firstOrNull { it.status in activeStatuses }
+
                 if (job == null) {
                     showEmptyState()
                 } else {
@@ -149,8 +161,10 @@ class ClientRequestsFragment : Fragment() {
         progressBar.visibility          = View.VISIBLE
         layoutProgressLabels.visibility = View.VISIBLE
         layoutBottomButtons.visibility  =
-            if (job.status == "PENDING_VERIFICATION" || job.status == "AVAILABLE") View.VISIBLE else View.GONE
+            if (job.status == "PENDING_VERIFICATION" || job.status == "AVAILABLE" || job.status == "IN_PROGRESS" || job.status == "HEADING_TO_CLIENT" || job.status == "ARRIVED") View.VISIBLE else View.GONE
 
+        btnMessageWorker.visibility = if (job.workerId != null) View.VISIBLE else View.GONE
+        
         currentJobId   = job.jobId
         tvTitle.text   = job.jobTitle
         tvDetails.text = """
@@ -276,6 +290,17 @@ class ClientRequestsFragment : Fragment() {
                 
                 cardWorkerInfo.visibility = View.VISIBLE
             }
+    }
+
+    private fun openChat() {
+        val job = currentJob ?: return
+        val workerId = job.workerId ?: return
+        val intent = android.content.Intent(requireContext(), com.example.newtacks.chatbot.presentation.ui.TransactionChatActivity::class.java)
+        intent.putExtra("JOB_ID", job.jobId)
+        intent.putExtra("WORKER_ID", workerId) // Pass the worker ID for session isolation
+        intent.putExtra("OTHER_USER_ID", workerId)
+        intent.putExtra("JOB_TITLE", job.jobTitle)
+        startActivity(intent)
     }
 
     // --------------------------------------------------
@@ -437,6 +462,7 @@ class ClientRequestsFragment : Fragment() {
             .document(jobId)
             .delete()
             .addOnSuccessListener {
+                com.example.newtacks.utils.ChatUtils.deleteChatHistory(jobId) // Clear storage
                 Toast.makeText(requireContext(), "Job request cancelled and deleted", Toast.LENGTH_SHORT).show()
                 showEmptyState()
             }
@@ -459,6 +485,7 @@ class ClientRequestsFragment : Fragment() {
                 )
             )
             .addOnSuccessListener {
+                com.example.newtacks.utils.ChatUtils.deleteChatHistory(jobId) // Clear storage
                 Toast.makeText(requireContext(), "Job Completed", Toast.LENGTH_SHORT).show()
                 fetchJobAndGenerateReceipt(jobId)
             }

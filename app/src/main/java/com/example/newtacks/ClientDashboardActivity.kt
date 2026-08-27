@@ -15,6 +15,8 @@ import com.example.newtacks.client.ClientRequestsFragment
 import com.example.newtacks.chatbot.presentation.ui.ChatActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class ClientDashboardActivity : AppCompatActivity() {
 
@@ -103,8 +105,32 @@ class ClientDashboardActivity : AppCompatActivity() {
             bottomNav.selectedItemId = R.id.nav_requests
             replaceFragment(ClientRequestsFragment())
         } else {
-            bottomNav.selectedItemId = R.id.nav_home
-            replaceFragment(ClientHomeFragment())
+            // Check for active job to decide landing page
+            val uid = FirebaseAuth.getInstance().currentUser?.uid
+            if (uid != null) {
+                FirebaseFirestore.getInstance().collection("jobs")
+                    .whereEqualTo("clientId", uid)
+                    .get(com.google.firebase.firestore.Source.SERVER)
+                    .addOnSuccessListener { snapshots ->
+                        val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
+                        val hasActiveJob = snapshots.documents.any { it.getString("status") in activeStatuses }
+                        
+                        if (hasActiveJob) {
+                            bottomNav.selectedItemId = R.id.nav_requests
+                            replaceFragment(ClientRequestsFragment())
+                        } else {
+                            bottomNav.selectedItemId = R.id.nav_home
+                            replaceFragment(ClientHomeFragment())
+                        }
+                    }
+                    .addOnFailureListener {
+                        bottomNav.selectedItemId = R.id.nav_home
+                        replaceFragment(ClientHomeFragment())
+                    }
+            } else {
+                bottomNav.selectedItemId = R.id.nav_home
+                replaceFragment(ClientHomeFragment())
+            }
         }
 
         findViewById<FloatingActionButton>(R.id.fabChat).setOnClickListener {

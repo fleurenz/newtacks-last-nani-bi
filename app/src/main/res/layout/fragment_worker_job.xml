@@ -249,6 +249,24 @@
         android:paddingBottom="20dp">
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnMessageClient"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:text="Message Client"
+            android:textColor="#2563EB"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:backgroundTint="#EFF6FF"
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_send"
+            app:iconGravity="textStart"
+            app:iconTint="#2563EB"
+            app:strokeColor="#2563EB"
+            app:strokeWidth="1dp"
+            android:layout_marginBottom="10dp" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStartHeading"
             android:layout_width="match_parent"
             android:layout_height="54dp"
