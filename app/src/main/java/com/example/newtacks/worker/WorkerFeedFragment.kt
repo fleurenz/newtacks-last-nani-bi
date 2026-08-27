@@ -2,10 +2,8 @@ package com.example.newtacks.worker
 
 import android.os.Bundle
 import android.view.*
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
@@ -14,9 +12,21 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.example.newtacks.R
 import com.example.newtacks.models.Job
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.switchmaterial.SwitchMaterial
+import com.google.android.material.tabs.TabLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import org.maplibre.android.annotations.MarkerOptions
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.MapView
 
 class WorkerFeedFragment : Fragment() {
 
@@ -24,7 +34,18 @@ class WorkerFeedFragment : Fragment() {
     private lateinit var adapter: WorkerJobAdapter
     private lateinit var layoutHeader: LinearLayout
     private lateinit var layoutEmptyState: LinearLayout
+    private lateinit var tabLayout: TabLayout
+    private lateinit var layoutListContainer: LinearLayout
+    private lateinit var layoutMapContainer: FrameLayout
+    private lateinit var mapView: MapView
+    private var mapLibreMap: MapLibreMap? = null
 
+    private lateinit var btnWorkerProfile: MaterialButton
+    private lateinit var switchLocation: SwitchMaterial
+    private lateinit var fabZoomIn: FloatingActionButton
+    private lateinit var fabZoomOut: FloatingActionButton
+
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val db = FirebaseFirestore.getInstance()
     private var listener: ListenerRegistration? = null
     private val jobList = mutableListOf<Job>()
@@ -36,13 +57,66 @@ class WorkerFeedFragment : Fragment() {
     ): View {
         val view = inflater.inflate(R.layout.fragment_worker_feed, container, false)
 
-        recyclerView     = view.findViewById(R.id.workerFeedRecycler)
-        layoutHeader     = view.findViewById(R.id.layoutHeader)
-        layoutEmptyState = view.findViewById(R.id.layoutEmptyState)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+
+        recyclerView        = view.findViewById(R.id.workerFeedRecycler)
+        layoutHeader        = view.findViewById(R.id.layoutHeader)
+        layoutEmptyState    = view.findViewById(R.id.layoutEmptyState)
+        tabLayout           = view.findViewById(R.id.tabLayout)
+        layoutListContainer = view.findViewById(R.id.layoutListContainer)
+        layoutMapContainer  = view.findViewById(R.id.layoutMapContainer)
+        mapView             = view.findViewById(R.id.mapView)
+
+        btnWorkerProfile    = view.findViewById(R.id.btnWorkerProfile)
+        switchLocation      = view.findViewById(R.id.switchLocation)
+        fabZoomIn           = view.findViewById(R.id.fabZoomIn)
+        fabZoomOut          = view.findViewById(R.id.fabZoomOut)
+
+        mapView.onCreate(savedInstanceState)
+        setupWorkerInfo()
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = WorkerJobAdapter(jobList) { job -> showJobPreview(job) }
         recyclerView.adapter = adapter
+
+        // --------------------------------------------------
+        // ✅ TAB SWITCHING
+        // --------------------------------------------------
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab?) {
+                if (tab?.position == 0) {
+                    layoutListContainer.visibility = View.VISIBLE
+                    layoutMapContainer.visibility = View.GONE
+                } else {
+                    layoutListContainer.visibility = View.GONE
+                    layoutMapContainer.visibility = View.VISIBLE
+                    initMap()
+                }
+            }
+            override fun onTabUnselected(tab: TabLayout.Tab?) {}
+            override fun onTabReselected(tab: TabLayout.Tab?) {}
+        })
+
+        // --------------------------------------------------
+        // ✅ LOCATION TOGGLE
+        // --------------------------------------------------
+        switchLocation.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                enableLocationTracking()
+            } else {
+                disableLocationTracking()
+            }
+        }
+
+        // --------------------------------------------------
+        // ✅ ZOOM CONTROLS
+        // --------------------------------------------------
+        fabZoomIn.setOnClickListener {
+            mapLibreMap?.animateCamera(CameraUpdateFactory.zoomIn())
+        }
+        fabZoomOut.setOnClickListener {
+            mapLibreMap?.animateCamera(CameraUpdateFactory.zoomOut())
+        }
 
         // --------------------------------------------------
         // ✅ WINDOW INSETS
@@ -63,6 +137,61 @@ class WorkerFeedFragment : Fragment() {
     }
 
     // --------------------------------------------------
+    // WORKER INFO & LOCATION
+    // --------------------------------------------------
+    private fun setupWorkerInfo() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        db.collection("users").document(uid).get().addOnSuccessListener { doc ->
+            val name = doc.getString("name") ?: "Worker Account"
+            btnWorkerProfile.text = name
+        }
+    }
+
+    private fun enableLocationTracking() {
+        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) 
+            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            @Suppress("DEPRECATION")
+            requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1001)
+            return
+        }
+
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location: android.location.Location? ->
+                if (location != null) {
+                    val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@addOnSuccessListener
+                    val update = mapOf(
+                        "latitude" to location.latitude,
+                        "longitude" to location.longitude,
+                        "lastActive" to System.currentTimeMillis(),
+                        "isOnline" to true
+                    )
+                    db.collection("users").document(uid).update(update)
+                    
+                    // Center map on worker if on map tab
+                    if (tabLayout.selectedTabPosition == 1) {
+                        mapLibreMap?.animateCamera(
+                            CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 15.0)
+                        )
+                    }
+                }
+            }
+    }
+
+    private fun disableLocationTracking() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        db.collection("users").document(uid).update("isOnline", false)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        if (requestCode == 1001 && grantResults.isNotEmpty() && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            enableLocationTracking()
+        } else {
+            switchLocation.isChecked = false
+            Toast.makeText(requireContext(), "Location permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // --------------------------------------------------
     // LIVE JOB FEED
     // --------------------------------------------------
     private fun listenForJobs() {
@@ -76,6 +205,7 @@ class WorkerFeedFragment : Fragment() {
                     jobList.add(job)
                 }
                 adapter.notifyDataSetChanged()
+                updateMapMarkers()
 
                 // toggle empty state
                 layoutEmptyState.visibility =
@@ -83,6 +213,49 @@ class WorkerFeedFragment : Fragment() {
                 recyclerView.visibility =
                     if (jobList.isEmpty()) View.GONE else View.VISIBLE
             }
+    }
+
+    // --------------------------------------------------
+    // MAP LOGIC
+    // --------------------------------------------------
+    private fun initMap() {
+        if (mapLibreMap != null) {
+            updateMapMarkers()
+            return
+        }
+
+        mapView.getMapAsync { map ->
+            mapLibreMap = map
+            
+            // 1. Load the local OSM style (powered by our localhost server)
+            map.setStyle("asset://map_style.json") {
+                // 2. Initial camera position (Davao City)
+                // Using Davao City Hall coordinates as a solid reference point
+                val davaoCityHall = LatLng(7.0648, 125.6079) 
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(davaoCityHall, 13.0))
+                
+                // Set zoom boundaries to match typical OSM city files
+                map.setMinZoomPreference(2.0)
+                map.setMaxZoomPreference(18.0)
+                
+                updateMapMarkers()
+            }
+        }
+    }
+
+    private fun updateMapMarkers() {
+        val map = mapLibreMap ?: return
+        map.clear()
+        for (job in jobList) {
+            if (job.latitude != 0.0 && job.longitude != 0.0) {
+                map.addMarker(
+                    MarkerOptions()
+                        .position(LatLng(job.latitude, job.longitude))
+                        .title(job.jobTitle)
+                        .snippet("₱${job.offeredAmount}")
+                )
+            }
+        }
     }
 
     // --------------------------------------------------
@@ -193,10 +366,21 @@ class WorkerFeedFragment : Fragment() {
     }
 
     // --------------------------------------------------
-    // CLEANUP
+    // CLEANUP & LIFECYCLE
     // --------------------------------------------------
+    override fun onStart() { super.onStart(); mapView.onStart() }
+    override fun onResume() { super.onResume(); mapView.onResume() }
+    override fun onPause() { super.onPause(); mapView.onPause() }
+    override fun onStop() { super.onStop(); mapView.onStop() }
+    override fun onLowMemory() { super.onLowMemory(); mapView.onLowMemory() }
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        mapView.onSaveInstanceState(outState)
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
+        mapView.onDestroy()
         listener?.remove()
     }
 }

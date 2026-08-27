@@ -82,7 +82,7 @@ class ReceiptAdapter(
 
     override fun getItemCount(): Int = items.size
 
-    inner class DateHeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class DateHeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvDate: TextView = itemView.findViewById(R.id.tvDateHeader)
         fun bind(date: String) {
             tvDate.text = date

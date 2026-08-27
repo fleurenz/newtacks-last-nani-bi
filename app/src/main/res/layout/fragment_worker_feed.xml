@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -48,51 +49,180 @@
 
     </LinearLayout>
 
-    <!-- ===== EMPTY STATE ===== -->
+    <!-- ===== WORKER INFO & LOCATION TOGGLE ===== -->
     <LinearLayout
-        android:id="@+id/layoutEmptyState"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:visibility="gone">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp"
+        android:background="#FFFFFF">
 
-        <ImageView
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:src="@drawable/ic_inbox"
-            android:alpha="0.3"
-            android:layout_marginBottom="20dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnWorkerProfile"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="No Jobs Available"
+            android:layout_weight="1"
+            android:text="Worker Account"
             android:textColor="#1E293B"
-            android:textSize="18sp"
+            android:textSize="14sp"
             android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+            android:gravity="start|center_vertical"
+            app:icon="@drawable/ic_nav_account"
+            app:iconTint="#2563EB"
+            style="@style/Widget.MaterialComponents.Button.TextButton" />
 
-        <TextView
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Check back later for new job posts."
-            android:textColor="#94A3B8"
-            android:textSize="13sp"
-            android:gravity="center" />
+            android:orientation="vertical"
+            android:gravity="end">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Go Online"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="#64748B" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchLocation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:thumbTint="#2563EB"
+                app:trackTint="#CBD5E1" />
+        </LinearLayout>
 
     </LinearLayout>
 
-    <!-- ===== RECYCLER ===== -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/workerFeedRecycler"
+    <!-- ===== TABS ===== -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        app:tabIndicatorColor="#2563EB"
+        app:tabSelectedTextColor="#2563EB"
+        app:tabTextColor="#64748B">
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="List Feed" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Map View" />
+
+    </com.google.android.material.tabs.TabLayout>
+
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clipToPadding="false"
-        android:paddingTop="8dp"
-        android:paddingBottom="16dp"
-        android:layoutAnimation="@anim/layout_animation_fall_down" />
+        android:layout_weight="1">
 
+        <!-- ===== LIST CONTAINER ===== -->
+        <LinearLayout
+            android:id="@+id/layoutListContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <!-- ===== EMPTY STATE ===== -->
+            <LinearLayout
+                android:id="@+id/layoutEmptyState"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:src="@drawable/ic_inbox"
+                    android:alpha="0.3"
+                    android:layout_marginBottom="20dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No Jobs Available"
+                    android:textColor="#1E293B"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Check back later for new job posts."
+                    android:textColor="#94A3B8"
+                    android:textSize="13sp"
+                    android:gravity="center" />
+
+            </LinearLayout>
+
+            <!-- ===== RECYCLER ===== -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/workerFeedRecycler"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingTop="8dp"
+                android:paddingBottom="16dp"
+                android:layoutAnimation="@anim/layout_animation_fall_down" />
+        </LinearLayout>
+
+        <!-- ===== MAP CONTAINER ===== -->
+        <FrameLayout
+            android:id="@+id/layoutMapContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_map_border"
+            android:padding="2dp"
+            android:visibility="gone">
+
+            <org.maplibre.android.maps.MapView
+                android:id="@+id/mapView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <!-- Custom Zoom Controls -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="16dp">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/fabZoomIn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:src="@drawable/ic_plus"
+                    app:fabSize="mini"
+                    app:backgroundTint="#FFFFFF"
+                    app:tint="#2563EB"
+                    android:contentDescription="Zoom In" />
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/fabZoomOut"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_minus"
+                    app:fabSize="mini"
+                    app:backgroundTint="#FFFFFF"
+                    app:tint="#2563EB"
+                    android:contentDescription="Zoom Out" />
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+    </FrameLayout>
 </LinearLayout>

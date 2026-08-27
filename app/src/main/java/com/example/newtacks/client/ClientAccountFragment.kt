@@ -128,7 +128,7 @@ class ClientAccountFragment : Fragment() {
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.window?.setLayout(
             (resources.displayMetrics.widthPixels * 0.88).toInt(),
-            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            ViewGroup.LayoutParams.WRAP_CONTENT
         )
 
         dialog.findViewById<ImageView>(R.id.dialogIcon).setImageResource(R.drawable.ic_nav_account)

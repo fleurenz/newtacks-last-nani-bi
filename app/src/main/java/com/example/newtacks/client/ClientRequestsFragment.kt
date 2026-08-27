@@ -352,7 +352,7 @@ class ClientRequestsFragment : Fragment() {
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.window?.setLayout(
             (resources.displayMetrics.widthPixels * 0.88).toInt(),
-            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            ViewGroup.LayoutParams.WRAP_CONTENT
         )
 
         val icon = dialog.findViewById<ImageView>(R.id.dialogIcon)

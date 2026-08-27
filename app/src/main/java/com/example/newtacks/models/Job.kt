@@ -38,6 +38,10 @@ data class Job(
     // IMAGES
     val jobImages: List<String> = emptyList(),
 
+    // LOCATION
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
+
     // TIMESTAMPS
     val createdAt: Long = System.currentTimeMillis(),
     val acceptedAt: Long? = null,

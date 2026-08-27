@@ -29,6 +29,52 @@ class WorkerDashboardActivity : AppCompatActivity() {
 
     private var activeFragment: Fragment = fragmentFeed
 
+    private fun setupDraggableChatHead() {
+        val fab = findViewById<FloatingActionButton>(R.id.fabChat)
+        var dX = 0f
+        var dY = 0f
+        var lastAction = 0
+
+        fab.setOnTouchListener { view, event ->
+            when (event.actionMasked) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    dX = view.x - event.rawX
+                    dY = view.y - event.rawY
+                    lastAction = android.view.MotionEvent.ACTION_DOWN
+                    view.animate().scaleX(1.1f).scaleY(1.1f).alpha(1.0f).setDuration(100).start()
+                }
+                android.view.MotionEvent.ACTION_MOVE -> {
+                    view.y = event.rawY + dY
+                    view.x = event.rawX + dX
+                    lastAction = android.view.MotionEvent.ACTION_MOVE
+                }
+                android.view.MotionEvent.ACTION_UP -> {
+                    if (lastAction == android.view.MotionEvent.ACTION_DOWN) {
+                        view.performClick()
+                    } else {
+                        // Snap to edges
+                        val screenWidth = resources.displayMetrics.widthPixels
+                        val finalX = if (view.x + view.width / 2 < screenWidth / 2) {
+                            16f // Snap to left
+                        } else {
+                            (screenWidth - view.width - 16).toFloat() // Snap to right
+                        }
+                        
+                        view.animate()
+                            .x(finalX)
+                            .scaleX(0.8f) // Shrink effect
+                            .scaleY(0.8f)
+                            .alpha(0.6f)  // Transparent effect
+                            .setDuration(300)
+                            .start()
+                    }
+                }
+                else -> return@setOnTouchListener false
+            }
+            true
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -83,6 +129,8 @@ class WorkerDashboardActivity : AppCompatActivity() {
             intent.putExtra("USER_ROLE", "worker")
             startActivity(intent)
         }
+
+        setupDraggableChatHead()
 
         bottomNav.setOnItemSelectedListener { item ->
             val target = when (item.itemId) {

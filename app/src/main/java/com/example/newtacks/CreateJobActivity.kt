@@ -31,6 +31,7 @@ class CreateJobActivity : AppCompatActivity() {
     private lateinit var etJobTitle: EditText
     private lateinit var etClientName: EditText
     private lateinit var etClientAddress: EditText
+    private lateinit var btnPickLocation: com.google.android.material.button.MaterialButton
 
     private lateinit var spinnerServiceType: Spinner
     private lateinit var btnSelectDate: Button
@@ -47,6 +48,8 @@ class CreateJobActivity : AppCompatActivity() {
 
     private var selectedDate = ""
     private var selectedTime = ""
+    private var selectedLat: Double = 0.0
+    private var selectedLng: Double = 0.0
 
     private var isUserEditingTitle = false
 
@@ -59,6 +62,16 @@ class CreateJobActivity : AppCompatActivity() {
                     selectedImages.add(uri)
                     addImagePreview(uri)
                 }
+            }
+        }
+
+    private val pickLocation =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                selectedLat = result.data?.getDoubleExtra("lat", 0.0) ?: 0.0
+                selectedLng = result.data?.getDoubleExtra("lng", 0.0) ?: 0.0
+                btnPickLocation.text = "Location Selected ✓"
+                btnPickLocation.setTextColor(android.graphics.Color.parseColor("#10B981"))
             }
         }
 
@@ -159,6 +172,13 @@ class CreateJobActivity : AppCompatActivity() {
 
         btnCancel = findViewById(R.id.btnCancel)
         btnSubmit = findViewById(R.id.btnSubmit)
+
+        btnPickLocation = findViewById(R.id.btnPickLocation)
+
+        btnPickLocation.setOnClickListener {
+            val intent = Intent(this, LocationPickerActivity::class.java)
+            pickLocation.launch(intent)
+        }
 
         btnAddPhoto = findViewById(R.id.btnAddPhoto)
         layoutImages = findViewById(R.id.layoutImages)
@@ -346,9 +366,11 @@ class CreateJobActivity : AppCompatActivity() {
             selectedTime.isEmpty() ||
             durationInput.isEmpty() ||
             offerInput.isEmpty() ||
-            description.isEmpty()
+            description.isEmpty() ||
+            selectedLat == 0.0 ||
+            selectedLng == 0.0
         ) {
-            Toast.makeText(this, "Please complete all fields", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Please pick a location on the map", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -466,7 +488,9 @@ class CreateJobActivity : AppCompatActivity() {
             offeredAmount = offeredAmount,
             description = description,
             status = "AVAILABLE",
-            jobImages = jobImages
+            jobImages = jobImages,
+            latitude = selectedLat,
+            longitude = selectedLng
         )
 
         firestore.collection("jobs")

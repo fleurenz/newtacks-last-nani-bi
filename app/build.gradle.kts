@@ -5,11 +5,7 @@ plugins {
 
 android {
     namespace = "com.example.newtacks"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.newtacks"
@@ -32,6 +28,12 @@ android {
     }
     buildFeatures {
         viewBinding = true
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 
     compileOptions {
@@ -57,6 +59,9 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.play.services.location)
+    implementation(libs.maplibre.android)
+    implementation(libs.nanohttpd)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

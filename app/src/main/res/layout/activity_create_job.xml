@@ -108,13 +108,29 @@
                     android:hint="@string/address"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     app:boxStrokeColor="#004A99"
-                    app:hintTextColor="#004A99">
+                    app:hintTextColor="#004A99"
+                    android:layout_marginBottom="12dp">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etClientAddress"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textColor="#1E293B" />
                 </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPickLocation"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:text="Pin Location on Map"
+                    android:textColor="#004A99"
+                    android:textSize="13sp"
+                    app:backgroundTint="#FFFFFF"
+                    app:strokeColor="#CBD5E1"
+                    app:strokeWidth="1dp"
+                    app:cornerRadius="8dp"
+                    app:icon="@drawable/ic_location"
+                    app:iconTint="#004A99"
+                    app:iconGravity="textStart" />
 
             </LinearLayout>
 
