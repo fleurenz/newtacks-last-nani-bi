@@ -20,6 +20,10 @@ import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
 import com.example.newtacks.chatbot.presentation.ui.ChatActivity
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import android.location.Geocoder
 import java.util.Locale
 import java.util.*
 
@@ -32,6 +36,9 @@ class CreateJobActivity : AppCompatActivity() {
     private lateinit var etClientName: EditText
     private lateinit var etClientAddress: EditText
     private lateinit var btnPickLocation: com.google.android.material.button.MaterialButton
+    private lateinit var switchRealTimeLocation: com.google.android.material.switchmaterial.SwitchMaterial
+
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private lateinit var spinnerServiceType: Spinner
     private lateinit var btnSelectDate: Button
@@ -50,6 +57,10 @@ class CreateJobActivity : AppCompatActivity() {
     private var selectedTime = ""
     private var selectedLat: Double = 0.0
     private var selectedLng: Double = 0.0
+
+    private var profileAddress = ""
+    private var profileLat = 0.0
+    private var profileLng = 0.0
 
     private var isUserEditingTitle = false
 
@@ -79,6 +90,7 @@ class CreateJobActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_create_job)
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
 
@@ -160,6 +172,15 @@ class CreateJobActivity : AppCompatActivity() {
         etJobTitle = findViewById(R.id.etJobTitle)
         etClientName = findViewById(R.id.etClientName)
         etClientAddress = findViewById(R.id.etClientAddress)
+        switchRealTimeLocation = findViewById(R.id.switchRealTimeLocation)
+
+        switchRealTimeLocation.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                detectRealTimeLocation()
+            } else {
+                restoreProfileLocation()
+            }
+        }
 
         spinnerServiceType = findViewById(R.id.spinnerServiceType)
 
@@ -228,6 +249,13 @@ class CreateJobActivity : AppCompatActivity() {
                 if (user != null) {
                     etClientName.setText(user.name)
                     etClientAddress.setText(user.address)
+                    
+                    profileAddress = user.address
+                    profileLat = user.latitude ?: 0.0
+                    profileLng = user.longitude ?: 0.0
+                    
+                    selectedLat = profileLat
+                    selectedLng = profileLng
 
                     etClientName.isEnabled = false
                     etClientAddress.isEnabled = false
@@ -324,6 +352,50 @@ class CreateJobActivity : AppCompatActivity() {
         }
     }
 
+    private fun detectRealTimeLocation() {
+        if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) 
+            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+            return
+        }
+
+        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    selectedLat = location.latitude
+                    selectedLng = location.longitude
+                    reverseGeocode(location.latitude, location.longitude)
+                } else {
+                    Toast.makeText(this, "Could not get location", Toast.LENGTH_SHORT).show()
+                    switchRealTimeLocation.isChecked = false
+                }
+            }
+    }
+
+    private fun reverseGeocode(lat: Double, lng: Double) {
+        try {
+            val geocoder = Geocoder(this, Locale.getDefault())
+            val addresses = geocoder.getFromLocation(lat, lng, 1)
+            if (addresses != null && addresses.isNotEmpty()) {
+                etClientAddress.setText(addresses[0].getAddressLine(0))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun restoreProfileLocation() {
+        etClientAddress.setText(profileAddress)
+        selectedLat = profileLat
+        selectedLng = profileLng
+    }
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) detectRealTimeLocation()
+            else switchRealTimeLocation.isChecked = false
+        }
+    
     private fun addImagePreview(uri: Uri) {
         val imageView = ImageView(this)
         val params = LinearLayout.LayoutParams(250, 250)

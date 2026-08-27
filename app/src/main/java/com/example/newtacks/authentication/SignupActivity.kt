@@ -18,13 +18,22 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.newtacks.R
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import android.location.Geocoder
+import java.util.Locale
 
 class SignupActivity : AppCompatActivity() {
 
     private lateinit var viewModel: SignupViewModel
     private var selectedRole: String = "CLIENT"
+
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var detectedLat: Double? = null
+    private var detectedLng: Double? = null
 
     // IMAGE URI
     private var imageUri: Uri? = null
@@ -48,6 +57,7 @@ class SignupActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_signup)
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         selectedRole = intent.getStringExtra("ROLE") ?: "CLIENT"
 
         val topSection = findViewById<LinearLayout>(R.id.topSection)
@@ -97,6 +107,7 @@ class SignupActivity : AppCompatActivity() {
         )[SignupViewModel::class.java]
 
         setupUIByRole()
+        setupLocationDetection()
 
         val email = findViewById<EditText>(R.id.etEmail)
         val password = findViewById<EditText>(R.id.etPassword)
@@ -166,6 +177,8 @@ class SignupActivity : AppCompatActivity() {
                 name = name,
                 phone = phone,
                 address = address,
+                latitude = detectedLat,
+                longitude = detectedLng,
                 companyName = companyName,
                 hrName = hrName,
                 categories = categories,
@@ -230,6 +243,65 @@ class SignupActivity : AppCompatActivity() {
 
         dialog.show()
     }
+
+    private fun setupLocationDetection() {
+        val btnDetectClient  = findViewById<ImageButton>(R.id.btnDetectClientLocation)
+        val btnDetectWorker  = findViewById<ImageButton>(R.id.btnDetectWorkerLocation)
+        val btnDetectCompany = findViewById<ImageButton>(R.id.btnDetectCompanyLocation)
+
+        val listener = View.OnClickListener {
+            detectLocation()
+        }
+
+        btnDetectClient.setOnClickListener(listener)
+        btnDetectWorker.setOnClickListener(listener)
+        btnDetectCompany.setOnClickListener(listener)
+    }
+
+    private fun detectLocation() {
+        if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) 
+            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+            return
+        }
+
+        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    detectedLat = location.latitude
+                    detectedLng = location.longitude
+                    reverseGeocode(location.latitude, location.longitude)
+                } else {
+                    Toast.makeText(this, "Could not get location. Is GPS on?", Toast.LENGTH_SHORT).show()
+                }
+            }
+    }
+
+    private fun reverseGeocode(lat: Double, lng: Double) {
+        try {
+            val geocoder = Geocoder(this, Locale.getDefault())
+            val addresses = geocoder.getFromLocation(lat, lng, 1)
+            if (addresses != null && addresses.isNotEmpty()) {
+                val address = addresses[0].getAddressLine(0)
+                
+                // Update based on role
+                when (selectedRole) {
+                    "CLIENT" -> findViewById<EditText>(R.id.etClientAddress).setText(address)
+                    "WORKER" -> findViewById<EditText>(R.id.etWorkerAddress).setText(address)
+                    "COMPANY" -> findViewById<EditText>(R.id.etCompanyAddress).setText(address)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "Reverse geocoding failed", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) detectLocation()
+            else Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
+        }
 
     private fun setupUIByRole() {
 

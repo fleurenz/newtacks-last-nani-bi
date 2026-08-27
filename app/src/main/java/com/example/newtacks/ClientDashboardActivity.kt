@@ -20,6 +20,59 @@ class ClientDashboardActivity : AppCompatActivity() {
 
     private var backPressedTime: Long = 0
 
+    private fun setupDraggableChatHead() {
+        val fab = findViewById<FloatingActionButton>(R.id.fabChat)
+        var dX = 0f
+        var dY = 0f
+
+        var startX = 0f
+        var startY = 0f
+        val clickThreshold = 10 // pixels
+
+        fab.setOnTouchListener { view, event ->
+            when (event.actionMasked) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    dX = view.x - event.rawX
+                    dY = view.y - event.rawY
+                    startX = event.rawX
+                    startY = event.rawY
+                    view.animate().scaleX(1.1f).scaleY(1.1f).alpha(1.0f).setDuration(100).start()
+                }
+                android.view.MotionEvent.ACTION_MOVE -> {
+                    view.y = event.rawY + dY
+                    view.x = event.rawX + dX
+                }
+                android.view.MotionEvent.ACTION_UP -> {
+                    val endX = event.rawX
+                    val endY = event.rawY
+                    val distance = Math.sqrt(Math.pow((endX - startX).toDouble(), 2.0) + Math.pow((endY - startY).toDouble(), 2.0))
+
+                    if (distance < clickThreshold) {
+                        view.performClick()
+                    } else {
+                        // Snap to edges
+                        val screenWidth = resources.displayMetrics.widthPixels
+                        val finalX = if (view.x + view.width / 2 < screenWidth / 2) {
+                            16f // Snap to left
+                        } else {
+                            (screenWidth - view.width - 16).toFloat() // Snap to right
+                        }
+
+                        view.animate()
+                            .x(finalX)
+                            .scaleX(0.8f) // Shrink effect
+                            .scaleY(0.8f)
+                            .alpha(0.6f)  // Transparent effect
+                            .setDuration(300)
+                            .start()
+                    }
+                }
+                else -> return@setOnTouchListener false
+            }
+            true
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -59,6 +112,8 @@ class ClientDashboardActivity : AppCompatActivity() {
             intent.putExtra("USER_ROLE", "client")
             startActivity(intent)
         }
+
+        setupDraggableChatHead()
 
         bottomNav.setOnItemSelectedListener {
             when (it.itemId) {

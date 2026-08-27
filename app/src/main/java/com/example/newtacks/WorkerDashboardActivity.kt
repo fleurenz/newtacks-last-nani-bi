@@ -33,23 +33,30 @@ class WorkerDashboardActivity : AppCompatActivity() {
         val fab = findViewById<FloatingActionButton>(R.id.fabChat)
         var dX = 0f
         var dY = 0f
-        var lastAction = 0
+        
+        var startX = 0f
+        var startY = 0f
+        val clickThreshold = 10 // pixels
 
         fab.setOnTouchListener { view, event ->
             when (event.actionMasked) {
                 android.view.MotionEvent.ACTION_DOWN -> {
                     dX = view.x - event.rawX
                     dY = view.y - event.rawY
-                    lastAction = android.view.MotionEvent.ACTION_DOWN
+                    startX = event.rawX
+                    startY = event.rawY
                     view.animate().scaleX(1.1f).scaleY(1.1f).alpha(1.0f).setDuration(100).start()
                 }
                 android.view.MotionEvent.ACTION_MOVE -> {
                     view.y = event.rawY + dY
                     view.x = event.rawX + dX
-                    lastAction = android.view.MotionEvent.ACTION_MOVE
                 }
                 android.view.MotionEvent.ACTION_UP -> {
-                    if (lastAction == android.view.MotionEvent.ACTION_DOWN) {
+                    val endX = event.rawX
+                    val endY = event.rawY
+                    val distance = Math.sqrt(Math.pow((endX - startX).toDouble(), 2.0) + Math.pow((endY - startY).toDouble(), 2.0))
+
+                    if (distance < clickThreshold) {
                         view.performClick()
                     } else {
                         // Snap to edges
