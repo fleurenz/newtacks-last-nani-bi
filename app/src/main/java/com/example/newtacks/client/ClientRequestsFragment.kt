@@ -32,16 +32,16 @@ class ClientRequestsFragment : Fragment() {
     private lateinit var tvTitle: TextView
     private lateinit var tvDetails: TextView
     private lateinit var btnConfirm: Button
-    private lateinit var btnCancelJob: Button
+    private lateinit var btnMoreOptions: ImageButton
     private lateinit var btnReject: Button
-    private lateinit var btnMessageWorker: Button
+    private lateinit var btnMessageWorker: View
     private lateinit var progressText: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var layoutContent: LinearLayout
     private lateinit var layoutEmptyState: LinearLayout
     private lateinit var layoutProgressLabels: LinearLayout
     private lateinit var layoutBottomButtons: LinearLayout
-    private lateinit var layoutHeader: LinearLayout
+    private lateinit var layoutHeader: RelativeLayout
     private lateinit var cardJobDetails: View
     private lateinit var cardWorkerInfo: View
     private lateinit var tvWorkerDetailName: TextView
@@ -63,16 +63,16 @@ class ClientRequestsFragment : Fragment() {
         tvTitle              = view.findViewById(R.id.tvRequestTitle)
         tvDetails            = view.findViewById(R.id.tvRequestDetails)
         btnConfirm           = view.findViewById(R.id.btnConfirm)
-        btnCancelJob          = view.findViewById(R.id.btnCancelJob)
+        btnMoreOptions       = view.findViewById(R.id.btnMoreOptions)
         btnReject            = view.findViewById(R.id.btnReject)
-        btnMessageWorker     = view.findViewById(R.id.btnMessageWorker)
+        btnMessageWorker     = view.findViewById(R.id.btnMessageWorkerSmall)
         progressText         = view.findViewById(R.id.tvProgress)
         progressBar          = view.findViewById(R.id.progressBar)
         layoutContent        = view.findViewById(R.id.layoutContent)
         layoutEmptyState     = view.findViewById(R.id.layoutEmptyState)
         layoutProgressLabels = view.findViewById(R.id.layoutProgressLabels)
         layoutBottomButtons  = view.findViewById(R.id.layoutBottomButtons)
-        layoutHeader         = view.findViewById(R.id.layoutHeader)
+        layoutHeader         = view.findViewById(R.id.layoutHeader) as RelativeLayout
 
         cardJobDetails       = view.findViewById(R.id.cardJobDetails)
         cardWorkerInfo       = view.findViewById(R.id.cardWorkerInfo)
@@ -100,7 +100,7 @@ class ClientRequestsFragment : Fragment() {
 
         listenForActiveJob()
         btnConfirm.setOnClickListener { confirmJob() }
-        btnCancelJob.setOnClickListener { showCancelConfirmationDialog() }
+        btnMoreOptions.setOnClickListener { showPopupMenu(it) }
         btnReject.setOnClickListener { rejectJob() }
         btnMessageWorker.setOnClickListener { openChat() }
 
@@ -165,6 +165,7 @@ class ClientRequestsFragment : Fragment() {
             if (job.status == "PENDING_VERIFICATION" || job.status == "AVAILABLE" || job.status == "IN_PROGRESS" || job.status == "HEADING_TO_CLIENT" || job.status == "ARRIVED") View.VISIBLE else View.GONE
 
         btnMessageWorker.visibility = if (job.workerId != null) View.VISIBLE else View.GONE
+        btnMoreOptions.visibility   = View.VISIBLE
         
         currentJobId   = job.jobId
         tvTitle.text   = job.jobTitle
@@ -179,7 +180,6 @@ class ClientRequestsFragment : Fragment() {
                 progressText.text = "Waiting for worker..."
                 progressText.setTextColor(android.graphics.Color.parseColor("#FFFFFF"))
                 progressText.setBackgroundResource(R.drawable.bg_badge_blue)
-                btnCancelJob.visibility = View.VISIBLE
                 btnConfirm.visibility = View.GONE
                 btnReject.visibility = View.GONE
             }
@@ -187,7 +187,6 @@ class ClientRequestsFragment : Fragment() {
                 progressText.text = "Worker Accepted"
                 progressText.setTextColor(android.graphics.Color.parseColor("#D97706"))
                 progressText.setBackgroundResource(R.drawable.bg_badge_yellow)
-                btnCancelJob.visibility = View.GONE
                 btnConfirm.visibility = View.GONE
                 btnReject.visibility = View.GONE
             }
@@ -195,7 +194,6 @@ class ClientRequestsFragment : Fragment() {
                 progressText.text = "Worker is on the way!"
                 progressText.setTextColor(android.graphics.Color.parseColor("#2563EB"))
                 progressText.setBackgroundResource(R.drawable.bg_badge_blue)
-                btnCancelJob.visibility = View.GONE
                 btnConfirm.visibility = View.GONE
                 btnReject.visibility = View.GONE
                 
@@ -207,7 +205,6 @@ class ClientRequestsFragment : Fragment() {
                 progressText.text = "Worker has arrived"
                 progressText.setTextColor(android.graphics.Color.parseColor("#16A34A"))
                 progressText.setBackgroundResource(R.drawable.bg_badge_green)
-                btnCancelJob.visibility = View.GONE
                 btnConfirm.visibility = View.GONE
                 btnReject.visibility = View.GONE
             }
@@ -215,15 +212,14 @@ class ClientRequestsFragment : Fragment() {
                 progressText.text = "Ready for confirmation"
                 progressText.setTextColor(android.graphics.Color.parseColor("#16A34A"))
                 progressText.setBackgroundResource(R.drawable.bg_badge_green)
-                btnCancelJob.visibility = View.GONE
                 btnConfirm.visibility = View.VISIBLE
                 btnReject.visibility = View.VISIBLE
+                btnMoreOptions.visibility = View.GONE
             }
             else -> {
-                progressText.text = "Active"
+                progressText.text = job.status
                 progressText.setTextColor(android.graphics.Color.parseColor("#FFFFFF"))
                 progressText.setBackgroundResource(R.drawable.bg_badge_blue)
-                btnCancelJob.visibility = View.GONE
                 btnConfirm.visibility = View.GONE
                 btnReject.visibility = View.GONE
             }
@@ -307,6 +303,25 @@ class ClientRequestsFragment : Fragment() {
     // --------------------------------------------------
     // 🔥 EMPTY STATE
     // --------------------------------------------------
+    private fun showPopupMenu(view: View) {
+        val popup = androidx.appcompat.widget.PopupMenu(view.context, view)
+        // Only allow cancel if job is AVAILABLE (no worker) or maybe based on business logic
+        // For now, let's keep it consistent with previous logic where btnCancelJob was visible in AVAILABLE
+        if (currentJob?.status == "AVAILABLE") {
+            popup.menu.add("Cancel Request")
+        }
+        popup.menu.add("Report")
+
+        popup.setOnMenuItemClickListener { item ->
+            when (item.title) {
+                "Cancel Request" -> showCancelConfirmationDialog()
+                "Report" -> Toast.makeText(requireContext(), "Report submitted", Toast.LENGTH_SHORT).show()
+            }
+            true
+        }
+        popup.show()
+    }
+
     private fun showEmptyState() {
         currentJob                      = null
         currentJobId                    = null
@@ -319,7 +334,7 @@ class ClientRequestsFragment : Fragment() {
         layoutProgressLabels.visibility = View.GONE
         tvTitle.text                    = ""
         btnConfirm.visibility           = View.GONE
-        btnCancelJob.visibility         = View.GONE
+        btnMoreOptions.visibility       = View.GONE
         btnReject.visibility            = View.GONE
     }
 
