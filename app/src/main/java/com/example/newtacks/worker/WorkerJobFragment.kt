@@ -3,6 +3,7 @@ package com.example.newtacks.worker
 import android.os.Bundle
 import android.view.*
 import android.widget.*
+import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -31,12 +32,12 @@ class WorkerJobFragment : Fragment() {
     private lateinit var btnDone: Button
     private lateinit var btnStartHeading: Button
     private lateinit var btnArrived: Button
-    private lateinit var btnMessageClient: Button
-    private lateinit var btnCancelJob: Button
+    private lateinit var btnMessageClient: View
+    private lateinit var btnMoreOptions: ImageButton
     private lateinit var layoutContent: LinearLayout
     private lateinit var layoutEmptyState: LinearLayout
     private lateinit var layoutBottomButtons: LinearLayout
-    private lateinit var layoutHeader: LinearLayout
+    private lateinit var layoutHeader: RelativeLayout
     private lateinit var cardJobDetails: View
     private lateinit var cardClientInfo: View
     private lateinit var tvClientDetailName: TextView
@@ -59,12 +60,12 @@ class WorkerJobFragment : Fragment() {
         btnDone             = view.findViewById(R.id.btnRequestDone)
         btnStartHeading     = view.findViewById(R.id.btnStartHeading)
         btnArrived          = view.findViewById(R.id.btnArrived)
-        btnMessageClient    = view.findViewById(R.id.btnMessageClient)
-        btnCancelJob        = view.findViewById(R.id.btnCancelActiveJob)
+        btnMessageClient    = view.findViewById(R.id.btnMessageClientSmall)
+        btnMoreOptions      = view.findViewById(R.id.btnMoreOptions)
         layoutContent       = view.findViewById(R.id.layoutContent)
         layoutEmptyState    = view.findViewById(R.id.layoutEmptyState)
         layoutBottomButtons = view.findViewById(R.id.layoutBottomButtons)
-        layoutHeader        = view.findViewById(R.id.layoutHeader)
+        layoutHeader        = view.findViewById(R.id.layoutHeader) as RelativeLayout
 
         cardJobDetails      = view.findViewById(R.id.cardJobDetails)
         cardClientInfo      = view.findViewById(R.id.cardClientInfo)
@@ -90,7 +91,7 @@ class WorkerJobFragment : Fragment() {
         btnStartHeading.setOnClickListener { updateJobStatus("HEADING_TO_CLIENT") }
         btnArrived.setOnClickListener { updateJobStatus("ARRIVED") }
         btnMessageClient.setOnClickListener { openChat() }
-        btnCancelJob.setOnClickListener { showCancelDialog() }
+        btnMoreOptions.setOnClickListener { showPopupMenu(it) }
 
         cardJobDetails.setOnClickListener {
             currentJob?.let { showJobDetailsDialog(it) }
@@ -151,7 +152,7 @@ class WorkerJobFragment : Fragment() {
         btnArrived.visibility      = View.GONE
         btnDone.visibility         = View.GONE
         btnMessageClient.visibility = View.VISIBLE
-        btnCancelJob.visibility    = View.VISIBLE // Can cancel anytime before verification
+        btnMoreOptions.visibility   = View.VISIBLE 
 
         when (job.status) {
             "IN_PROGRESS" -> {
@@ -179,7 +180,7 @@ class WorkerJobFragment : Fragment() {
                 tvStatus.text = "Waiting for client confirmation"
                 tvStatus.setTextColor(android.graphics.Color.parseColor("#16A34A"))
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_green)
-                btnCancelJob.visibility = View.GONE
+                btnMoreOptions.visibility = View.GONE
             }
             else -> {
                 tvStatus.text = job.status
@@ -187,6 +188,21 @@ class WorkerJobFragment : Fragment() {
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_blue)
             }
         }
+    }
+
+    private fun showPopupMenu(view: View) {
+        val popup = PopupMenu(view.context, view)
+        popup.menu.add("Cancel Job")
+        popup.menu.add("Report")
+        
+        popup.setOnMenuItemClickListener { item ->
+            when (item.title) {
+                "Cancel Job" -> showCancelDialog()
+                "Report"     -> Toast.makeText(requireContext(), "Non-Functionalxxxx", Toast.LENGTH_SHORT).show()
+            }
+            true
+        }
+        popup.show()
     }
 
     private fun showLiveDistance(jobLat: Double, jobLng: Double) {
@@ -291,6 +307,7 @@ class WorkerJobFragment : Fragment() {
         tvStatus.visibility            = View.GONE
         tvStatus.background            = null
         btnDone.visibility             = View.GONE
+        btnMoreOptions.visibility      = View.GONE
     }
 
     // --------------------------------------------------
