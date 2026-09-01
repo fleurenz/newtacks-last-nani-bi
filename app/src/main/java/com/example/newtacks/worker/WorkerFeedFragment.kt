@@ -27,6 +27,9 @@ import com.google.firebase.firestore.ListenerRegistration
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.location.LocationComponentActivationOptions
+import org.maplibre.android.location.modes.CameraMode
+import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 
@@ -35,6 +38,7 @@ class WorkerFeedFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: WorkerJobAdapter
     private lateinit var fabToggleList: FloatingActionButton
+    private lateinit var fabMyLocation: FloatingActionButton
     private lateinit var cardListOverlay: View
     private lateinit var mapView: MapView
     private var mapLibreMap: MapLibreMap? = null
@@ -59,6 +63,7 @@ class WorkerFeedFragment : Fragment() {
 
         recyclerView        = view.findViewById(R.id.workerFeedRecycler)
         fabToggleList       = view.findViewById(R.id.fabToggleList)
+        fabMyLocation       = view.findViewById(R.id.fabMyLocation)
         cardListOverlay     = view.findViewById(R.id.cardListOverlay)
         mapView             = view.findViewById(R.id.mapView)
 
@@ -79,6 +84,21 @@ class WorkerFeedFragment : Fragment() {
 
         fabToggleList.setOnClickListener {
             cardListOverlay.visibility = if (cardListOverlay.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+        }
+
+        fabMyLocation.setOnClickListener {
+            mapLibreMap?.let { map ->
+                if (map.locationComponent.isLocationComponentActivated) {
+                    val lastLoc = map.locationComponent.lastKnownLocation
+                    if (lastLoc != null) {
+                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lastLoc.latitude, lastLoc.longitude), 15.0))
+                    } else {
+                        Toast.makeText(requireContext(), "Getting location...", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    enableUserLocation(map)
+                }
+            }
         }
 
         // --------------------------------------------------
@@ -114,11 +134,43 @@ class WorkerFeedFragment : Fragment() {
         }
     }
 
+    private fun enableUserLocation(map: MapLibreMap, moveCamera: Boolean = false) {
+        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) 
+            == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            
+            val locationComponent = map.locationComponent
+            val activationOptions = LocationComponentActivationOptions.builder(requireContext(), map.style!!)
+                .build()
+            
+            locationComponent.activateLocationComponent(activationOptions)
+            locationComponent.isLocationComponentEnabled = true
+            locationComponent.cameraMode = CameraMode.NONE
+            locationComponent.renderMode = RenderMode.COMPASS
+
+            if (moveCamera) {
+                // Try to get last location to center the map immediately
+                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                    if (location != null) {
+                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 15.0))
+                    } else {
+                        // Fallback to Davao if GPS is off/null
+                        val davaoCityHall = LatLng(7.0648, 125.6079) 
+                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(davaoCityHall, 13.0))
+                    }
+                }
+            }
+        } else {
+            // Request permission if not granted
+            @Suppress("DEPRECATION")
+            requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1002)
+        }
+    }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         if (requestCode == 1002 && grantResults.isNotEmpty() && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(requireContext(), "Permission granted! Tap Accept again to confirm.", Toast.LENGTH_SHORT).show()
+            mapLibreMap?.let { enableUserLocation(it, moveCamera = true) }
         } else {
-            Toast.makeText(requireContext(), "Location permission is required to accept jobs", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Location permission is required to see your position", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -154,15 +206,11 @@ class WorkerFeedFragment : Fragment() {
             
             // 1. Load the local OSM style (powered by our localhost server)
             map.setStyle("asset://map_style.json") {
-                // 2. Initial camera position (Davao City)
-                // Using Davao City Hall coordinates as a solid reference point
-                val davaoCityHall = LatLng(7.0648, 125.6079) 
-                map.moveCamera(CameraUpdateFactory.newLatLngZoom(davaoCityHall, 13.0))
-                
                 // Set zoom boundaries to match typical OSM city files
                 map.setMinZoomPreference(2.0)
                 map.setMaxZoomPreference(18.0)
                 
+                enableUserLocation(map, moveCamera = true)
                 updateMapMarkers()
             }
 
