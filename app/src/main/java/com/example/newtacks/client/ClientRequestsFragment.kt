@@ -566,7 +566,7 @@ class ClientRequestsFragment : Fragment() {
         val jobId = currentJobId ?: return
         firestore.collection("jobs")
             .document(jobId)
-            .update("status", "IN_PROGRESS")
+            .update("status", "ARRIVED")
             .addOnSuccessListener {
                 Toast.makeText(requireContext(), "Returned to worker", Toast.LENGTH_SHORT).show()
             }
