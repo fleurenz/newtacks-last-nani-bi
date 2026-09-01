@@ -95,7 +95,7 @@
         android:id="@+id/btnAccept"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:text="View Details"
+        android:text="Find on Map"
         android:textColor="#FFFFFF"
         android:textSize="14sp"
         android:textStyle="bold"

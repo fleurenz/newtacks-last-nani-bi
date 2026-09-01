@@ -6,6 +6,7 @@ import android.widget.*
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -33,15 +34,11 @@ class WorkerFeedFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: WorkerJobAdapter
-    private lateinit var layoutHeader: LinearLayout
-    private lateinit var layoutEmptyState: LinearLayout
-    private lateinit var tabLayout: TabLayout
-    private lateinit var layoutListContainer: LinearLayout
-    private lateinit var layoutMapContainer: FrameLayout
+    private lateinit var fabToggleList: FloatingActionButton
+    private lateinit var cardListOverlay: View
     private lateinit var mapView: MapView
     private var mapLibreMap: MapLibreMap? = null
 
-    private lateinit var btnWorkerProfile: MaterialButton
     private lateinit var fabZoomIn: FloatingActionButton
     private lateinit var fabZoomOut: FloatingActionButton
 
@@ -61,37 +58,28 @@ class WorkerFeedFragment : Fragment() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
 
         recyclerView        = view.findViewById(R.id.workerFeedRecycler)
-        layoutHeader        = view.findViewById(R.id.layoutHeader)
-        layoutEmptyState    = view.findViewById(R.id.layoutEmptyState)
-        tabLayout           = view.findViewById(R.id.tabLayout)
-        layoutListContainer = view.findViewById(R.id.layoutListContainer)
-        layoutMapContainer  = view.findViewById(R.id.layoutMapContainer)
+        fabToggleList       = view.findViewById(R.id.fabToggleList)
+        cardListOverlay     = view.findViewById(R.id.cardListOverlay)
         mapView             = view.findViewById(R.id.mapView)
 
-        btnWorkerProfile    = view.findViewById(R.id.btnWorkerProfile)
         fabZoomIn           = view.findViewById(R.id.fabZoomIn)
         fabZoomOut          = view.findViewById(R.id.fabZoomOut)
 
         mapView.onCreate(savedInstanceState)
-        setupWorkerInfo()
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = WorkerJobAdapter(jobList) { job -> showJobPreview(job) }
+        adapter = WorkerJobAdapter(jobList) { job -> 
+            // When a job is clicked in the list:
+            // 1. Hide the list overlay
+            cardListOverlay.visibility = View.GONE
+            // 2. Animate camera to the job location
+            mapLibreMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(job.latitude, job.longitude), 15.0))
+        }
         recyclerView.adapter = adapter
 
-        // --------------------------------------------------
-        // ✅ TAB SWITCHING
-        // --------------------------------------------------
-        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab?) {
-                layoutListContainer.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE
-                layoutMapContainer.visibility  = if (tab?.position == 1) View.VISIBLE else View.GONE
-                
-                if (tab?.position == 1) initMap()
-            }
-            override fun onTabUnselected(tab: TabLayout.Tab?) {}
-            override fun onTabReselected(tab: TabLayout.Tab?) {}
-        })
+        fabToggleList.setOnClickListener {
+            cardListOverlay.visibility = if (cardListOverlay.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+        }
 
         // --------------------------------------------------
         // ✅ ZOOM CONTROLS
@@ -108,24 +96,21 @@ class WorkerFeedFragment : Fragment() {
         // --------------------------------------------------
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            layoutHeader.setPadding(
-                layoutHeader.paddingLeft,
-                systemBars.top + resources.getDimensionPixelSize(R.dimen.header_padding_top),
-                layoutHeader.paddingRight,
-                layoutHeader.paddingBottom
-            )
+            fabToggleList.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = systemBars.top + (resources.displayMetrics.density * 16).toInt()
+            }
             insets
         }
 
         listenForJobs()
+        initMap() // Always init map now
         return view
     }
 
     private fun setupWorkerInfo() {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        db.collection("users").document(uid).get().addOnSuccessListener { doc ->
-            val name = doc.getString("name") ?: "Worker Account"
-            btnWorkerProfile.text = name
+        db.collection("users").document(uid).get().addOnSuccessListener { 
+            // Update UI or logic here if needed
         }
     }
 
@@ -152,12 +137,6 @@ class WorkerFeedFragment : Fragment() {
                 }
                 adapter.notifyDataSetChanged()
                 updateMapMarkers()
-
-                // toggle empty state
-                layoutEmptyState.visibility =
-                    if (jobList.isEmpty()) View.VISIBLE else View.GONE
-                recyclerView.visibility =
-                    if (jobList.isEmpty()) View.GONE else View.VISIBLE
             }
     }
 
@@ -185,6 +164,21 @@ class WorkerFeedFragment : Fragment() {
                 map.setMaxZoomPreference(18.0)
                 
                 updateMapMarkers()
+            }
+
+            map.addOnMapClickListener {
+                // Optional: hide overlay if user taps map
+                cardListOverlay.visibility = View.GONE
+                false
+            }
+
+            map.setOnMarkerClickListener { marker ->
+                // Find job by coordinates or title (simplified for now: searching jobList)
+                val job = jobList.find { it.jobTitle == marker.title }
+                if (job != null) {
+                    showJobPreview(job)
+                }
+                true
             }
         }
     }

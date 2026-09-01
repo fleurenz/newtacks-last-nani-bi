@@ -1,207 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#F0F4F8">
 
-    <!-- ===== HEADER ===== -->
-    <LinearLayout
-        android:id="@+id/layoutHeader"
+    <!-- ===== MAP VIEW (FULL SCREEN) ===== -->
+    <org.maplibre.android.maps.MapView
+        android:id="@+id/mapView"
         android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- ===== LIST TOGGLE FAB ===== -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabToggleList"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_inbox"
+        app:backgroundTint="#FFFFFF"
+        app:tint="#004A99"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:contentDescription="Toggle Job List" />
+
+    <!-- ===== ZOOM CONTROLS ===== -->
+    <LinearLayout
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@drawable/bg_header_rounded"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp"
-        android:paddingTop="28dp"
-        android:paddingBottom="24dp">
+        android:layout_margin="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabZoomIn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="AVAILABLE JOBS"
-            android:textColor="#FFFFFF"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.15"
-            android:alpha="0.7"
-            android:layout_marginBottom="4dp" />
+            android:layout_marginBottom="8dp"
+            android:src="@drawable/ic_plus"
+            app:fabSize="mini"
+            app:backgroundTint="#FFFFFF"
+            app:tint="#2563EB"
+            android:contentDescription="Zoom In" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabZoomOut"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Job Feed"
-                android:textColor="#FFFFFF"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
-        </LinearLayout>
+            android:src="@drawable/ic_minus"
+            app:fabSize="mini"
+            app:backgroundTint="#FFFFFF"
+            app:tint="#2563EB"
+            android:contentDescription="Zoom Out" />
 
     </LinearLayout>
 
-    <!-- ===== WORKER INFO SECTION ===== -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="16dp"
-        android:background="#FFFFFF">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnWorkerProfile"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Worker Account"
-            android:textColor="#1E293B"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:gravity="start|center_vertical"
-            app:icon="@drawable/ic_nav_account"
-            app:iconTint="#2563EB"
-            style="@style/Widget.MaterialComponents.Button.TextButton" />
-
-    </LinearLayout>
-
-    <!-- ===== TABS ===== -->
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#FFFFFF"
-        app:tabIndicatorColor="#F59E0B"
-        app:tabSelectedTextColor="#F59E0B"
-        app:tabTextColor="#64748B">
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="List Feed" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Map View" />
-
-    </com.google.android.material.tabs.TabLayout>
-
-    <FrameLayout
+    <!-- ===== LIST OVERLAY CARD ===== -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardListOverlay"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_margin="16dp"
+        android:visibility="gone"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/fabToggleList">
 
-        <!-- ===== LIST CONTAINER ===== -->
         <LinearLayout
-            android:id="@+id/layoutListContainer"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <!-- ===== EMPTY STATE ===== -->
-            <LinearLayout
-                android:id="@+id/layoutEmptyState"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="Available Jobs"
+                android:textColor="#004A99"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <View
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:visibility="gone">
+                android:layout_height="1dp"
+                android:background="#F1F5F9" />
 
-                <ImageView
-                    android:layout_width="72dp"
-                    android:layout_height="72dp"
-                    android:src="@drawable/ic_inbox"
-                    android:alpha="0.3"
-                    android:layout_marginBottom="20dp"
-                    android:contentDescription="No Jobs" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="No Jobs Available"
-                    android:textColor="#1E293B"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Check back later for new job posts."
-                    android:textColor="#94A3B8"
-                    android:textSize="13sp"
-                    android:gravity="center" />
-
-            </LinearLayout>
-
-            <!-- ===== RECYCLER ===== -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/workerFeedRecycler"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
-                android:paddingTop="8dp"
-                android:paddingBottom="16dp"
-                android:layoutAnimation="@anim/layout_animation_fall_down" />
+                android:paddingBottom="16dp" />
+
         </LinearLayout>
 
-        <!-- ===== MAP CONTAINER ===== -->
-        <FrameLayout
-            android:id="@+id/layoutMapContainer"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_margin="8dp"
-            android:background="@drawable/bg_map_border"
-            android:padding="2dp"
-            android:visibility="gone">
+    </com.google.android.material.card.MaterialCardView>
 
-            <org.maplibre.android.maps.MapView
-                android:id="@+id/mapView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-            <!-- Custom Zoom Controls -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_gravity="bottom|end"
-                android:layout_margin="16dp">
-
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/fabZoomIn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:src="@drawable/ic_plus"
-                    app:fabSize="mini"
-                    app:backgroundTint="#FFFFFF"
-                    app:tint="#2563EB"
-                    android:contentDescription="Zoom In" />
-
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/fabZoomOut"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/ic_minus"
-                    app:fabSize="mini"
-                    app:backgroundTint="#FFFFFF"
-                    app:tint="#2563EB"
-                    android:contentDescription="Zoom Out" />
-
-            </LinearLayout>
-
-        </FrameLayout>
-
-    </FrameLayout>
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
