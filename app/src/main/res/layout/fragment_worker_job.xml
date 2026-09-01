@@ -20,17 +20,6 @@
         android:paddingBottom="28dp">
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ACTIVE JOB"
-            android:textColor="#FFFFFF"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.15"
-            android:alpha="0.7"
-            android:layout_marginBottom="6dp" />
-
-        <TextView
             android:id="@+id/tvJobTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

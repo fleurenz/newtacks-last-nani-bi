@@ -24,9 +24,11 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_margin="16dp"
-            android:src="@android:drawable/stat_notify_chat"
-            app:backgroundTint="?attr/colorPrimary"
-            app:tint="@android:color/white"
+            app:maxImageSize="40dp"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/chatbot_logo"
+            app:tint="@null"
+            app:backgroundTint="#FFFFFF"
             android:contentDescription="Chat with AI" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
