@@ -80,8 +80,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
-        app:tabIndicatorColor="#2563EB"
-        app:tabSelectedTextColor="#2563EB"
+        app:tabIndicatorColor="#F59E0B"
+        app:tabSelectedTextColor="#F59E0B"
         app:tabTextColor="#64748B">
 
         <com.google.android.material.tabs.TabItem
