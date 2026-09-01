@@ -106,6 +106,7 @@ class WorkerDashboardActivity : AppCompatActivity() {
         val startFragment = intent.getStringExtra(OPEN_FRAGMENT)
         activeFragment = when (startFragment) {
             "JOB"     -> fragmentJob
+            "HIRING"  -> fragmentHiring
             "HISTORY" -> fragmentHistory
             "ACCOUNT" -> fragmentAccount
             else      -> fragmentFeed
@@ -129,6 +130,7 @@ class WorkerDashboardActivity : AppCompatActivity() {
         // ✅ Sync bottom nav selected item to match start fragment
         bottomNav.selectedItemId = when (startFragment) {
             "JOB"     -> R.id.nav_job
+            "HIRING"  -> R.id.nav_hiring
             "HISTORY" -> R.id.nav_history
             "ACCOUNT" -> R.id.nav_account
             else      -> R.id.nav_feed
