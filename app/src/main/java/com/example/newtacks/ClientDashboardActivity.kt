@@ -21,6 +21,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 class ClientDashboardActivity : AppCompatActivity() {
 
     private var backPressedTime: Long = 0
+    private var jobHandshakeListener: com.google.firebase.firestore.ListenerRegistration? = null
+
+    fun switchTab(tabId: Int) {
+        val bottomNav = findViewById<BottomNavigationView>(R.id.clientBottomNav)
+        bottomNav.selectedItemId = tabId
+    }
 
     private fun setupDraggableChatHead() {
         val fab = findViewById<FloatingActionButton>(R.id.fabChat)
@@ -140,6 +146,7 @@ class ClientDashboardActivity : AppCompatActivity() {
         }
 
         setupDraggableChatHead()
+        listenForJobHandshake()
 
         bottomNav.setOnItemSelectedListener {
             when (it.itemId) {
@@ -187,6 +194,33 @@ class ClientDashboardActivity : AppCompatActivity() {
             )
             .replace(R.id.clientFragmentContainer, fragment)
             .commit()
+    }
+
+    private fun listenForJobHandshake() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        
+        jobHandshakeListener = FirebaseFirestore.getInstance().collection("jobs")
+            .whereEqualTo("clientId", uid)
+            .addSnapshotListener { snapshots, _ ->
+                if (snapshots == null || snapshots.isEmpty) return@addSnapshotListener
+                
+                val hasNewHandshake = snapshots.documents.any { 
+                    it.getString("status") == "IN_PROGRESS" 
+                }
+
+                if (hasNewHandshake) {
+                    val bottomNav = findViewById<BottomNavigationView>(R.id.clientBottomNav)
+                    if (bottomNav.selectedItemId != R.id.nav_requests) {
+                        switchTab(R.id.nav_requests)
+                        Toast.makeText(this, "A worker has accepted your request!", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        jobHandshakeListener?.remove()
     }
 
     companion object {

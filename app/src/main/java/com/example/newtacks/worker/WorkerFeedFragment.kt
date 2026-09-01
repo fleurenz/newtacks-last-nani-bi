@@ -48,9 +48,11 @@ class WorkerFeedFragment : Fragment() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val db = FirebaseFirestore.getInstance()
-    private var listener: ListenerRegistration? = null
+    private var availableJobsListener: ListenerRegistration? = null
+    private var activeHandshakeListener: ListenerRegistration? = null
     
-    private val jobList = mutableListOf<Job>()
+    private val availableJobs = mutableListOf<Job>()
+    private val myActiveHandshakeJobs = mutableListOf<Job>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -73,7 +75,7 @@ class WorkerFeedFragment : Fragment() {
         mapView.onCreate(savedInstanceState)
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = WorkerJobAdapter(jobList) { job -> 
+        adapter = WorkerJobAdapter(availableJobs) { job -> 
             // When a job is clicked in the list:
             // 1. Hide the list overlay
             cardListOverlay.visibility = View.GONE
@@ -178,18 +180,39 @@ class WorkerFeedFragment : Fragment() {
     // LIVE JOB FEED
     // --------------------------------------------------
     private fun listenForJobs() {
-        listener = db.collection("jobs")
+        val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+        // 1. Listen for AVAILABLE jobs (for everyone)
+        availableJobsListener = db.collection("jobs")
             .whereEqualTo("status", "AVAILABLE")
             .addSnapshotListener { snapshots, _ ->
                 if (snapshots == null) return@addSnapshotListener
-                jobList.clear()
+                availableJobs.clear()
                 for (doc in snapshots) {
                     val job = doc.toObject(Job::class.java)
-                    jobList.add(job)
+                    availableJobs.add(job)
                 }
                 adapter.notifyDataSetChanged()
                 updateMapMarkers()
             }
+
+        // 2. Listen for MY active handshake jobs (until I arrive)
+        if (currentUid.isNotEmpty()) {
+            activeHandshakeListener = db.collection("jobs")
+                .whereEqualTo("workerId", currentUid)
+                .addSnapshotListener { snapshots, _ ->
+                    if (snapshots == null) return@addSnapshotListener
+                    myActiveHandshakeJobs.clear()
+                    val handshakeStatuses = listOf("IN_PROGRESS", "HEADING_TO_CLIENT")
+                    for (doc in snapshots) {
+                        val job = doc.toObject(Job::class.java)
+                        if (job.status in handshakeStatuses) {
+                            myActiveHandshakeJobs.add(job)
+                        }
+                    }
+                    updateMapMarkers()
+                }
+        }
     }
 
     // --------------------------------------------------
@@ -221,8 +244,10 @@ class WorkerFeedFragment : Fragment() {
             }
 
             map.setOnMarkerClickListener { marker ->
-                // Find job by coordinates or title (simplified for now: searching jobList)
-                val job = jobList.find { it.jobTitle == marker.title }
+                // Search in both lists
+                val job = availableJobs.find { it.jobTitle == marker.title } 
+                    ?: myActiveHandshakeJobs.find { it.jobTitle == marker.title }
+                
                 if (job != null) {
                     showJobPreview(job)
                 }
@@ -235,14 +260,26 @@ class WorkerFeedFragment : Fragment() {
         val map = mapLibreMap ?: return
         map.clear()
         
-        // Job Markers
-        for (job in jobList) {
+        // 1. Available Job Markers
+        for (job in availableJobs) {
             if (job.latitude != 0.0 && job.longitude != 0.0) {
                 map.addMarker(
                     MarkerOptions()
                         .position(LatLng(job.latitude, job.longitude))
                         .title(job.jobTitle)
-                        .snippet("Job: ₱${job.offeredAmount}")
+                        .snippet("Available: ₱${job.offeredAmount}")
+                )
+            }
+        }
+
+        // 2. My Active Job Markers (Highlighted or different text)
+        for (job in myActiveHandshakeJobs) {
+            if (job.latitude != 0.0 && job.longitude != 0.0) {
+                map.addMarker(
+                    MarkerOptions()
+                        .position(LatLng(job.latitude, job.longitude))
+                        .title(job.jobTitle)
+                        .snippet("My Active Job: ${job.status}")
                 )
             }
         }
@@ -392,6 +429,8 @@ class WorkerFeedFragment : Fragment() {
                                 "isOnline" to true,
                                 "lastActive" to System.currentTimeMillis()
                             ))
+                        }.addOnSuccessListener {
+                            (activity as? com.example.newtacks.WorkerDashboardActivity)?.switchTab(R.id.nav_job)
                         }
                     }
             }
@@ -413,6 +452,7 @@ class WorkerFeedFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         mapView.onDestroy()
-        listener?.remove()
+        availableJobsListener?.remove()
+        activeHandshakeListener?.remove()
     }
 }

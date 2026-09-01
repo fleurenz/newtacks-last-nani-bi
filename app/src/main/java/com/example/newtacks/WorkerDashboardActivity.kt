@@ -30,6 +30,11 @@ class WorkerDashboardActivity : AppCompatActivity() {
 
     private var activeFragment: Fragment = fragmentFeed
 
+    fun switchTab(tabId: Int) {
+        val bottomNav = findViewById<BottomNavigationView>(R.id.workerBottomNav)
+        bottomNav.selectedItemId = tabId
+    }
+
     private fun setupDraggableChatHead() {
         val fab = findViewById<FloatingActionButton>(R.id.fabChat)
         var dX = 0f
