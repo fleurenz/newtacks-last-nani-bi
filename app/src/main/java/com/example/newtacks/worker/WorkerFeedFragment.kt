@@ -51,9 +51,11 @@ class WorkerFeedFragment : Fragment() {
     private val db = FirebaseFirestore.getInstance()
     private var availableJobsListener: ListenerRegistration? = null
     private var activeHandshakeListener: ListenerRegistration? = null
+    private var hiringListener: ListenerRegistration? = null
     
     private val availableJobs = mutableListOf<Job>()
     private val myActiveHandshakeJobs = mutableListOf<Job>()
+    private val hiringList = mutableListOf<com.example.newtacks.models.HiringPost>()
 
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
     private val refreshWaypointTask = object : Runnable {
@@ -228,6 +230,22 @@ class WorkerFeedFragment : Fragment() {
                     updateMapMarkers()
                 }
         }
+
+        // 3. Listen for Company Hiring Posts
+        hiringListener = db.collection("hiring")
+            .whereEqualTo("status", "OPEN")
+            .addSnapshotListener { snapshots, _ ->
+                if (snapshots == null) return@addSnapshotListener
+                val now = System.currentTimeMillis()
+                hiringList.clear()
+                for (doc in snapshots) {
+                    val post = doc.toObject(com.example.newtacks.models.HiringPost::class.java)
+                    if (post.expiresAt == 0L || post.expiresAt > now) {
+                        hiringList.add(post)
+                    }
+                }
+                updateMapMarkers()
+            }
     }
 
     // --------------------------------------------------
@@ -259,12 +277,17 @@ class WorkerFeedFragment : Fragment() {
             }
 
             map.setOnMarkerClickListener { marker ->
-                // Search in both lists
+                // Search in all lists
                 val job = availableJobs.find { it.jobTitle == marker.title } 
                     ?: myActiveHandshakeJobs.find { it.jobTitle == marker.title }
                 
                 if (job != null) {
                     showJobPreview(job)
+                } else {
+                    val hiringPost = hiringList.find { it.jobTitle == marker.title }
+                    if (hiringPost != null) {
+                        showHiringPreview(hiringPost)
+                    }
                 }
                 true
             }
@@ -287,7 +310,19 @@ class WorkerFeedFragment : Fragment() {
             }
         }
 
-        // 2. My Active Job Markers & Waypoint Line
+        // 2. Company Hiring Markers
+        for (post in hiringList) {
+            if (post.latitude != 0.0 && post.longitude != 0.0) {
+                map.addMarker(
+                    MarkerOptions()
+                        .position(LatLng(post.latitude, post.longitude))
+                        .title(post.jobTitle)
+                        .snippet("Company: ₱${post.dailyRate}/day")
+                )
+            }
+        }
+
+        // 3. My Active Job Markers & Waypoint Line
         val workerLoc = map.locationComponent.lastKnownLocation
         
         for (job in myActiveHandshakeJobs) {
@@ -374,6 +409,64 @@ class WorkerFeedFragment : Fragment() {
 
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.show()
+    }
+
+    private fun showHiringPreview(post: com.example.newtacks.models.HiringPost) {
+        val view = layoutInflater.inflate(R.layout.dialog_job_preview, null)
+        val tvTitle   = view.findViewById<TextView>(R.id.tvTitle)
+        val tvDetails = view.findViewById<TextView>(R.id.tvDetails)
+        val btnAccept = view.findViewById<Button>(R.id.btnAccept)
+        val btnClose  = view.findViewById<Button>(R.id.btnClose)
+        
+        tvTitle.text = post.jobTitle
+        tvDetails.text = """
+            Company: ${post.companyName}
+            Address: ${post.companyAddress}
+            Daily Rate: ₱${post.dailyRate}
+            Employment: ${post.employmentType}
+            Services: ${post.serviceCategories.joinToString(", ")}
+        """.trimIndent()
+
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        val hasApplied = uid != null && post.applicants.contains(uid)
+
+        if (hasApplied) {
+            btnAccept.text = "Already Applied"
+            btnAccept.isEnabled = false
+            btnAccept.alpha = 0.6f
+        } else {
+            btnAccept.text = "Apply Now"
+            btnAccept.isEnabled = true
+            btnAccept.alpha = 1.0f
+        }
+
+        // Hiring posts don't have images yet
+        view.findViewById<View>(R.id.tvImagesLabel).visibility = View.GONE
+        view.findViewById<View>(R.id.scrollImages).visibility = View.GONE
+        view.findViewById<View>(R.id.tvDuration).visibility = View.GONE
+        
+        val dialog = android.app.AlertDialog.Builder(requireContext())
+            .setView(view)
+            .create()
+
+        btnClose.setOnClickListener { dialog.dismiss() }
+        btnAccept.setOnClickListener {
+            dialog.dismiss()
+            applyForHiring(post)
+        }
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
+    }
+
+    private fun applyForHiring(post: com.example.newtacks.models.HiringPost) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        
+        db.collection("hiring").document(post.hiringId)
+            .update("applicants", com.google.firebase.firestore.FieldValue.arrayUnion(uid))
+            .addOnSuccessListener {
+                Toast.makeText(requireContext(), "Application sent!", Toast.LENGTH_SHORT).show()
+            }
     }
 
     // --------------------------------------------------
@@ -493,5 +586,6 @@ class WorkerFeedFragment : Fragment() {
         mapView.onDestroy()
         availableJobsListener?.remove()
         activeHandshakeListener?.remove()
+        hiringListener?.remove()
     }
 }
