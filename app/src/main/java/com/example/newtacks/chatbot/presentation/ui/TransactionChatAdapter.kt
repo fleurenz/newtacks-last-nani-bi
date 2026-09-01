@@ -10,6 +10,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.newtacks.R
 import com.example.newtacks.models.ChatMessage
 import com.google.firebase.auth.FirebaseAuth
+import java.text.SimpleDateFormat
+import java.util.*
 
 class TransactionChatAdapter : ListAdapter<ChatMessage, TransactionChatAdapter.ViewHolder>(DiffCallback()) {
 
@@ -31,8 +33,12 @@ class TransactionChatAdapter : ListAdapter<ChatMessage, TransactionChatAdapter.V
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val tvMessage: TextView = view.findViewById(R.id.tvMessage)
+        private val tvTimestamp: TextView = view.findViewById(R.id.tvTimestamp)
+        private val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+
         fun bind(message: ChatMessage) {
             tvMessage.text = message.text
+            tvTimestamp.text = sdf.format(Date(message.timestamp))
         }
     }
 

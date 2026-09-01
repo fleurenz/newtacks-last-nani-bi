@@ -1,14 +1,25 @@
 package com.example.newtacks.chatbot.presentation.ui
 
 import android.os.Bundle
+import android.view.View
+import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
+import coil.transform.CircleCropTransformation
 import com.example.newtacks.R
 import com.example.newtacks.models.ChatMessage
+import com.example.newtacks.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -16,7 +27,7 @@ class TransactionChatActivity : AppCompatActivity() {
 
     private lateinit var rvChat: RecyclerView
     private lateinit var etMessage: EditText
-    private lateinit var btnSend: ImageButton
+    private lateinit var btnSend: View
     private lateinit var adapter: TransactionChatAdapter
 
     private val db = FirebaseFirestore.getInstance()
@@ -29,6 +40,13 @@ class TransactionChatActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // ✅ Step 1 — Edge-to-edge
+        window.statusBarColor = android.graphics.Color.parseColor("#002E6B")
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowCompat.getInsetsController(window, window.decorView)
+            .isAppearanceLightStatusBars = false
+
         setContentView(R.layout.activity_transaction_chat)
 
         jobId = intent.getStringExtra("JOB_ID") ?: ""
@@ -41,9 +59,30 @@ class TransactionChatActivity : AppCompatActivity() {
             return
         }
 
+        // ✅ Step 2 — Insets listener
+        val chatRoot = findViewById<View>(R.id.chatRoot)
+        val appBarLayout = findViewById<View>(R.id.appBarLayout)
+        val inputCard = findViewById<View>(R.id.inputCard)
+
+        ViewCompat.setOnApplyWindowInsetsListener(chatRoot) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+
+            // Status bar → push AppBar down
+            appBarLayout.updatePadding(top = systemBars.top)
+
+            // Nav bar + keyboard → move input card up
+            inputCard.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                val bottomInset = maxOf(systemBars.bottom, ime.bottom)
+                bottomMargin = bottomInset + (resources.displayMetrics.density * 12).toInt()
+            }
+
+            insets
+        }
+
         val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
-        supportActionBar?.title = jobTitle
+        supportActionBar?.title = "" // Using custom layout
         toolbar.setNavigationOnClickListener { finish() }
 
         rvChat = findViewById(R.id.rvChat)
@@ -58,8 +97,32 @@ class TransactionChatActivity : AppCompatActivity() {
 
         btnSend.setOnClickListener { sendMessage() }
 
+        setupHeader()
         listenForMessages()
         checkJobStatus()
+    }
+
+    private fun setupHeader() {
+        val tvName = findViewById<TextView>(R.id.tvOtherUserName)
+        val tvJob = findViewById<TextView>(R.id.tvJobTitleHeader)
+        val ivOther = findViewById<ImageView>(R.id.ivOtherUser)
+
+        tvJob.text = jobTitle
+
+        if (otherUserId.isNotEmpty()) {
+            db.collection("users").document(otherUserId).get()
+                .addOnSuccessListener { doc ->
+                    val user = doc.toObject(User::class.java)
+                    if (user != null) {
+                        tvName.text = user.name
+                        ivOther.load(user.profileImage) {
+                            crossfade(true)
+                            placeholder(R.drawable.ic_user_placeholder)
+                            transformations(CircleCropTransformation())
+                        }
+                    }
+                }
+        }
     }
 
     private fun listenForMessages() {
