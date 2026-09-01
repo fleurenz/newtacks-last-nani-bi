@@ -92,6 +92,11 @@
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Hiring" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="Map View" />
 
     </com.google.android.material.tabs.TabLayout>
@@ -122,7 +127,8 @@
                     android:layout_height="72dp"
                     android:src="@drawable/ic_inbox"
                     android:alpha="0.3"
-                    android:layout_marginBottom="20dp" />
+                    android:layout_marginBottom="20dp"
+                    android:contentDescription="No Jobs" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -153,6 +159,16 @@
                 android:paddingBottom="16dp"
                 android:layoutAnimation="@anim/layout_animation_fall_down" />
         </LinearLayout>
+
+        <!-- ===== HIRING CONTAINER ===== -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvHiringPosts"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingTop="8dp"
+            android:paddingBottom="16dp"
+            android:visibility="gone" />
 
         <!-- ===== MAP CONTAINER ===== -->
         <FrameLayout

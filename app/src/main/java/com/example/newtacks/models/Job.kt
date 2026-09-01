@@ -44,6 +44,7 @@ data class Job(
 
     // TIMESTAMPS
     val createdAt: Long = System.currentTimeMillis(),
+    val expiresAt: Long = 0,
     val acceptedAt: Long? = null,
     val completedAt: Long? = null
 )

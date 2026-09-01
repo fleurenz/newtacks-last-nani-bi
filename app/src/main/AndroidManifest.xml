@@ -41,6 +41,7 @@
         <activity android:name=".CompanyDashboardActivity" />
 
         <activity android:name=".CreateJobActivity" />
+        <activity android:name=".company.CreateHiringActivity" />
         <activity android:name=".receipt.ReceiptDetailActivity" />
         <activity android:name=".chatbot.presentation.ui.TransactionChatActivity" />
         <activity

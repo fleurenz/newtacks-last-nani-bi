@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.example.newtacks.R
 import com.example.newtacks.models.Job
+import com.example.newtacks.utils.ImageUtils
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -36,6 +37,7 @@ class WorkerFeedFragment : Fragment() {
     private lateinit var layoutEmptyState: LinearLayout
     private lateinit var tabLayout: TabLayout
     private lateinit var layoutListContainer: LinearLayout
+    private lateinit var rvHiringPosts: RecyclerView
     private lateinit var layoutMapContainer: FrameLayout
     private lateinit var mapView: MapView
     private var mapLibreMap: MapLibreMap? = null
@@ -47,7 +49,12 @@ class WorkerFeedFragment : Fragment() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val db = FirebaseFirestore.getInstance()
     private var listener: ListenerRegistration? = null
+    private var hiringListener: ListenerRegistration? = null
+    
     private val jobList = mutableListOf<Job>()
+    private val hiringList = mutableListOf<com.example.newtacks.models.HiringPost>()
+    
+    private lateinit var hiringAdapter: HiringAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -63,6 +70,7 @@ class WorkerFeedFragment : Fragment() {
         layoutEmptyState    = view.findViewById(R.id.layoutEmptyState)
         tabLayout           = view.findViewById(R.id.tabLayout)
         layoutListContainer = view.findViewById(R.id.layoutListContainer)
+        rvHiringPosts       = view.findViewById(R.id.rvHiringPosts)
         layoutMapContainer  = view.findViewById(R.id.layoutMapContainer)
         mapView             = view.findViewById(R.id.mapView)
 
@@ -76,20 +84,21 @@ class WorkerFeedFragment : Fragment() {
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = WorkerJobAdapter(jobList) { job -> showJobPreview(job) }
         recyclerView.adapter = adapter
+        
+        rvHiringPosts.layoutManager = LinearLayoutManager(requireContext())
+        hiringAdapter = HiringAdapter(hiringList, FirebaseAuth.getInstance().currentUser?.uid) { post -> showHiringPreview(post) }
+        rvHiringPosts.adapter = hiringAdapter
 
         // --------------------------------------------------
         // ✅ TAB SWITCHING
         // --------------------------------------------------
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
-                if (tab?.position == 0) {
-                    layoutListContainer.visibility = View.VISIBLE
-                    layoutMapContainer.visibility = View.GONE
-                } else {
-                    layoutListContainer.visibility = View.GONE
-                    layoutMapContainer.visibility = View.VISIBLE
-                    initMap()
-                }
+                layoutListContainer.visibility = if (tab?.position == 0) View.VISIBLE else View.GONE
+                rvHiringPosts.visibility       = if (tab?.position == 1) View.VISIBLE else View.GONE
+                layoutMapContainer.visibility  = if (tab?.position == 2) View.VISIBLE else View.GONE
+                
+                if (tab?.position == 2) initMap()
             }
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {}
@@ -120,7 +129,85 @@ class WorkerFeedFragment : Fragment() {
         }
 
         listenForJobs()
+        listenForHiringPosts()
         return view
+    }
+
+    private fun listenForHiringPosts() {
+        hiringListener = db.collection("hiring")
+            .whereEqualTo("status", "OPEN")
+            .addSnapshotListener { snapshots, _ ->
+                if (snapshots == null) return@addSnapshotListener
+                val now = System.currentTimeMillis()
+                hiringList.clear()
+                for (doc in snapshots) {
+                    val post = doc.toObject(com.example.newtacks.models.HiringPost::class.java)
+                    // Only show if not expired (Calendar-based deadline)
+                    if (post.expiresAt == 0L || post.expiresAt > now) {
+                        hiringList.add(post)
+                    }
+                }
+                hiringAdapter.notifyDataSetChanged()
+                updateMapMarkers()
+            }
+    }
+
+    private fun showHiringPreview(post: com.example.newtacks.models.HiringPost) {
+        val view = layoutInflater.inflate(R.layout.dialog_job_preview, null)
+        val tvTitle   = view.findViewById<TextView>(R.id.tvTitle)
+        val tvDetails = view.findViewById<TextView>(R.id.tvDetails)
+        val btnAccept = view.findViewById<Button>(R.id.btnAccept)
+        val btnClose  = view.findViewById<Button>(R.id.btnClose)
+        
+        tvTitle.text = post.jobTitle
+        tvDetails.text = """
+            Company: ${post.companyName}
+            Address: ${post.companyAddress}
+            Daily Rate: ₱${post.dailyRate}
+            Employment: ${post.employmentType}
+            Services: ${post.serviceCategories.joinToString(", ")}
+        """.trimIndent()
+
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        val hasApplied = uid != null && post.applicants.contains(uid)
+
+        if (hasApplied) {
+            btnAccept.text = "Already Applied"
+            btnAccept.isEnabled = false
+            btnAccept.alpha = 0.6f
+        } else {
+            btnAccept.text = "Apply Now"
+            btnAccept.isEnabled = true
+            btnAccept.alpha = 1.0f
+        }
+
+        // Hiring posts don't have images yet
+        view.findViewById<View>(R.id.tvImagesLabel).visibility = View.GONE
+        view.findViewById<View>(R.id.scrollImages).visibility = View.GONE
+        view.findViewById<View>(R.id.tvDuration).visibility = View.GONE // Duration was removed from HiringPost model
+        
+        val dialog = android.app.AlertDialog.Builder(requireContext())
+            .setView(view)
+            .create()
+
+        btnClose.setOnClickListener { dialog.dismiss() }
+        btnAccept.setOnClickListener {
+            dialog.dismiss()
+            applyForHiring(post)
+        }
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
+    }
+
+    private fun applyForHiring(post: com.example.newtacks.models.HiringPost) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        
+        db.collection("hiring").document(post.hiringId)
+            .update("applicants", com.google.firebase.firestore.FieldValue.arrayUnion(uid))
+            .addOnSuccessListener {
+                Toast.makeText(requireContext(), "Application sent!", Toast.LENGTH_SHORT).show()
+            }
     }
 
     // --------------------------------------------------
@@ -197,13 +284,27 @@ class WorkerFeedFragment : Fragment() {
     private fun updateMapMarkers() {
         val map = mapLibreMap ?: return
         map.clear()
+        
+        // Job Markers
         for (job in jobList) {
             if (job.latitude != 0.0 && job.longitude != 0.0) {
                 map.addMarker(
                     MarkerOptions()
                         .position(LatLng(job.latitude, job.longitude))
                         .title(job.jobTitle)
-                        .snippet("₱${job.offeredAmount}")
+                        .snippet("Job: ₱${job.offeredAmount}")
+                )
+            }
+        }
+        
+        // Hiring Markers
+        for (post in hiringList) {
+            if (post.latitude != 0.0 && post.longitude != 0.0) {
+                map.addMarker(
+                    MarkerOptions()
+                        .position(LatLng(post.latitude, post.longitude))
+                        .title(post.jobTitle)
+                        .snippet("Company: ₱${post.dailyRate}/day")
                 )
             }
         }
@@ -247,6 +348,9 @@ class WorkerFeedFragment : Fragment() {
                 imageView.load(url) {
                     crossfade(true)
                     placeholder(R.drawable.bg_image_placeholder)
+                }
+                imageView.setOnClickListener {
+                    ImageUtils.showFullscreenImage(requireContext(), url)
                 }
                 layoutImages.addView(imageView)
             }
@@ -372,5 +476,6 @@ class WorkerFeedFragment : Fragment() {
         super.onDestroyView()
         mapView.onDestroy()
         listener?.remove()
+        hiringListener?.remove()
     }
 }

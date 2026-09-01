@@ -531,6 +531,7 @@ class CreateJobActivity : AppCompatActivity() {
         jobImages: List<String>
     ) {
         val jobId = firestore.collection("jobs").document().id
+        val now = System.currentTimeMillis()
         val job = Job(
             jobId = jobId,
             clientId = uid,
@@ -546,7 +547,9 @@ class CreateJobActivity : AppCompatActivity() {
             status = "AVAILABLE",
             jobImages = jobImages,
             latitude = selectedLat,
-            longitude = selectedLng
+            longitude = selectedLng,
+            createdAt = now,
+            expiresAt = 0 // No expiration for client jobs
         )
 
         firestore.collection("jobs")

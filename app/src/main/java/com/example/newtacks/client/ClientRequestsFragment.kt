@@ -16,6 +16,7 @@ import com.example.newtacks.models.Job
 import com.example.newtacks.models.Receipt
 import com.example.newtacks.models.Review
 import com.example.newtacks.models.User
+import com.example.newtacks.utils.ImageUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
 import java.util.Locale
@@ -357,6 +358,9 @@ class ClientRequestsFragment : Fragment() {
                     crossfade(true)
                     placeholder(R.drawable.bg_image_placeholder)
                 }
+                imageView.setOnClickListener {
+                    ImageUtils.showFullscreenImage(requireContext(), url)
+                }
                 layoutImages.addView(imageView)
             }
         }
@@ -403,6 +407,9 @@ class ClientRequestsFragment : Fragment() {
                     crossfade(true)
                     placeholder(R.drawable.ic_user_placeholder)
                     transformations(CircleCropTransformation())
+                }
+                ivProfile.setOnClickListener {
+                    ImageUtils.showFullscreenImage(requireContext(), worker.profileImage)
                 }
 
                 AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)

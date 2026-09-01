@@ -85,10 +85,10 @@ class WorkerReviewsActivity : AppCompatActivity() {
 
     @SuppressLint("MissingInflatedId")
     private fun loadReviews() {
-        val uid = auth.currentUser?.uid ?: return
+        val targetUid = intent.getStringExtra("TARGET_UID") ?: auth.currentUser?.uid ?: return
 
         var query = firestore.collection("reviews")
-            .whereEqualTo("workerId", uid)
+            .whereEqualTo("workerId", targetUid)
 
         currentRatingFilter?.let {
             query = query.whereEqualTo("rating", it.toDouble())

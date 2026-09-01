@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F0F4F8">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="#004A99"
+        android:elevation="4dp"
+        app:title="Post Hiring"
+        app:titleTextColor="#FFFFFF"
+        app:navigationIcon="@drawable/ic_back" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <!-- COMPANY INFO CARD -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_card"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="COMPANY INFORMATION"
+                    android:textColor="#004A99"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="14dp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Company Name"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_marginBottom="12dp">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etCompanyName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:enabled="false" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Use Real-time Location"
+                        android:textColor="#004A99"
+                        android:textStyle="bold"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchRealTimeLocation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Work Area Address"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etCompanyAddress"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
+
+            <!-- HIRING DETAILS CARD -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_card"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="HIRING DETAILS"
+                    android:textColor="#004A99"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="14dp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Job Title"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_marginBottom="14dp">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etHiringTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Required Services:"
+                    android:textColor="#64748B"
+                    android:textSize="12sp"
+                    android:layout_marginBottom="8dp" />
+
+                <CheckBox android:id="@+id/cbCarpentry" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Carpentry" />
+                <CheckBox android:id="@+id/cbPlumbing" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Plumbing" />
+                <CheckBox android:id="@+id/cbMasonry" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Masonry" />
+                <CheckBox android:id="@+id/cbWelding" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Welding" />
+                <CheckBox android:id="@+id/cbPainting" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Painting" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Employment Type:"
+                    android:textColor="#64748B"
+                    android:textSize="12sp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="8dp" />
+
+                <RadioGroup
+                    android:id="@+id/rgEmploymentType"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <RadioButton android:id="@+id/rbPartTime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Part-time" />
+                    <RadioButton android:id="@+id/rbFullTime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Full-time" android:layout_marginStart="8dp" />
+                    <RadioButton android:id="@+id/rbProject" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Project" android:layout_marginStart="8dp" />
+                </RadioGroup>
+
+            </LinearLayout>
+
+            <!-- RATE & SCHEDULE CARD -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_card"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="RATE &amp; SCHEDULE"
+                    android:textColor="#004A99"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="14dp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Daily Rate"
+                    app:prefixText="₱ "
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_marginBottom="14dp">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etDailyRate"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="numberDecimal" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hiring Deadline (Post will close after this date)"
+                    android:textColor="#64748B"
+                    android:textSize="12sp"
+                    android:layout_marginTop="14dp"
+                    android:layout_marginBottom="4dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSelectClosingDate"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:text="Select Closing Date"
+                    app:backgroundTint="#FFFFFF"
+                    android:textColor="#64748B"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#CBD5E1"
+                    app:cornerRadius="8dp"
+                    app:icon="@drawable/ic_calendar"
+                    app:iconTint="#004A99"
+                    app:iconGravity="textStart" />
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSubmitHiring"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Post Hiring Request"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                app:backgroundTint="#004A99"
+                android:layout_marginBottom="24dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>
