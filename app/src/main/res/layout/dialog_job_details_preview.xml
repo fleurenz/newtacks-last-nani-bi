@@ -48,6 +48,22 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Location"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#94A3B8" />
+
+        <TextView
+            android:id="@+id/tvDialogLocation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="#1E293B"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="Offered Amount"
             android:textSize="12sp"
             android:textStyle="bold"

@@ -139,7 +139,7 @@ class WorkerJobFragment : Fragment() {
         layoutBottomButtons.visibility = View.VISIBLE
 
         tvTitle.text = job.jobTitle
-        tvDetails.text = "Service: ${job.serviceCategory}\n₱${job.offeredAmount}"
+        tvDetails.text = "Service: ${job.serviceCategory}\nRate: ₱${job.offeredAmount}\nLocation: ${job.clientAddress}"
 
         tvClientDetailName.text = job.clientName
         tvClientDetailPhone.text = "Tap to view contact"
@@ -302,6 +302,7 @@ class WorkerJobFragment : Fragment() {
         val tvTitle = dialogView.findViewById<TextView>(R.id.tvDialogJobTitle)
         val tvCategory = dialogView.findViewById<TextView>(R.id.tvDialogCategory)
         val tvSchedule = dialogView.findViewById<TextView>(R.id.tvDialogSchedule)
+        val tvLocation = dialogView.findViewById<TextView>(R.id.tvDialogLocation)
         val tvPrice = dialogView.findViewById<TextView>(R.id.tvDialogPrice)
         val tvDescription = dialogView.findViewById<TextView>(R.id.tvDialogDescription)
         val layoutImages = dialogView.findViewById<LinearLayout>(R.id.layoutDialogImages)
@@ -309,6 +310,7 @@ class WorkerJobFragment : Fragment() {
         tvTitle.text = job.jobTitle
         tvCategory.text = job.serviceCategory
         tvSchedule.text = "${job.scheduledDate} at ${job.scheduledTime}"
+        tvLocation.text = job.clientAddress
         tvPrice.text = "₱${job.offeredAmount}"
         tvDescription.text = job.description
 
