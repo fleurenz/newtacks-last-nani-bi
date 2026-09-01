@@ -24,6 +24,7 @@ class WorkerDashboardActivity : AppCompatActivity() {
     // ✅ Create fragment instances once — never recreated on tab switch
     private val fragmentFeed    = WorkerFeedFragment()
     private val fragmentJob     = WorkerJobFragment()
+    private val fragmentHiring  = WorkerHiringFragment()
     private val fragmentHistory = WorkerHistoryFragment()
     private val fragmentAccount = WorkerAccountFragment()
 
@@ -116,6 +117,8 @@ class WorkerDashboardActivity : AppCompatActivity() {
             hide(fragmentAccount)
             add(R.id.workerFragmentContainer, fragmentHistory, "history")
             hide(fragmentHistory)
+            add(R.id.workerFragmentContainer, fragmentHiring, "hiring")
+            hide(fragmentHiring)
             add(R.id.workerFragmentContainer, fragmentJob, "job")
             hide(fragmentJob)
             add(R.id.workerFragmentContainer, fragmentFeed, "feed")
@@ -143,6 +146,7 @@ class WorkerDashboardActivity : AppCompatActivity() {
             val target = when (item.itemId) {
                 R.id.nav_feed    -> fragmentFeed
                 R.id.nav_job     -> fragmentJob
+                R.id.nav_hiring  -> fragmentHiring
                 R.id.nav_history -> fragmentHistory
                 R.id.nav_account -> fragmentAccount
                 else             -> return@setOnItemSelectedListener false

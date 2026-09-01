@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import coil.load
 import coil.transform.CircleCropTransformation
@@ -28,6 +29,7 @@ import com.example.newtacks.chatbot.data.repository.ChatRepository
 import com.example.newtacks.models.Review
 import com.example.newtacks.models.User
 import com.example.newtacks.worker.account.WorkerReviewsActivity
+import com.google.android.material.appbar.AppBarLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -82,6 +84,7 @@ class WorkerAccountFragment : Fragment() {
         btnUploadNC1 = view.findViewById(R.id.btnUploadNC1)
         btnUploadNC2 = view.findViewById(R.id.btnUploadNC2)
         btnUploadNC3 = view.findViewById(R.id.btnUploadNC3)
+        val appBarLayout = view.findViewById<AppBarLayout>(R.id.appBarLayout)
 
         btnUploadNC1.setOnClickListener {
             pendingNCLevel = 1
@@ -98,12 +101,7 @@ class WorkerAccountFragment : Fragment() {
 
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            layoutHeader.setPadding(
-                layoutHeader.paddingLeft,
-                systemBars.top + resources.getDimensionPixelSize(R.dimen.header_padding_top),
-                layoutHeader.paddingRight,
-                layoutHeader.paddingBottom
-            )
+            appBarLayout.updatePadding(top = systemBars.top)
             insets
         }
 

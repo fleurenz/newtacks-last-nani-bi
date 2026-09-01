@@ -9,6 +9,10 @@
         android:title="Job"
         android:icon="@drawable/ic_nav_requests" />
     <item
+        android:id="@+id/nav_hiring"
+        android:title="Hiring"
+        android:icon="@drawable/ic_company" />
+    <item
         android:id="@+id/nav_history"
         android:title="History"
         android:icon="@drawable/ic_nav_history" />

@@ -1,35 +1,27 @@
-# Prevent Duplicate Hiring Applications
+# Transitioning Worker Account Header to Collapsing Toolbar
 
-This plan adds logic to prevent workers from applying to the same company hiring post multiple times. The UI will update to show "Applied" or "Already Applied" if an application has already been submitted.
-
-## User Review Required
-
-> [!NOTE]
-> The "Already Applied" state will be reflected both in the feed list and the detailed preview dialog.
-> Firestore `arrayUnion` already prevents duplicate IDs in the `applicants` list, but this change improves the user experience by providing clear feedback.
+The user wants the blue banner in the `WorkerAccountFragment` to shrink when scrolling down to reveal more content.
 
 ## Proposed Changes
 
-### Adapters
+### UI Layout
 
-#### [MODIFY] [HiringAdapter.kt](file:///C:/Users/FRUSCHE/StudioProjects/newtacks-last-nani-bi/app/src/main/java/com/example/newtacks/worker/HiringAdapter.kt)
-- Add `currentUserId: String?` to the constructor.
-- In `onBindViewHolder`, check if `post.applicants` contains `currentUserId`.
-- If applied, change `btnAccept` text to "Applied", disable it, and reduce alpha.
+#### [MODIFY] [fragment_worker_account.xml](file:///C:/Users/FRUSCHE/StudioProjects/newtacks-last-nani-bi/app/src/main/res/layout/fragment_worker_account.xml)
+- Change root to `androidx.coordinatorlayout.widget.CoordinatorLayout`.
+- Implement `com.google.android.material.appbar.AppBarLayout` and `com.google.android.material.appbar.CollapsingToolbarLayout`.
+- Move the `layoutHeader` (blue banner) inside the `CollapsingToolbarLayout`.
+- Replace the root `ScrollView` with `androidx.core.widget.NestedScrollView` and apply `app:layout_behavior="@string/appbar_scrolling_view_behavior"`.
+- Add a `androidx.appcompat.widget.Toolbar` inside `CollapsingToolbarLayout` to act as the "sticky" header when collapsed.
 
-### Worker Feature
+### Fragment Logic
 
-#### [MODIFY] [WorkerFeedFragment.kt](file:///C:/Users/FRUSCHE/StudioProjects/newtacks-last-nani-bi/app/src/main/java/com/example/newtacks/worker/WorkerFeedFragment.kt)
-- Update `hiringAdapter` initialization to pass the current user's UID.
-- In `showHiringPreview`, check if the user has already applied.
-- If applied, change `btnAccept` text to "Already Applied" and disable it.
+#### [MODIFY] [WorkerAccountFragment.kt](file:///C:/Users/FRUSCHE/StudioProjects/newtacks-last-nani-bi/app/src/main/java/com/example/newtacks/worker/WorkerAccountFragment.kt)
+- Update view references if IDs change.
+- Adjust status bar and padding logic to work with the new `CoordinatorLayout` structure if needed.
 
 ## Verification Plan
 
-### Automated Tests
-- Build the project to ensure all constructor changes and logic are correct.
-
 ### Manual Verification
-- **Apply to Job**: As a worker, apply to a company hiring post.
-- **Verify Feed**: Confirm that the button in the hiring feed list now says "Applied" and is disabled for that specific post.
-- **Verify Preview**: Click the post anyway (to open the preview) and confirm the "Apply Now" button is replaced by "Already Applied" and disabled.
+- Deploy to device.
+- Open the Worker Account tab.
+- Scroll down and observe the blue header shrinking and the name/avatar transitioning.
