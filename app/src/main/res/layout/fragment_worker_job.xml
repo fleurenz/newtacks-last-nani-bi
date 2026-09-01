@@ -280,6 +280,23 @@
         android:paddingBottom="20dp">
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnNavigateToMap"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:text="Navigate to Job Site"
+            android:textColor="#004A99"
+            android:textStyle="bold"
+            app:cornerRadius="14dp"
+            app:strokeColor="#004A99"
+            app:strokeWidth="1dp"
+            app:icon="@drawable/ic_location"
+            app:iconGravity="textStart"
+            app:iconTint="#004A99"
+            android:layout_marginBottom="10dp"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStartHeading"
             android:layout_width="match_parent"
             android:layout_height="54dp"

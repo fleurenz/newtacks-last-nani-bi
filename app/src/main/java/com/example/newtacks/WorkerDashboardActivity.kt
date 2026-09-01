@@ -35,6 +35,11 @@ class WorkerDashboardActivity : AppCompatActivity() {
         bottomNav.selectedItemId = tabId
     }
 
+    fun focusMapOnLocation(lat: Double, lng: Double) {
+        switchTab(R.id.nav_feed)
+        fragmentFeed.zoomToLocation(lat, lng)
+    }
+
     private fun setupDraggableChatHead() {
         val fab = findViewById<FloatingActionButton>(R.id.fabChat)
         var dX = 0f

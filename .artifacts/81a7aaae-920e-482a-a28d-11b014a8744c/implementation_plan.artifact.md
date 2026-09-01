@@ -1,28 +1,35 @@
-# Smart Navigation for Job Handshake
+# Implement "Navigate to Map" from Active Job
 
-This plan implements automatic navigation (smart transitions) for both Workers and Clients when a job handshake begins.
+This plan adds a "Navigate" button to the active job screen for workers. Clicking it will switch the view to the Map Feed and zoom directly into the job's location.
 
 ## Proposed Changes
 
-### Worker Side
+### UI Layout
+
+#### [MODIFY] [fragment_worker_job.xml](file:///C:/Users/FRUSCHE/StudioProjects/newtacks-last-nani-bi/app/src/main/res/layout/fragment_worker_job.xml)
+- Add a new `MaterialButton` (ID: `btnNavigateToMap`) in the `layoutBottomButtons` section.
+- This button will be styled with an outline to differentiate it from the main status action buttons.
+
+### Navigation Logic
 
 #### [MODIFY] [WorkerDashboardActivity.kt](file:///C:/Users/FRUSCHE/StudioProjects/newtacks-last-nani-bi/app/src/main/java/com/example/newtacks/WorkerDashboardActivity.kt)
-- Add a public method `switchTab(tabId: Int)` that allows fragments to programmatically change the active tab.
+- Add a function `focusMapOnLocation(lat: Double, lng: Double)` that:
+    1. Switches the tab to `nav_feed`.
+    2. Calls a new `zoomToLocation` method on the `fragmentFeed`.
 
 #### [MODIFY] [WorkerFeedFragment.kt](file:///C:/Users/FRUSCHE/StudioProjects/newtacks-last-nani-bi/app/src/main/java/com/example/newtacks/worker/WorkerFeedFragment.kt)
-- After a successful job acceptance transaction in `processJobAcceptance`, call `switchTab(R.id.nav_job)` to move the worker to their active job screen immediately.
+- Add a public function `zoomToLocation(lat: Double, lng: Double)` that animates the map camera to the given coordinates.
 
----
-
-### Client Side
-
-#### [MODIFY] [ClientDashboardActivity.kt](file:///C:/Users/FRUSCHE/StudioProjects/newtacks-last-nani-bi/app/src/main/java/com/example/newtacks/ClientDashboardActivity.kt)
-- Add a public method `switchTab(tabId: Int)` to programmatically change the active tab.
-- Implement a `ListenerRegistration` that monitors the current user's jobs.
-- If a job status changes to `IN_PROGRESS` while the user is on a different tab, automatically switch to `R.id.nav_requests`.
+#### [MODIFY] [WorkerJobFragment.kt](file:///C:/Users/FRUSCHE/StudioProjects/newtacks-last-nani-bi/app/src/main/java/com/example/newtacks/worker/WorkerJobFragment.kt)
+- Initialize `btnNavigateToMap`.
+- Show/hide the button based on whether a job is active.
+- Set a click listener that calls `focusMapOnLocation` using the current job's coordinates.
 
 ## Verification Plan
 
 ### Manual Verification
-1.  **Worker Auto-Nav**: As a worker, accept a job from the Map Feed. Verify that the app immediately switches you to the "Job" tab.
-2.  **Client Auto-Nav**: Log in as a client and stay on the "Home" tab. As a worker, accept that client's job. Verify that the client's app automatically switches to the "Requests" tab without user interaction.
+1.  **Accept a Job**: As a worker, accept a job from the feed.
+2.  **Navigate**: On the Job tab, you should see a "Navigate to Job Site" button.
+3.  **Click**: Tap the button. Verify that:
+    - The bottom navigation switches back to the Feed tab.
+    - The map automatically zooms into the job's pin location.

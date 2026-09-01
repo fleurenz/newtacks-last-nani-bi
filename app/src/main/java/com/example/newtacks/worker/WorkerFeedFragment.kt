@@ -25,6 +25,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import org.maplibre.android.annotations.MarkerOptions
+import org.maplibre.android.annotations.PolylineOptions
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.location.LocationComponentActivationOptions
@@ -53,6 +54,16 @@ class WorkerFeedFragment : Fragment() {
     
     private val availableJobs = mutableListOf<Job>()
     private val myActiveHandshakeJobs = mutableListOf<Job>()
+
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val refreshWaypointTask = object : Runnable {
+        override fun run() {
+            if (myActiveHandshakeJobs.any { it.status == "HEADING_TO_CLIENT" }) {
+                updateMapMarkers()
+            }
+            handler.postDelayed(this, 5000)
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -129,6 +140,10 @@ class WorkerFeedFragment : Fragment() {
         return view
     }
 
+    fun zoomToLocation(lat: Double, lng: Double) {
+        mapLibreMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 15.0))
+    }
+
     private fun setupWorkerInfo() {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
         db.collection("users").document(uid).get().addOnSuccessListener { 
@@ -148,7 +163,7 @@ class WorkerFeedFragment : Fragment() {
             locationComponent.isLocationComponentEnabled = true
             locationComponent.cameraMode = CameraMode.NONE
             locationComponent.renderMode = RenderMode.COMPASS
-
+            
             if (moveCamera) {
                 // Try to get last location to center the map immediately
                 fusedLocationClient.lastLocation.addOnSuccessListener { location ->
@@ -272,7 +287,9 @@ class WorkerFeedFragment : Fragment() {
             }
         }
 
-        // 2. My Active Job Markers (Highlighted or different text)
+        // 2. My Active Job Markers & Waypoint Line
+        val workerLoc = map.locationComponent.lastKnownLocation
+        
         for (job in myActiveHandshakeJobs) {
             if (job.latitude != 0.0 && job.longitude != 0.0) {
                 map.addMarker(
@@ -281,6 +298,20 @@ class WorkerFeedFragment : Fragment() {
                         .title(job.jobTitle)
                         .snippet("My Active Job: ${job.status}")
                 )
+
+                // 3. Waypoint Line (Only if HEADING_TO_CLIENT)
+                if (job.status == "HEADING_TO_CLIENT" && workerLoc != null) {
+                    val points = listOf(
+                        LatLng(workerLoc.latitude, workerLoc.longitude),
+                        LatLng(job.latitude, job.longitude)
+                    )
+                    map.addPolyline(
+                        PolylineOptions()
+                            .addAll(points)
+                            .color(android.graphics.Color.parseColor("#2563EB"))
+                            .width(4f)
+                    )
+                }
             }
         }
     }
@@ -440,8 +471,16 @@ class WorkerFeedFragment : Fragment() {
     // CLEANUP & LIFECYCLE
     // --------------------------------------------------
     override fun onStart() { super.onStart(); mapView.onStart() }
-    override fun onResume() { super.onResume(); mapView.onResume() }
-    override fun onPause() { super.onPause(); mapView.onPause() }
+    override fun onResume() { 
+        super.onResume()
+        mapView.onResume()
+        handler.post(refreshWaypointTask)
+    }
+    override fun onPause() { 
+        super.onPause()
+        mapView.onPause()
+        handler.removeCallbacks(refreshWaypointTask)
+    }
     override fun onStop() { super.onStop(); mapView.onStop() }
     override fun onLowMemory() { super.onLowMemory(); mapView.onLowMemory() }
     override fun onSaveInstanceState(outState: Bundle) {

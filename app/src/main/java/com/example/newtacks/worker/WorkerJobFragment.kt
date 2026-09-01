@@ -30,6 +30,7 @@ class WorkerJobFragment : Fragment() {
     private lateinit var tvDetails: TextView
     private lateinit var tvStatus: TextView
     private lateinit var btnDone: Button
+    private lateinit var btnNavigateToMap: Button
     private lateinit var btnStartHeading: Button
     private lateinit var btnArrived: Button
     private lateinit var btnMessageClient: View
@@ -58,6 +59,7 @@ class WorkerJobFragment : Fragment() {
         tvDetails           = view.findViewById(R.id.tvJobDetails)
         tvStatus            = view.findViewById(R.id.tvJobStatus)
         btnDone             = view.findViewById(R.id.btnRequestDone)
+        btnNavigateToMap    = view.findViewById(R.id.btnNavigateToMap)
         btnStartHeading     = view.findViewById(R.id.btnStartHeading)
         btnArrived          = view.findViewById(R.id.btnArrived)
         btnMessageClient    = view.findViewById(R.id.btnMessageClientSmall)
@@ -88,6 +90,11 @@ class WorkerJobFragment : Fragment() {
 
         listenForActiveJob()
         btnDone.setOnClickListener { requestDone() }
+        btnNavigateToMap.setOnClickListener {
+            currentJob?.let { job ->
+                (activity as? com.example.newtacks.WorkerDashboardActivity)?.focusMapOnLocation(job.latitude, job.longitude)
+            }
+        }
         btnStartHeading.setOnClickListener { updateJobStatus("HEADING_TO_CLIENT") }
         btnArrived.setOnClickListener { updateJobStatus("ARRIVED") }
         btnMessageClient.setOnClickListener { openChat() }
@@ -153,6 +160,7 @@ class WorkerJobFragment : Fragment() {
         btnDone.visibility         = View.GONE
         btnMessageClient.visibility = View.VISIBLE
         btnMoreOptions.visibility   = View.VISIBLE 
+        btnNavigateToMap.visibility = View.VISIBLE
 
         when (job.status) {
             "IN_PROGRESS" -> {
@@ -303,6 +311,7 @@ class WorkerJobFragment : Fragment() {
         layoutContent.visibility       = View.GONE
         layoutEmptyState.visibility    = View.VISIBLE
         layoutBottomButtons.visibility = View.GONE
+        btnNavigateToMap.visibility    = View.GONE
         tvTitle.text                   = ""
         tvStatus.visibility            = View.GONE
         tvStatus.background            = null
