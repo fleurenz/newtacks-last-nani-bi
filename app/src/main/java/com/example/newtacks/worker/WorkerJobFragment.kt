@@ -32,6 +32,9 @@ class WorkerJobFragment : Fragment() {
     private lateinit var tvStatus: TextView
     private lateinit var btnDone: Button
     private lateinit var btnNavigateToMap: Button
+    private lateinit var btnNavigateToMapSmall: Button
+    private lateinit var btnNavigateToMapArrived: Button
+    private lateinit var btnNavigateToMapDone: Button
     private lateinit var btnStartHeading: Button
     private lateinit var btnArrived: Button
     private lateinit var btnMessageClient: View
@@ -39,6 +42,9 @@ class WorkerJobFragment : Fragment() {
     private lateinit var layoutContent: LinearLayout
     private lateinit var layoutEmptyState: LinearLayout
     private lateinit var layoutBottomButtons: LinearLayout
+    private lateinit var layoutHeadingButtons: LinearLayout
+    private lateinit var layoutArrivedButtons: LinearLayout
+    private lateinit var layoutDoneButtons: LinearLayout
     private lateinit var layoutHeader: RelativeLayout
     private lateinit var cardJobDetails: View
     private lateinit var cardClientInfo: View
@@ -62,6 +68,9 @@ class WorkerJobFragment : Fragment() {
         tvStatus            = view.findViewById(R.id.tvJobStatus)
         btnDone             = view.findViewById(R.id.btnRequestDone)
         btnNavigateToMap    = view.findViewById(R.id.btnNavigateToMap)
+        btnNavigateToMapSmall = view.findViewById(R.id.btnNavigateToMapSmall)
+        btnNavigateToMapArrived = view.findViewById(R.id.btnNavigateToMapArrived)
+        btnNavigateToMapDone = view.findViewById(R.id.btnNavigateToMapDone)
         btnStartHeading     = view.findViewById(R.id.btnStartHeading)
         btnArrived          = view.findViewById(R.id.btnArrived)
         btnMessageClient    = view.findViewById(R.id.btnMessageClientSmall)
@@ -69,6 +78,9 @@ class WorkerJobFragment : Fragment() {
         layoutContent       = view.findViewById(R.id.layoutContent)
         layoutEmptyState    = view.findViewById(R.id.layoutEmptyState)
         layoutBottomButtons = view.findViewById(R.id.layoutBottomButtons)
+        layoutHeadingButtons = view.findViewById(R.id.layoutHeadingButtons)
+        layoutArrivedButtons = view.findViewById(R.id.layoutArrivedButtons)
+        layoutDoneButtons    = view.findViewById(R.id.layoutDoneButtons)
         layoutHeader        = view.findViewById(R.id.layoutHeader) as RelativeLayout
 
         cardJobDetails      = view.findViewById(R.id.cardJobDetails)
@@ -92,11 +104,16 @@ class WorkerJobFragment : Fragment() {
 
         listenForActiveJob()
         btnDone.setOnClickListener { requestDone() }
-        btnNavigateToMap.setOnClickListener {
+        val mapAction = {
             currentJob?.let { job ->
                 (activity as? com.example.newtacks.WorkerDashboardActivity)?.focusMapOnLocation(job.latitude, job.longitude)
             }
         }
+        btnNavigateToMap.setOnClickListener { mapAction() }
+        btnNavigateToMapSmall.setOnClickListener { mapAction() }
+        btnNavigateToMapArrived.setOnClickListener { mapAction() }
+        btnNavigateToMapDone.setOnClickListener { mapAction() }
+
         btnStartHeading.setOnClickListener { updateJobStatus("HEADING_TO_CLIENT") }
         btnArrived.setOnClickListener { updateJobStatus("ARRIVED") }
         btnMessageClient.setOnClickListener { openChat() }
@@ -160,25 +177,33 @@ class WorkerJobFragment : Fragment() {
         listenForClientLocation(job.clientId, job.latitude, job.longitude)
         
         // Default visibility
+        layoutHeadingButtons.visibility = View.GONE
+        layoutArrivedButtons.visibility = View.GONE
+        layoutDoneButtons.visibility    = View.GONE
+        btnNavigateToMap.visibility = View.GONE
+        btnNavigateToMapSmall.visibility = View.GONE
         btnStartHeading.visibility = View.GONE
         btnArrived.visibility      = View.GONE
         btnDone.visibility         = View.GONE
         btnMessageClient.visibility = View.VISIBLE
         btnMoreOptions.visibility   = View.VISIBLE 
-        btnNavigateToMap.visibility = View.VISIBLE
 
         when (job.status) {
             "IN_PROGRESS" -> {
                 tvStatus.text = "Job Accepted"
                 tvStatus.setTextColor(android.graphics.Color.parseColor("#D97706"))
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_yellow)
+                layoutHeadingButtons.visibility = View.VISIBLE
                 btnStartHeading.visibility = View.VISIBLE
+                btnNavigateToMapSmall.visibility = View.VISIBLE
             }
             "HEADING_TO_CLIENT" -> {
                 tvStatus.text = "Heading to Location..."
                 tvStatus.setTextColor(android.graphics.Color.parseColor("#2563EB"))
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_blue)
+                layoutArrivedButtons.visibility = View.VISIBLE
                 btnArrived.visibility = View.VISIBLE
+                btnNavigateToMapArrived.visibility = View.VISIBLE
                 
                 // Show live distance
                 showLiveDistance(job.latitude, job.longitude)
@@ -187,7 +212,9 @@ class WorkerJobFragment : Fragment() {
                 tvStatus.text = "Arrived at Location"
                 tvStatus.setTextColor(android.graphics.Color.parseColor("#16A34A"))
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_green)
+                layoutDoneButtons.visibility = View.VISIBLE
                 btnDone.visibility = View.VISIBLE
+                btnNavigateToMapDone.visibility = View.VISIBLE
             }
             "PENDING_VERIFICATION" -> {
                 tvStatus.text = "Waiting for client confirmation"
@@ -365,6 +392,9 @@ class WorkerJobFragment : Fragment() {
         layoutContent.visibility       = View.GONE
         layoutEmptyState.visibility    = View.VISIBLE
         layoutBottomButtons.visibility = View.GONE
+        layoutHeadingButtons.visibility = View.GONE
+        layoutArrivedButtons.visibility = View.GONE
+        layoutDoneButtons.visibility    = View.GONE
         btnNavigateToMap.visibility    = View.GONE
         tvTitle.text                   = ""
         tvStatus.visibility            = View.GONE

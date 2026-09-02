@@ -279,6 +279,136 @@
         android:paddingEnd="20dp"
         android:paddingBottom="20dp">
 
+        <!-- side-by-side for IN_PROGRESS -->
+        <LinearLayout
+            android:id="@+id/layoutHeadingButtons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="10dp"
+            android:visibility="gone">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnNavigateToMapSmall"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="54dp"
+                android:layout_weight="0.35"
+                android:text="Map"
+                android:textColor="#004A99"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                app:strokeColor="#004A99"
+                app:strokeWidth="1dp"
+                app:icon="@drawable/ic_navigate_location"
+                app:iconGravity="textStart"
+                app:iconTint="#004A99"
+                android:layout_marginEnd="10dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStartHeading"
+                android:layout_width="0dp"
+                android:layout_height="54dp"
+                android:layout_weight="0.65"
+                android:text="Start Heading There"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:backgroundTint="#004A99"
+                app:cornerRadius="14dp"
+                app:icon="@drawable/ic_location"
+                app:iconGravity="textStart"
+                app:iconTint="#FFFFFF" />
+        </LinearLayout>
+
+        <!-- side-by-side for HEADING_TO_CLIENT -->
+        <LinearLayout
+            android:id="@+id/layoutArrivedButtons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="10dp"
+            android:visibility="gone">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnNavigateToMapArrived"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="54dp"
+                android:layout_weight="0.35"
+                android:text="Map"
+                android:textColor="#004A99"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                app:strokeColor="#004A99"
+                app:strokeWidth="1dp"
+                app:icon="@drawable/ic_navigate_location"
+                app:iconGravity="textStart"
+                app:iconTint="#004A99"
+                android:layout_marginEnd="10dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnArrived"
+                android:layout_width="0dp"
+                android:layout_height="54dp"
+                android:layout_weight="0.65"
+                android:text="I Have Arrived"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:backgroundTint="#16A34A"
+                app:cornerRadius="14dp"
+                app:icon="@drawable/ic_check_circle"
+                app:iconGravity="textStart"
+                app:iconTint="#FFFFFF" />
+        </LinearLayout>
+
+        <!-- side-by-side for ARRIVED -->
+        <LinearLayout
+            android:id="@+id/layoutDoneButtons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="10dp"
+            android:visibility="gone">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnNavigateToMapDone"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="54dp"
+                android:layout_weight="0.35"
+                android:text="Map"
+                android:textColor="#004A99"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                app:strokeColor="#004A99"
+                app:strokeWidth="1dp"
+                app:icon="@drawable/ic_navigate_location"
+                app:iconGravity="textStart"
+                app:iconTint="#004A99"
+                android:layout_marginEnd="10dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRequestDone"
+                android:layout_width="0dp"
+                android:layout_height="54dp"
+                android:layout_weight="0.65"
+                android:text="Request Done"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:backgroundTint="#004A99"
+                app:cornerRadius="14dp"
+                app:icon="@drawable/ic_check"
+                app:iconGravity="textStart"
+                app:iconTint="#FFFFFF" />
+        </LinearLayout>
+
+        <!-- full width map for other states (if needed) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnNavigateToMap"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
@@ -290,58 +420,13 @@
             app:cornerRadius="14dp"
             app:strokeColor="#004A99"
             app:strokeWidth="1dp"
-            app:icon="@drawable/ic_location"
+            app:icon="@drawable/ic_navigate_location"
             app:iconGravity="textStart"
             app:iconTint="#004A99"
             android:layout_marginBottom="10dp"
             android:visibility="gone" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnStartHeading"
-            android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:text="Start Heading There"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:visibility="gone"
-            app:backgroundTint="#004A99"
-            app:cornerRadius="14dp"
-            app:icon="@drawable/ic_location"
-            app:iconGravity="textStart"
-            app:iconTint="#FFFFFF"
-            android:layout_marginBottom="10dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnArrived"
-            android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:text="I Have Arrived"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:visibility="gone"
-            app:backgroundTint="#16A34A"
-            app:cornerRadius="14dp"
-            app:icon="@drawable/ic_check_circle"
-            app:iconGravity="textStart"
-            app:iconTint="#FFFFFF"
-            android:layout_marginBottom="10dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnRequestDone"
-            android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:text="Request Done"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:visibility="gone"
-            app:backgroundTint="#004A99"
-            app:cornerRadius="14dp"
-            app:icon="@drawable/ic_check"
-            app:iconGravity="textStart"
-            app:iconTint="#FFFFFF" />
     </LinearLayout>
+
+
 
 </LinearLayout>

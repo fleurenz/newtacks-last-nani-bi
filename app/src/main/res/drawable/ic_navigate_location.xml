@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Trifold map outline (closed outer shape) -->
+    <path
+        android:pathData="M3,6 L8,9 L14,6 L14,18 L8,21 L3,18 Z"
+        android:fillColor="#00000000"
+        android:strokeColor="#000000"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Middle fold line -->
+    <path
+        android:pathData="M8,9 L8,21"
+        android:fillColor="#00000000"
+        android:strokeColor="#000000"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Compass outer circle -->
+    <path
+        android:pathData="M21.3,6.5 a3.3,3.3 0 1,0 -6.6,0 a3.3,3.3 0 1,0 6.6,0"
+        android:fillColor="#00000000"
+        android:strokeColor="#000000"
+        android:strokeWidth="1.8" />
+
+    <!-- Compass needle (filled diamond) -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M18,5 L19.1,6.5 L18,8 L16.9,6.5 Z" />
+
+</vector>
