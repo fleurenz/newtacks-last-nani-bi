@@ -106,14 +106,14 @@
                         <View
                             android:layout_width="4dp"
                             android:layout_height="20dp"
-                            android:background="#004A99"
+                            android:background="#0F325E"
                             android:layout_marginEnd="10dp" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="JOB DETAILS"
-                            android:textColor="#004A99"
+                            android:textColor="#0F325E"
                             android:textSize="11sp"
                             android:textStyle="bold"
                             android:letterSpacing="0.1" />
@@ -221,7 +221,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Update your progress to keep the client informed."
-                        android:textColor="#004A99"
+                        android:textColor="#0F325E"
                         android:textSize="12sp"
                         android:lineSpacingExtra="3dp" />
                 </LinearLayout>
@@ -295,15 +295,15 @@
                 android:layout_height="54dp"
                 android:layout_weight="0.35"
                 android:text="Map"
-                android:textColor="#004A99"
+                android:textColor="#0F325E"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 app:cornerRadius="14dp"
-                app:strokeColor="#004A99"
+                app:strokeColor="#0F325E"
                 app:strokeWidth="1dp"
                 app:icon="@drawable/ic_navigate_location"
                 app:iconGravity="textStart"
-                app:iconTint="#004A99"
+                app:iconTint="#0F325E"
                 android:layout_marginEnd="10dp" />
 
             <com.google.android.material.button.MaterialButton
@@ -315,7 +315,7 @@
                 android:textColor="#FFFFFF"
                 android:textSize="15sp"
                 android:textStyle="bold"
-                app:backgroundTint="#004A99"
+                app:backgroundTint="#0F325E"
                 app:cornerRadius="14dp"
                 app:icon="@drawable/ic_location"
                 app:iconGravity="textStart"
@@ -338,15 +338,15 @@
                 android:layout_height="54dp"
                 android:layout_weight="0.35"
                 android:text="Map"
-                android:textColor="#004A99"
+                android:textColor="#0F325E"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 app:cornerRadius="14dp"
-                app:strokeColor="#004A99"
+                app:strokeColor="#0F325E"
                 app:strokeWidth="1dp"
                 app:icon="@drawable/ic_navigate_location"
                 app:iconGravity="textStart"
-                app:iconTint="#004A99"
+                app:iconTint="#0F325E"
                 android:layout_marginEnd="10dp" />
 
             <com.google.android.material.button.MaterialButton
@@ -381,15 +381,15 @@
                 android:layout_height="54dp"
                 android:layout_weight="0.35"
                 android:text="Map"
-                android:textColor="#004A99"
+                android:textColor="#0F325E"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 app:cornerRadius="14dp"
-                app:strokeColor="#004A99"
+                app:strokeColor="#0F325E"
                 app:strokeWidth="1dp"
                 app:icon="@drawable/ic_navigate_location"
                 app:iconGravity="textStart"
-                app:iconTint="#004A99"
+                app:iconTint="#0F325E"
                 android:layout_marginEnd="10dp" />
 
             <com.google.android.material.button.MaterialButton
@@ -401,7 +401,7 @@
                 android:textColor="#FFFFFF"
                 android:textSize="15sp"
                 android:textStyle="bold"
-                app:backgroundTint="#004A99"
+                app:backgroundTint="#0F325E"
                 app:cornerRadius="14dp"
                 app:icon="@drawable/ic_check"
                 app:iconGravity="textStart"
@@ -415,14 +415,14 @@
             android:layout_width="match_parent"
             android:layout_height="54dp"
             android:text="Navigate to Job Site"
-            android:textColor="#004A99"
+            android:textColor="#0F325E"
             android:textStyle="bold"
             app:cornerRadius="14dp"
-            app:strokeColor="#004A99"
+            app:strokeColor="#0F325E"
             app:strokeWidth="1dp"
             app:icon="@drawable/ic_navigate_location"
             app:iconGravity="textStart"
-            app:iconTint="#004A99"
+            app:iconTint="#0F325E"
             android:layout_marginBottom="10dp"
             android:visibility="gone" />
     </LinearLayout>

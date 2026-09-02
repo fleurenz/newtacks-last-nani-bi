@@ -199,7 +199,7 @@ class WorkerJobFragment : Fragment() {
             }
             "HEADING_TO_CLIENT" -> {
                 tvStatus.text = "Heading to Location..."
-                tvStatus.setTextColor(android.graphics.Color.parseColor("#2563EB"))
+                tvStatus.setTextColor(android.graphics.Color.parseColor("#0F325E"))
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_blue)
                 layoutArrivedButtons.visibility = View.VISIBLE
                 btnArrived.visibility = View.VISIBLE

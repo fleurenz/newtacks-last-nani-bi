@@ -69,7 +69,7 @@
         android:layout_margin="16dp"
         android:src="@drawable/ic_inbox"
         app:backgroundTint="#FFFFFF"
-        app:tint="#004A99"
+        app:tint="#0F325E"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:contentDescription="Toggle Job List" />
@@ -92,7 +92,7 @@
             android:layout_marginBottom="16dp"
             android:src="@drawable/ic_location"
             app:backgroundTint="#FFFFFF"
-            app:tint="#004A99"
+            app:tint="#0F325E"
             android:contentDescription="Go to my location" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -140,7 +140,7 @@
                 android:layout_height="wrap_content"
                 android:padding="16dp"
                 android:text="Available Jobs"
-                android:textColor="#004A99"
+                android:textColor="#0F325E"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 

@@ -99,7 +99,7 @@
         android:textColor="#FFFFFF"
         android:textSize="14sp"
         android:textStyle="bold"
-        app:backgroundTint="#004A99"
+        app:backgroundTint="#0F325E"
         app:cornerRadius="10dp" />
 
 </LinearLayout>

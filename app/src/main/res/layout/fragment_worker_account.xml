@@ -10,14 +10,14 @@
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#004A99"
+        android:background="#0F325E"
         android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsingToolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:contentScrim="#004A99"
+            app:contentScrim="#0F325E"
             app:expandedTitleGravity="center|bottom"
             app:expandedTitleMarginBottom="80dp"
             app:layout_scrollFlags="scroll|exitUntilCollapsed|snap"
@@ -153,7 +153,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
-                        android:textColor="#004A99"
+                        android:textColor="#0F325E"
                         android:textSize="28sp"
                         android:textStyle="bold" />
 
@@ -228,13 +228,13 @@
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         android:background="@drawable/bg_circle"
-                        android:backgroundTint="#EBF2FF"
+                        android:backgroundTint="#F1F5F9"
                         android:gravity="center">
                         <ImageView
                             android:layout_width="18dp"
                             android:layout_height="18dp"
                             android:src="@drawable/ic_nav_account"
-                            app:tint="#004A99" />
+                            app:tint="#0F325E" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -282,13 +282,13 @@
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         android:background="@drawable/bg_circle"
-                        android:backgroundTint="#EBF2FF"
+                        android:backgroundTint="#F1F5F9"
                         android:gravity="center">
                         <ImageView
                             android:layout_width="18dp"
                             android:layout_height="18dp"
                             android:src="@drawable/ic_nav_requests"
-                            app:tint="#004A99" />
+                            app:tint="#0F325E" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -464,13 +464,13 @@
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         android:background="@drawable/bg_circle"
-                        android:backgroundTint="#EBF2FF"
+                        android:backgroundTint="#F1F5F9"
                         android:gravity="center">
                         <ImageView
                             android:layout_width="18dp"
                             android:layout_height="18dp"
                             android:src="@drawable/ic_inbox"
-                            app:tint="#004A99" />
+                            app:tint="#0F325E" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -525,7 +525,7 @@
                         android:text="NC1"
                         android:textSize="12sp"
                         app:cornerRadius="8dp"
-                        app:strokeColor="#004A99" />
+                        app:strokeColor="#0F325E" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnUploadNC2"
@@ -537,7 +537,7 @@
                         android:text="NC2"
                         android:textSize="12sp"
                         app:cornerRadius="8dp"
-                        app:strokeColor="#004A99" />
+                        app:strokeColor="#0F325E" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnUploadNC3"
@@ -548,7 +548,7 @@
                         android:text="NC3"
                         android:textSize="12sp"
                         app:cornerRadius="8dp"
-                        app:strokeColor="#004A99" />
+                        app:strokeColor="#0F325E" />
                 </LinearLayout>
             </LinearLayout>
 
