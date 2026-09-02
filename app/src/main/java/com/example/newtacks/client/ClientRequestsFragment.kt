@@ -16,6 +16,7 @@ import com.example.newtacks.models.Job
 import com.example.newtacks.models.Receipt
 import com.example.newtacks.models.Review
 import com.example.newtacks.models.User
+import com.example.newtacks.utils.DistanceUtils
 import com.example.newtacks.utils.ImageUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
@@ -130,11 +131,12 @@ class ClientRequestsFragment : Fragment() {
                     return@addSnapshotListener
                 }
 
-                // Filter for active statuses locally
+                // Filter for active statuses locally and pick the NEWEST one in case of duplicates
                 val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
                 val job = snapshots?.documents
                     ?.mapNotNull { it.toObject(Job::class.java) }
-                    ?.firstOrNull { it.status in activeStatuses }
+                    ?.filter { it.status in activeStatuses }
+                    ?.maxByOrNull { it.createdAt }
 
                 if (job == null) {
                     showEmptyState()
@@ -258,8 +260,8 @@ class ClientRequestsFragment : Fragment() {
                             job.latitude, job.longitude,
                             results
                         )
-                        val distanceKm = results[0] / 1000
-                        progressText.text = String.format(Locale.getDefault(), "Worker is %.1f km away", distanceKm)
+                        val distanceStr = DistanceUtils.formatDistance(results[0])
+                        progressText.text = String.format(Locale.getDefault(), "Worker is %s away", distanceStr)
                     }
                 }
             }
@@ -286,6 +288,9 @@ class ClientRequestsFragment : Fragment() {
                 }
                 
                 cardWorkerInfo.visibility = View.VISIBLE
+                
+                // Also track worker distance in real-time if job is in appropriate status
+                currentJob?.let { startTrackingWorkerDistance(it) }
             }
     }
 

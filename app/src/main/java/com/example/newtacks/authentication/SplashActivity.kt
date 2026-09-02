@@ -1,12 +1,17 @@
 package com.example.newtacks.authentication
 
+import android.content.Context
 import android.content.Intent
+import android.location.LocationManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import com.example.newtacks.ClientDashboardActivity
@@ -23,6 +28,16 @@ class SplashActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var currentProgress = 0
 
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
+            val allGranted = results.values.all { it }
+            if (allGranted) {
+                checkGpsAndStart()
+            } else {
+                showRequirementsDialog("Permissions Required", "NewTacks requires Location and Notification permissions to function properly. Please grant them to continue.")
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -31,7 +46,55 @@ class SplashActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.splashProgress)
         tvStatus    = findViewById(R.id.tvSplashStatus)
 
-        startLoadingSequence()
+        checkPermissionsAndStart()
+    }
+
+    private fun checkPermissionsAndStart() {
+        val permissions = mutableListOf(
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        val allGranted = permissions.all {
+            androidx.core.content.ContextCompat.checkSelfPermission(this, it) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        }
+
+        if (allGranted) {
+            checkGpsAndStart()
+        } else {
+            requestPermissionLauncher.launch(permissions.toTypedArray())
+        }
+    }
+
+    private fun checkGpsAndStart() {
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || 
+                          locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+
+        if (isGpsEnabled) {
+            startLoadingSequence()
+        } else {
+            showRequirementsDialog("GPS Required", "Your device's location services are turned off. Please enable GPS to use NewTacks.")
+        }
+    }
+
+    private fun showRequirementsDialog(title: String, message: String) {
+        AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(message)
+            .setCancelable(false)
+            .setPositiveButton("Check Again") { _, _ ->
+                checkPermissionsAndStart()
+            }
+            .setNegativeButton("Settings") { _, _ ->
+                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                startActivity(intent)
+            }
+            .show()
     }
 
     // --------------------------------------------------

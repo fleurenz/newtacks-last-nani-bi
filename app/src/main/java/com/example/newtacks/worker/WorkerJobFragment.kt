@@ -13,6 +13,7 @@ import coil.transform.CircleCropTransformation
 import com.example.newtacks.R
 import com.example.newtacks.models.Job
 import com.example.newtacks.models.User
+import com.example.newtacks.utils.DistanceUtils
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
@@ -46,6 +47,7 @@ class WorkerJobFragment : Fragment() {
 
     private var currentJob: Job? = null
     private var currentJobId: String? = null
+    private var clientLocationListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -154,6 +156,9 @@ class WorkerJobFragment : Fragment() {
 
         tvStatus.visibility = View.VISIBLE
         
+        // Listen for client's dynamic location updates
+        listenForClientLocation(job.clientId, job.latitude, job.longitude)
+        
         // Default visibility
         btnStartHeading.visibility = View.GONE
         btnArrived.visibility      = View.GONE
@@ -214,7 +219,8 @@ class WorkerJobFragment : Fragment() {
     }
 
     private fun showLiveDistance(jobLat: Double, jobLng: Double) {
-        if (androidx.core.content.ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) 
+        val context = context ?: return
+        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) 
             != android.content.pm.PackageManager.PERMISSION_GRANTED) return
 
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
@@ -225,8 +231,56 @@ class WorkerJobFragment : Fragment() {
                     jobLat, jobLng,
                     results
                 )
-                val distanceKm = results[0] / 1000
-                tvStatus.text = String.format(Locale.getDefault(), "Heading to Location... (%.1f km away)", distanceKm)
+                val distanceStr = DistanceUtils.formatDistance(results[0])
+                
+                // If we have a client location listener, it will update tvStatus
+                // This is just the initial calculation
+                if (clientLocationListener == null) {
+                    tvStatus.text = String.format(Locale.getDefault(), "Heading to Location... (%s away)", distanceStr)
+                }
+            }
+        }
+    }
+
+    private fun listenForClientLocation(clientId: String, jobLat: Double, jobLng: Double) {
+        clientLocationListener?.remove()
+        
+        clientLocationListener = firestore.collection("users").document(clientId)
+            .addSnapshotListener { snapshot, _ ->
+                val user = snapshot?.toObject(User::class.java)
+                val cLat = user?.latitude ?: jobLat
+                val cLng = user?.longitude ?: jobLng
+                
+                updateDistanceUI(cLat, cLng)
+            }
+    }
+
+    private fun updateDistanceUI(cLat: Double, cLng: Double) {
+        if (!isAdded) return
+        val context = context ?: return
+        
+        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) 
+            != android.content.pm.PackageManager.PERMISSION_GRANTED) return
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+                val results = FloatArray(1)
+                android.location.Location.distanceBetween(
+                    location.latitude, location.longitude,
+                    cLat, cLng,
+                    results
+                )
+                val distanceStr = DistanceUtils.formatDistance(results[0])
+                
+                val currentStatus = currentJob?.status ?: ""
+                when (currentStatus) {
+                    "HEADING_TO_CLIENT" -> {
+                        tvStatus.text = String.format(Locale.getDefault(), "Heading to Client... (%s away)", distanceStr)
+                    }
+                    "ARRIVED" -> {
+                        tvStatus.text = String.format(Locale.getDefault(), "Arrived (%s from client)", distanceStr)
+                    }
+                }
             }
         }
     }
@@ -428,5 +482,6 @@ class WorkerJobFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         listener?.remove()
+        clientLocationListener?.remove()
     }
 }

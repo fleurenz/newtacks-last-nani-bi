@@ -3,6 +3,7 @@ package com.example.newtacks.worker
 import android.os.Bundle
 import android.view.*
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -57,6 +58,17 @@ class WorkerFeedFragment : Fragment() {
     private val myActiveHandshakeJobs = mutableListOf<Job>()
     private val hiringList = mutableListOf<com.example.newtacks.models.HiringPost>()
 
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                mapLibreMap?.let { enableUserLocation(it, moveCamera = true) }
+            } else {
+                context?.let {
+                    Toast.makeText(it, "Location permission is required to see your position", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
     private val refreshWaypointTask = object : Runnable {
         override fun run() {
@@ -103,7 +115,7 @@ class WorkerFeedFragment : Fragment() {
 
         fabMyLocation.setOnClickListener {
             mapLibreMap?.let { map ->
-                if (map.locationComponent.isLocationComponentActivated) {
+                if (map.locationComponent.isLocationComponentActivated && map.locationComponent.isLocationComponentEnabled) {
                     val lastLoc = map.locationComponent.lastKnownLocation
                     if (lastLoc != null) {
                         map.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lastLoc.latitude, lastLoc.longitude), 15.0))
@@ -111,7 +123,8 @@ class WorkerFeedFragment : Fragment() {
                         Toast.makeText(requireContext(), "Getting location...", Toast.LENGTH_SHORT).show()
                     }
                 } else {
-                    enableUserLocation(map)
+                    // Explicit user request: force the permission popup
+                    enableUserLocation(map, moveCamera = true, forceRequest = true)
                 }
             }
         }
@@ -153,12 +166,16 @@ class WorkerFeedFragment : Fragment() {
         }
     }
 
-    private fun enableUserLocation(map: MapLibreMap, moveCamera: Boolean = false) {
-        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) 
-            == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            
+    private fun enableUserLocation(map: MapLibreMap, moveCamera: Boolean = false, forceRequest: Boolean = false) {
+        val context = context ?: return
+        if (!isAdded) return
+        val style = map.style ?: return
+
+        val hasPermission = ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
             val locationComponent = map.locationComponent
-            val activationOptions = LocationComponentActivationOptions.builder(requireContext(), map.style!!)
+            val activationOptions = LocationComponentActivationOptions.builder(context, style)
                 .build()
             
             locationComponent.activateLocationComponent(activationOptions)
@@ -167,30 +184,27 @@ class WorkerFeedFragment : Fragment() {
             locationComponent.renderMode = RenderMode.COMPASS
             
             if (moveCamera) {
-                // Try to get last location to center the map immediately
                 fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                    if (location != null) {
+                    if (location != null && isAdded) {
                         map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 15.0))
-                    } else {
-                        // Fallback to Davao if GPS is off/null
+                    } else if (isAdded) {
                         val davaoCityHall = LatLng(7.0648, 125.6079) 
                         map.moveCamera(CameraUpdateFactory.newLatLngZoom(davaoCityHall, 13.0))
                     }
                 }
             }
-        } else {
-            // Request permission if not granted
-            @Suppress("DEPRECATION")
-            requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1002)
+        } else if (forceRequest) {
+            // Only request if the user explicitly triggered this (e.g. clicked My Location button)
+            handler.post {
+                if (isAdded) {
+                    requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                }
+            }
         }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        if (requestCode == 1002 && grantResults.isNotEmpty() && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            mapLibreMap?.let { enableUserLocation(it, moveCamera = true) }
-        } else {
-            Toast.makeText(requireContext(), "Location permission is required to see your position", Toast.LENGTH_SHORT).show()
-        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
     // --------------------------------------------------

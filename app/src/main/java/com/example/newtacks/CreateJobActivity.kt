@@ -62,6 +62,8 @@ class CreateJobActivity : AppCompatActivity() {
     private var profileLng = 0.0
 
     private var isUserEditingTitle = false
+    private var isSubmitting = false
+    private var isDetectingLocation = false
 
     private val selectedImages = mutableListOf<Uri>()
 
@@ -167,6 +169,7 @@ class CreateJobActivity : AppCompatActivity() {
             if (isChecked) {
                 detectRealTimeLocation()
             } else {
+                isDetectingLocation = false
                 restoreProfileLocation()
             }
         }
@@ -341,16 +344,27 @@ class CreateJobActivity : AppCompatActivity() {
             return
         }
 
+        isDetectingLocation = true
+        etClientAddress.setText("Detecting location...")
+
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
             .addOnSuccessListener { location ->
+                isDetectingLocation = false
                 if (location != null) {
                     selectedLat = location.latitude
                     selectedLng = location.longitude
                     reverseGeocode(location.latitude, location.longitude)
                 } else {
-                    Toast.makeText(this, "Could not get location", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Could not get location. Ensure GPS is on.", Toast.LENGTH_SHORT).show()
                     switchRealTimeLocation.isChecked = false
+                    restoreProfileLocation()
                 }
+            }
+            .addOnFailureListener {
+                isDetectingLocation = false
+                Toast.makeText(this, "Location detection failed", Toast.LENGTH_SHORT).show()
+                switchRealTimeLocation.isChecked = false
+                restoreProfileLocation()
             }
     }
 
@@ -360,9 +374,12 @@ class CreateJobActivity : AppCompatActivity() {
             val addresses = geocoder.getFromLocation(lat, lng, 1)
             if (addresses != null && addresses.isNotEmpty()) {
                 etClientAddress.setText(addresses[0].getAddressLine(0))
+            } else {
+                etClientAddress.setText("Coordinates found, but address unavailable")
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            etClientAddress.setText("Coordinates found, but address unavailable")
         }
     }
 
@@ -391,11 +408,16 @@ class CreateJobActivity : AppCompatActivity() {
     // ---------------- SUBMIT JOB ----------------
 
     private fun submitJob() {
+        if (isSubmitting) return
 
         val currentUser = auth.currentUser
-
         if (currentUser == null) {
             Toast.makeText(this, "User not authenticated", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (isDetectingLocation) {
+            Toast.makeText(this, "Still detecting location. Please wait.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -416,6 +438,7 @@ class CreateJobActivity : AppCompatActivity() {
             jobTitle.isEmpty() ||
             clientName.isEmpty() ||
             clientAddress.isEmpty() ||
+            clientAddress == "Detecting location..." ||
             selectedDate.isEmpty() ||
             selectedTime.isEmpty() ||
             durationInput.isEmpty() ||
@@ -427,7 +450,7 @@ class CreateJobActivity : AppCompatActivity() {
         }
 
         if (selectedLat == 0.0 || selectedLng == 0.0) {
-            Toast.makeText(this, "Location coordinates not found. Please try toggling real-time location or check your profile.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Location coordinates not found. Please ensure your location is set correctly.", Toast.LENGTH_LONG).show()
             return
         }
 
@@ -440,7 +463,9 @@ class CreateJobActivity : AppCompatActivity() {
         }
 
         // ---------------- UI LOCK ----------------
+        isSubmitting = true
         btnSubmit.isEnabled = false
+        btnSubmit.text = "Submitting..."
 
         // ---------------- CHECK ACTIVE JOB FIRST ----------------
 
@@ -471,7 +496,9 @@ class CreateJobActivity : AppCompatActivity() {
                 uploadImagesAndCreateJob(currentUser.uid, clientName, clientAddress, jobTitle, serviceCategory, estimatedDuration, offeredAmount, description)
             }
             .addOnFailureListener {
+                isSubmitting = false
                 btnSubmit.isEnabled = true
+                btnSubmit.text = "Submit Request"
                 Toast.makeText(this, "Error checking active jobs", Toast.LENGTH_SHORT).show()
             }
     }
@@ -530,42 +557,59 @@ class CreateJobActivity : AppCompatActivity() {
         description: String,
         jobImages: List<String>
     ) {
-        val jobId = firestore.collection("jobs").document().id
-        val now = System.currentTimeMillis()
-        val job = Job(
-            jobId = jobId,
-            clientId = uid,
-            clientName = clientName,
-            clientAddress = clientAddress,
-            jobTitle = jobTitle,
-            serviceCategory = serviceCategory,
-            scheduledDate = selectedDate,
-            scheduledTime = selectedTime,
-            estimatedDurationHours = estimatedDuration,
-            offeredAmount = offeredAmount,
-            description = description,
-            status = "AVAILABLE",
-            jobImages = jobImages,
-            latitude = selectedLat,
-            longitude = selectedLng,
-            createdAt = now,
-            expiresAt = 0 // No expiration for client jobs
-        )
+        val jobsRef = firestore.collection("jobs")
+        
+        // Final sanity check before writing: re-verify no active job exists
+        jobsRef.whereEqualTo("clientId", uid).get().addOnSuccessListener { snapshots ->
+            val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
+            val hasActiveJob = snapshots.documents.any { it.getString("status") in activeStatuses }
 
-        firestore.collection("jobs")
-            .document(jobId)
-            .set(job)
-            .addOnSuccessListener {
-                Toast.makeText(this, "Job Submitted Successfully", Toast.LENGTH_SHORT).show()
-                val intent = Intent(this, ClientDashboardActivity::class.java)
-                intent.putExtra(ClientDashboardActivity.OPEN_FRAGMENT, "REQUESTS")
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-                finish()
-            }
-            .addOnFailureListener {
+            if (hasActiveJob) {
+                Toast.makeText(this, "You already have an active request", Toast.LENGTH_LONG).show()
+                isSubmitting = false
                 btnSubmit.isEnabled = true
-                Toast.makeText(this, "Failed to submit job", Toast.LENGTH_SHORT).show()
+                btnSubmit.text = "Submit Request"
+                return@addOnSuccessListener
             }
+
+            // proceed with creation
+            val jobId = jobsRef.document().id
+            val now = System.currentTimeMillis()
+            val job = Job(
+                jobId = jobId,
+                clientId = uid,
+                clientName = clientName,
+                clientAddress = clientAddress,
+                jobTitle = jobTitle,
+                serviceCategory = serviceCategory,
+                scheduledDate = selectedDate,
+                scheduledTime = selectedTime,
+                estimatedDurationHours = estimatedDuration,
+                offeredAmount = offeredAmount,
+                description = description,
+                status = "AVAILABLE",
+                jobImages = jobImages,
+                latitude = selectedLat,
+                longitude = selectedLng,
+                createdAt = now,
+                expiresAt = 0 // No expiration for client jobs
+            )
+
+            jobsRef.document(jobId).set(job)
+                .addOnSuccessListener {
+                    Toast.makeText(this, "Job Submitted Successfully", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, ClientDashboardActivity::class.java)
+                    intent.putExtra(ClientDashboardActivity.OPEN_FRAGMENT, "REQUESTS")
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                    finish()
+                }
+                .addOnFailureListener {
+                    isSubmitting = false
+                    btnSubmit.isEnabled = true
+                    btnSubmit.text = "Submit Request"
+                    Toast.makeText(this, "Failed to submit job", Toast.LENGTH_SHORT).show()
+                }
+        }
     }
 }

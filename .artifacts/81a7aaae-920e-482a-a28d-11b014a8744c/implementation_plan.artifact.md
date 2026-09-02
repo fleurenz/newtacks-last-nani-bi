@@ -1,35 +1,36 @@
-# Implement "Navigate to Map" from Active Job
+# Real-time Location Tracking Implementation
 
-This plan adds a "Navigate" button to the active job screen for workers. Clicking it will switch the view to the Map Feed and zoom directly into the job's location.
+This plan enables continuous location synchronization between Workers and Clients during an active job handshake.
+
+## User Review Required
+
+> [!IMPORTANT]
+> - Users must keep the app open (at least in the foreground/dashboard) for updates to occur.
+> - Battery consumption will increase slightly while a job is active due to periodic GPS usage.
+> - Updates are pushed to Firestore every 10 seconds only when a job is in a handshake state (`IN_PROGRESS`, `HEADING_TO_CLIENT`, or `ARRIVED`).
 
 ## Proposed Changes
 
-### UI Layout
-
-#### [MODIFY] [fragment_worker_job.xml](file:///C:/Users/FRUSCHE/StudioProjects/newtacks-last-nani-bi/app/src/main/res/layout/fragment_worker_job.xml)
-- Add a new `MaterialButton` (ID: `btnNavigateToMap`) in the `layoutBottomButtons` section.
-- This button will be styled with an outline to differentiate it from the main status action buttons.
-
-### Navigation Logic
+### Dashboards (Background Sync)
 
 #### [MODIFY] [WorkerDashboardActivity.kt](file:///C:/Users/FRUSCHE/StudioProjects/newtacks-last-nani-bi/app/src/main/java/com/example/newtacks/WorkerDashboardActivity.kt)
-- Add a function `focusMapOnLocation(lat: Double, lng: Double)` that:
-    1. Switches the tab to `nav_feed`.
-    2. Calls a new `zoomToLocation` method on the `fragmentFeed`.
+- Initialize `FusedLocationProviderClient`.
+- Add `startLocationUpdates()` that pushes the worker's current coordinates to their Firestore `user` document.
+- Implement a listener that starts/stops these updates based on whether the worker has an active job.
 
-#### [MODIFY] [WorkerFeedFragment.kt](file:///C:/Users/FRUSCHE/StudioProjects/newtacks-last-nani-bi/app/src/main/java/com/example/newtacks/worker/WorkerFeedFragment.kt)
-- Add a public function `zoomToLocation(lat: Double, lng: Double)` that animates the map camera to the given coordinates.
+#### [MODIFY] [ClientDashboardActivity.kt](file:///C:/Users/FRUSCHE/StudioProjects/newtacks-last-nani-bi/app/src/main/java/com/example/newtacks/ClientDashboardActivity.kt)
+- Mirror the worker logic: Push client coordinates to Firestore only when a request is active and a worker is assigned.
+
+### Handshake Screens (UI Tracking)
 
 #### [MODIFY] [WorkerJobFragment.kt](file:///C:/Users/FRUSCHE/StudioProjects/newtacks-last-nani-bi/app/src/main/java/com/example/newtacks/worker/WorkerJobFragment.kt)
-- Initialize `btnNavigateToMap`.
-- Show/hide the button based on whether a job is active.
-- Set a click listener that calls `focusMapOnLocation` using the current job's coordinates.
+- Add a `clientLocationListener` that monitors the client's `user` document.
+- Update the `tvStatus` text to show the distance between the worker and the client (e.g., "Arrived at Location (0.1 km away)").
 
 ## Verification Plan
 
 ### Manual Verification
-1.  **Accept a Job**: As a worker, accept a job from the feed.
-2.  **Navigate**: On the Job tab, you should see a "Navigate to Job Site" button.
-3.  **Click**: Tap the button. Verify that:
-    - The bottom navigation switches back to the Feed tab.
-    - The map automatically zooms into the job's pin location.
+1.  **Handshake Start**: As a worker, accept a job and click "Start Heading There".
+2.  **Worker Movement**: Move the worker device. Verify the client device updates the distance text in real-time.
+3.  **Client Movement**: Move the client device. Verify the worker device updates the distance text in real-time.
+4.  **Completion**: Mark the job as "Done". Verify that location updates stop (battery saving).

@@ -8,10 +8,14 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
-import com.example.newtacks.chatbot.presentation.ui.ChatActivity
+import com.example.newtacks.utils.ChatbotUtils
 import com.example.newtacks.worker.*
+import com.google.android.gms.location.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 
 class WorkerDashboardActivity : AppCompatActivity() {
 
@@ -21,14 +25,18 @@ class WorkerDashboardActivity : AppCompatActivity() {
 
     private var backPressedTime: Long = 0
 
-    // ✅ Create fragment instances once — never recreated on tab switch
-    private val fragmentFeed    = WorkerFeedFragment()
-    private val fragmentJob     = WorkerJobFragment()
-    private val fragmentHiring  = WorkerHiringFragment()
-    private val fragmentHistory = WorkerHistoryFragment()
-    private val fragmentAccount = WorkerAccountFragment()
+    // ✅ Fragments (Lazy or restored)
+    private var fragmentFeed: WorkerFeedFragment? = null
+    private var fragmentJob: WorkerJobFragment? = null
+    private var fragmentHiring: WorkerHiringFragment? = null
+    private var fragmentHistory: WorkerHistoryFragment? = null
+    private var fragmentAccount: WorkerAccountFragment? = null
 
-    private var activeFragment: Fragment = fragmentFeed
+    private var activeFragment: Fragment? = null
+
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var locationCallback: LocationCallback? = null
+    private var jobHandshakeListener: ListenerRegistration? = null
 
     fun switchTab(tabId: Int) {
         val bottomNav = findViewById<BottomNavigationView>(R.id.workerBottomNav)
@@ -37,60 +45,7 @@ class WorkerDashboardActivity : AppCompatActivity() {
 
     fun focusMapOnLocation(lat: Double, lng: Double) {
         switchTab(R.id.nav_feed)
-        fragmentFeed.zoomToLocation(lat, lng)
-    }
-
-    private fun setupDraggableChatHead() {
-        val fab = findViewById<FloatingActionButton>(R.id.fabChat)
-        var dX = 0f
-        var dY = 0f
-        
-        var startX = 0f
-        var startY = 0f
-        val clickThreshold = 10 // pixels
-
-        fab.setOnTouchListener { view, event ->
-            when (event.actionMasked) {
-                android.view.MotionEvent.ACTION_DOWN -> {
-                    dX = view.x - event.rawX
-                    dY = view.y - event.rawY
-                    startX = event.rawX
-                    startY = event.rawY
-                    view.animate().scaleX(1.1f).scaleY(1.1f).alpha(1.0f).setDuration(100).start()
-                }
-                android.view.MotionEvent.ACTION_MOVE -> {
-                    view.y = event.rawY + dY
-                    view.x = event.rawX + dX
-                }
-                android.view.MotionEvent.ACTION_UP -> {
-                    val endX = event.rawX
-                    val endY = event.rawY
-                    val distance = Math.sqrt(Math.pow((endX - startX).toDouble(), 2.0) + Math.pow((endY - startY).toDouble(), 2.0))
-
-                    if (distance < clickThreshold) {
-                        view.performClick()
-                    } else {
-                        // Snap to edges
-                        val screenWidth = resources.displayMetrics.widthPixels
-                        val finalX = if (view.x + view.width / 2 < screenWidth / 2) {
-                            16f // Snap to left
-                        } else {
-                            (screenWidth - view.width - 16).toFloat() // Snap to right
-                        }
-                        
-                        view.animate()
-                            .x(finalX)
-                            .scaleX(0.8f) // Shrink effect
-                            .scaleY(0.8f)
-                            .alpha(0.6f)  // Transparent effect
-                            .setDuration(300)
-                            .start()
-                    }
-                }
-                else -> return@setOnTouchListener false
-            }
-            true
-        }
+        fragmentFeed?.zoomToLocation(lat, lng)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -100,7 +55,6 @@ class WorkerDashboardActivity : AppCompatActivity() {
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.workerBottomNav)
 
-        // ✅ Apply insets
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.workerRootLayout)) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             bottomNav.setPadding(
@@ -112,32 +66,46 @@ class WorkerDashboardActivity : AppCompatActivity() {
             insets
         }
 
-        // ✅ Determine which fragment to start on
         val startFragment = intent.getStringExtra(OPEN_FRAGMENT)
-        activeFragment = when (startFragment) {
-            "JOB"     -> fragmentJob
-            "HIRING"  -> fragmentHiring
-            "HISTORY" -> fragmentHistory
-            "ACCOUNT" -> fragmentAccount
-            else      -> fragmentFeed
+        
+        // Handle fragment restoration during recreation
+        if (savedInstanceState == null) {
+            // Initial create
+            fragmentAccount = WorkerAccountFragment()
+            fragmentHistory = WorkerHistoryFragment()
+            fragmentHiring  = WorkerHiringFragment()
+            fragmentJob     = WorkerJobFragment()
+            fragmentFeed    = WorkerFeedFragment()
+
+            activeFragment = when (startFragment) {
+                "JOB"     -> fragmentJob
+                "HIRING"  -> fragmentHiring
+                "HISTORY" -> fragmentHistory
+                "ACCOUNT" -> fragmentAccount
+                else      -> fragmentFeed
+            }
+
+            supportFragmentManager.beginTransaction().apply {
+                add(R.id.workerFragmentContainer, fragmentAccount!!, "account").hide(fragmentAccount!!)
+                add(R.id.workerFragmentContainer, fragmentHistory!!, "history").hide(fragmentHistory!!)
+                add(R.id.workerFragmentContainer, fragmentHiring!!, "hiring").hide(fragmentHiring!!)
+                add(R.id.workerFragmentContainer, fragmentJob!!, "job").hide(fragmentJob!!)
+                add(R.id.workerFragmentContainer, fragmentFeed!!, "feed").hide(fragmentFeed!!)
+                show(activeFragment!!)
+            }.commit()
+        } else {
+            // Restore references from FragmentManager
+            fragmentAccount = supportFragmentManager.findFragmentByTag("account") as? WorkerAccountFragment
+            fragmentHistory = supportFragmentManager.findFragmentByTag("history") as? WorkerHistoryFragment
+            fragmentHiring  = supportFragmentManager.findFragmentByTag("hiring") as? WorkerHiringFragment
+            fragmentJob     = supportFragmentManager.findFragmentByTag("job") as? WorkerJobFragment
+            fragmentFeed    = supportFragmentManager.findFragmentByTag("feed") as? WorkerFeedFragment
+
+            // Find which one was visible
+            val fragments = listOf(fragmentAccount, fragmentHistory, fragmentHiring, fragmentJob, fragmentFeed)
+            activeFragment = fragments.find { it?.isVisible == true } ?: fragmentFeed
         }
 
-        // ✅ Add ALL fragments once, hide all except the active one
-        supportFragmentManager.beginTransaction().apply {
-            add(R.id.workerFragmentContainer, fragmentAccount, "account")
-            hide(fragmentAccount)
-            add(R.id.workerFragmentContainer, fragmentHistory, "history")
-            hide(fragmentHistory)
-            add(R.id.workerFragmentContainer, fragmentHiring, "hiring")
-            hide(fragmentHiring)
-            add(R.id.workerFragmentContainer, fragmentJob, "job")
-            hide(fragmentJob)
-            add(R.id.workerFragmentContainer, fragmentFeed, "feed")
-            hide(fragmentFeed)
-            show(activeFragment)
-        }.commit()
-
-        // ✅ Sync bottom nav selected item to match start fragment
         bottomNav.selectedItemId = when (startFragment) {
             "JOB"     -> R.id.nav_job
             "HIRING"  -> R.id.nav_hiring
@@ -146,13 +114,11 @@ class WorkerDashboardActivity : AppCompatActivity() {
             else      -> R.id.nav_feed
         }
 
-        findViewById<FloatingActionButton>(R.id.fabChat).setOnClickListener {
-            val intent = android.content.Intent(this, ChatActivity::class.java)
-            intent.putExtra("USER_ROLE", "worker")
-            startActivity(intent)
-        }
-
-        setupDraggableChatHead()
+        val fabChat = findViewById<FloatingActionButton>(R.id.fabChat)
+        ChatbotUtils.setupChatbot(this, fabChat, "worker")
+        
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        listenForActiveHandshake()
 
         bottomNav.setOnItemSelectedListener { item ->
             val target = when (item.itemId) {
@@ -164,20 +130,17 @@ class WorkerDashboardActivity : AppCompatActivity() {
                 else             -> return@setOnItemSelectedListener false
             }
 
-            // ✅ Only switch if tapping a DIFFERENT tab
-            if (target !== activeFragment) {
+            if (target != null && target !== activeFragment) {
                 supportFragmentManager.beginTransaction()
                     .setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
-                    .hide(activeFragment)
+                    .hide(activeFragment!!)
                     .show(target)
                     .commit()
                 activeFragment = target
             }
-
             true
         }
 
-        // Handle double back to exit
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (backPressedTime + 2000 > System.currentTimeMillis()) {
@@ -188,5 +151,72 @@ class WorkerDashboardActivity : AppCompatActivity() {
                 backPressedTime = System.currentTimeMillis()
             }
         })
+    }
+
+    private fun listenForActiveHandshake() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val db = FirebaseFirestore.getInstance()
+
+        jobHandshakeListener = db.collection("jobs")
+            .whereEqualTo("workerId", uid)
+            .addSnapshotListener { snapshots, _ ->
+                if (snapshots == null) return@addSnapshotListener
+                
+                val handshakeStatuses = listOf("IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED")
+                val hasActiveHandshake = snapshots.documents.any { 
+                    it.getString("status") in handshakeStatuses 
+                }
+
+                if (hasActiveHandshake) {
+                    startLocationUpdates()
+                } else {
+                    stopLocationUpdates()
+                }
+            }
+    }
+
+    private fun startLocationUpdates() {
+        if (locationCallback != null) return
+
+        // Silent permission check
+        val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (!hasPermission) return
+
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
+            .setMinUpdateIntervalMillis(5000)
+            .build()
+
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
+                val loc = result.lastLocation ?: return
+                updateWorkerLocationInFirestore(loc.latitude, loc.longitude)
+            }
+        }
+
+        if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) 
+            == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.requestLocationUpdates(request, locationCallback!!, android.os.Looper.getMainLooper())
+        }
+    }
+
+    private fun stopLocationUpdates() {
+        locationCallback?.let { fusedLocationClient.removeLocationUpdates(it) }
+        locationCallback = null
+    }
+
+    private fun updateWorkerLocationInFirestore(lat: Double, lng: Double) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        FirebaseFirestore.getInstance().collection("users").document(uid)
+            .update(mapOf(
+                "latitude" to lat,
+                "longitude" to lng,
+                "lastActive" to System.currentTimeMillis()
+            ))
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopLocationUpdates()
+        jobHandshakeListener?.remove()
     }
 }
