@@ -15,6 +15,8 @@ import coil.load
 import com.example.newtacks.R
 import com.example.newtacks.models.Job
 import com.example.newtacks.utils.ImageUtils
+import com.example.newtacks.utils.RouteApiService
+import com.example.newtacks.utils.RouteUtils
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -34,6 +36,8 @@ import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class WorkerFeedFragment : Fragment() {
 
@@ -42,6 +46,9 @@ class WorkerFeedFragment : Fragment() {
     private lateinit var fabToggleList: FloatingActionButton
     private lateinit var fabMyLocation: FloatingActionButton
     private lateinit var cardListOverlay: View
+    private lateinit var cardNavInfo: View
+    private lateinit var tvNavDistance: TextView
+    private lateinit var tvNavEstimate: TextView
     private lateinit var mapView: MapView
     private var mapLibreMap: MapLibreMap? = null
 
@@ -57,6 +64,18 @@ class WorkerFeedFragment : Fragment() {
     private val availableJobs = mutableListOf<Job>()
     private val myActiveHandshakeJobs = mutableListOf<Job>()
     private val hiringList = mutableListOf<com.example.newtacks.models.HiringPost>()
+
+    private val routeService: RouteApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://router.project-osrm.org/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(RouteApiService::class.java)
+    }
+
+    private var lastRoutePoints: List<LatLng>? = null
+    private var lastWorkerLatLng: LatLng? = null
+    private var activeJobId: String? = null
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -92,6 +111,9 @@ class WorkerFeedFragment : Fragment() {
         fabToggleList       = view.findViewById(R.id.fabToggleList)
         fabMyLocation       = view.findViewById(R.id.fabMyLocation)
         cardListOverlay     = view.findViewById(R.id.cardListOverlay)
+        cardNavInfo         = view.findViewById(R.id.cardNavInfo)
+        tvNavDistance       = view.findViewById(R.id.tvNavDistance)
+        tvNavEstimate       = view.findViewById(R.id.tvNavEstimate)
         mapView             = view.findViewById(R.id.mapView)
 
         fabZoomIn           = view.findViewById(R.id.fabZoomIn)
@@ -101,10 +123,7 @@ class WorkerFeedFragment : Fragment() {
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = WorkerJobAdapter(availableJobs) { job -> 
-            // When a job is clicked in the list:
-            // 1. Hide the list overlay
             cardListOverlay.visibility = View.GONE
-            // 2. Animate camera to the job location
             mapLibreMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(job.latitude, job.longitude), 15.0))
         }
         recyclerView.adapter = adapter
@@ -123,15 +142,11 @@ class WorkerFeedFragment : Fragment() {
                         Toast.makeText(requireContext(), "Getting location...", Toast.LENGTH_SHORT).show()
                     }
                 } else {
-                    // Explicit user request: force the permission popup
                     enableUserLocation(map, moveCamera = true, forceRequest = true)
                 }
             }
         }
 
-        // --------------------------------------------------
-        // ✅ ZOOM CONTROLS
-        // --------------------------------------------------
         fabZoomIn.setOnClickListener {
             mapLibreMap?.animateCamera(CameraUpdateFactory.zoomIn())
         }
@@ -139,9 +154,6 @@ class WorkerFeedFragment : Fragment() {
             mapLibreMap?.animateCamera(CameraUpdateFactory.zoomOut())
         }
 
-        // --------------------------------------------------
-        // ✅ WINDOW INSETS
-        // --------------------------------------------------
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             fabToggleList.updateLayoutParams<ViewGroup.MarginLayoutParams> {
@@ -151,19 +163,12 @@ class WorkerFeedFragment : Fragment() {
         }
 
         listenForJobs()
-        initMap() // Always init map now
+        initMap()
         return view
     }
 
     fun zoomToLocation(lat: Double, lng: Double) {
         mapLibreMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 15.0))
-    }
-
-    private fun setupWorkerInfo() {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        db.collection("users").document(uid).get().addOnSuccessListener { 
-            // Update UI or logic here if needed
-        }
     }
 
     private fun enableUserLocation(map: MapLibreMap, moveCamera: Boolean = false, forceRequest: Boolean = false) {
@@ -194,7 +199,6 @@ class WorkerFeedFragment : Fragment() {
                 }
             }
         } else if (forceRequest) {
-            // Only request if the user explicitly triggered this (e.g. clicked My Location button)
             handler.post {
                 if (isAdded) {
                     requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
@@ -207,13 +211,9 @@ class WorkerFeedFragment : Fragment() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
-    // --------------------------------------------------
-    // LIVE JOB FEED
-    // --------------------------------------------------
     private fun listenForJobs() {
         val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-        // 1. Listen for AVAILABLE jobs (for everyone)
         availableJobsListener = db.collection("jobs")
             .whereEqualTo("status", "AVAILABLE")
             .addSnapshotListener { snapshots, _ ->
@@ -227,7 +227,6 @@ class WorkerFeedFragment : Fragment() {
                 updateMapMarkers()
             }
 
-        // 2. Listen for MY active handshake jobs (until I arrive)
         if (currentUid.isNotEmpty()) {
             activeHandshakeListener = db.collection("jobs")
                 .whereEqualTo("workerId", currentUid)
@@ -235,17 +234,26 @@ class WorkerFeedFragment : Fragment() {
                     if (snapshots == null) return@addSnapshotListener
                     myActiveHandshakeJobs.clear()
                     val handshakeStatuses = listOf("IN_PROGRESS", "HEADING_TO_CLIENT")
+                    
+                    var newActiveJobId: String? = null
                     for (doc in snapshots) {
                         val job = doc.toObject(Job::class.java)
                         if (job.status in handshakeStatuses) {
                             myActiveHandshakeJobs.add(job)
+                            newActiveJobId = job.jobId
                         }
                     }
+
+                    if (newActiveJobId != activeJobId) {
+                        activeJobId = newActiveJobId
+                        lastRoutePoints = null
+                        lastWorkerLatLng = null
+                    }
+
                     updateMapMarkers()
                 }
         }
 
-        // 3. Listen for Company Hiring Posts
         hiringListener = db.collection("hiring")
             .whereEqualTo("status", "OPEN")
             .addSnapshotListener { snapshots, _ ->
@@ -262,9 +270,6 @@ class WorkerFeedFragment : Fragment() {
             }
     }
 
-    // --------------------------------------------------
-    // MAP LOGIC
-    // --------------------------------------------------
     private fun initMap() {
         if (mapLibreMap != null) {
             updateMapMarkers()
@@ -273,25 +278,19 @@ class WorkerFeedFragment : Fragment() {
 
         mapView.getMapAsync { map ->
             mapLibreMap = map
-            
-            // 1. Load the local OSM style (powered by our localhost server)
             map.setStyle("asset://map_style.json") {
-                // Set zoom boundaries to match typical OSM city files
                 map.setMinZoomPreference(2.0)
                 map.setMaxZoomPreference(18.0)
-                
                 enableUserLocation(map, moveCamera = true)
                 updateMapMarkers()
             }
 
             map.addOnMapClickListener {
-                // Optional: hide overlay if user taps map
                 cardListOverlay.visibility = View.GONE
                 false
             }
 
             map.setOnMarkerClickListener { marker ->
-                // Search in all lists
                 val job = availableJobs.find { it.jobTitle == marker.title } 
                     ?: myActiveHandshakeJobs.find { it.jobTitle == marker.title }
                 
@@ -312,7 +311,8 @@ class WorkerFeedFragment : Fragment() {
         val map = mapLibreMap ?: return
         map.clear()
         
-        // 1. Available Job Markers
+        var isHeadingToClient = false
+
         for (job in availableJobs) {
             if (job.latitude != 0.0 && job.longitude != 0.0) {
                 map.addMarker(
@@ -324,7 +324,6 @@ class WorkerFeedFragment : Fragment() {
             }
         }
 
-        // 2. Company Hiring Markers
         for (post in hiringList) {
             if (post.latitude != 0.0 && post.longitude != 0.0) {
                 map.addMarker(
@@ -336,7 +335,6 @@ class WorkerFeedFragment : Fragment() {
             }
         }
 
-        // 3. My Active Job Markers & Waypoint Line
         val workerLoc = map.locationComponent.lastKnownLocation
         
         for (job in myActiveHandshakeJobs) {
@@ -348,26 +346,82 @@ class WorkerFeedFragment : Fragment() {
                         .snippet("My Active Job: ${job.status}")
                 )
 
-                // 3. Waypoint Line (Only if HEADING_TO_CLIENT)
                 if (job.status == "HEADING_TO_CLIENT" && workerLoc != null) {
-                    val points = listOf(
-                        LatLng(workerLoc.latitude, workerLoc.longitude),
-                        LatLng(job.latitude, job.longitude)
-                    )
-                    map.addPolyline(
-                        PolylineOptions()
-                            .addAll(points)
-                            .color(android.graphics.Color.parseColor("#2563EB"))
-                            .width(4f)
-                    )
+                    isHeadingToClient = true
+                    val workerLatLng = LatLng(workerLoc.latitude, workerLoc.longitude)
+                    val jobLatLng = LatLng(job.latitude, job.longitude)
+
+                    lastRoutePoints?.let { points ->
+                        map.addPolyline(
+                            PolylineOptions()
+                                .addAll(points)
+                                .color(android.graphics.Color.parseColor("#2563EB"))
+                                .width(5f)
+                        )
+                    }
+
+                    if (shouldFetchNewRoute(workerLatLng)) {
+                        fetchRouteFromOsrm(workerLatLng, jobLatLng)
+                    }
                 }
             }
         }
+        
+        if (isHeadingToClient) {
+            cardNavInfo.visibility = View.VISIBLE
+        } else {
+            cardNavInfo.visibility = View.GONE
+            lastRoutePoints = null
+        }
     }
 
-    // --------------------------------------------------
-    // JOB PREVIEW POPUP
-    // --------------------------------------------------
+    private fun updateNavInfoUI(meters: Float, durationSec: Double) {
+        if (!isAdded) return
+        
+        val distanceStr = com.example.newtacks.utils.DistanceUtils.formatDistance(meters)
+        tvNavDistance.text = distanceStr
+
+        val mins = (durationSec / 60).toInt().coerceAtLeast(1)
+        val arrivalCal = java.util.Calendar.getInstance()
+        arrivalCal.add(java.util.Calendar.SECOND, durationSec.toInt())
+        val arrivalTime = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(arrivalCal.time)
+
+        tvNavEstimate.text = String.format("%d mins • %s arrival", mins, arrivalTime)
+    }
+
+    private fun shouldFetchNewRoute(currentLoc: LatLng): Boolean {
+        if (lastRoutePoints == null || lastWorkerLatLng == null) return true
+        return currentLoc.distanceTo(lastWorkerLatLng!!) > 50
+    }
+
+    private fun fetchRouteFromOsrm(worker: LatLng, job: LatLng) {
+        val coords = "${worker.longitude},${worker.latitude};${job.longitude},${job.latitude}"
+        routeService.getRoute(coords).enqueue(object : retrofit2.Callback<com.example.newtacks.utils.OsrmResponse> {
+            override fun onResponse(
+                call: retrofit2.Call<com.example.newtacks.utils.OsrmResponse>,
+                response: retrofit2.Response<com.example.newtacks.utils.OsrmResponse>
+            ) {
+                if (response.isSuccessful) {
+                    val route = response.body()?.routes?.firstOrNull()
+                    val encodedPoly = route?.geometry
+                    if (encodedPoly != null) {
+                        lastRoutePoints = RouteUtils.decodePolyline(encodedPoly)
+                        lastWorkerLatLng = worker
+                        
+                        val distanceMeters = route.distance.toFloat()
+                        val durationSeconds = route.duration
+                        updateNavInfoUI(distanceMeters, durationSeconds)
+                        updateMapMarkers()
+                    }
+                }
+            }
+
+            override fun onFailure(call: retrofit2.Call<com.example.newtacks.utils.OsrmResponse>, t: Throwable) {
+                t.printStackTrace()
+            }
+        })
+    }
+
     private fun showJobPreview(job: Job) {
         val view = layoutInflater.inflate(R.layout.dialog_job_preview, null)
         val tvTitle   = view.findViewById<TextView>(R.id.tvTitle)
@@ -454,7 +508,6 @@ class WorkerFeedFragment : Fragment() {
             btnAccept.alpha = 1.0f
         }
 
-        // Hiring posts don't have images yet
         view.findViewById<View>(R.id.tvImagesLabel).visibility = View.GONE
         view.findViewById<View>(R.id.scrollImages).visibility = View.GONE
         view.findViewById<View>(R.id.tvDuration).visibility = View.GONE
@@ -483,13 +536,7 @@ class WorkerFeedFragment : Fragment() {
             }
     }
 
-    // --------------------------------------------------
-    // ACCEPT JOB (FIRESTORE TRANSACTION)
-    // --------------------------------------------------
     private fun acceptJob(job: Job) {
-        // --------------------------------------------------
-        // ✅ ENFORCE LOCATION RESTRICTION
-        // --------------------------------------------------
         if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) 
             != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             @Suppress("DEPRECATION")
@@ -503,7 +550,6 @@ class WorkerFeedFragment : Fragment() {
                 return@addOnSuccessListener
             }
 
-            // Continue with job acceptance
             processJobAcceptance(job, location)
         }
     }
@@ -517,7 +563,6 @@ class WorkerFeedFragment : Fragment() {
             .get()
             .addOnSuccessListener { snapshots ->
                 
-                // Filter active statuses locally to avoid index issues
                 val activeStatuses = listOf("IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
                 val hasActiveJob = snapshots.documents.any { 
                     val status = it.getString("status") ?: ""
@@ -548,7 +593,6 @@ class WorkerFeedFragment : Fragment() {
                                 throw Exception("Job already taken")
                             }
 
-                            // Update job with worker info
                             transaction.update(
                                 ref,
                                 mapOf(
@@ -559,7 +603,6 @@ class WorkerFeedFragment : Fragment() {
                                 )
                             )
                             
-                            // Also update worker's location in their profile
                             val workerRef = db.collection("users").document(workerId)
                             transaction.update(workerRef, mapOf(
                                 "latitude" to location.latitude,
@@ -574,9 +617,6 @@ class WorkerFeedFragment : Fragment() {
             }
     }
 
-    // --------------------------------------------------
-    // CLEANUP & LIFECYCLE
-    // --------------------------------------------------
     override fun onStart() { super.onStart(); mapView.onStart() }
     override fun onResume() { 
         super.onResume()
