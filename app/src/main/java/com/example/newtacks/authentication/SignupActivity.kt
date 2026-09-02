@@ -130,6 +130,7 @@ class SignupActivity : AppCompatActivity() {
             var address = ""
             var companyName = ""
             var hrName = ""
+            var aboutUs: String? = null
             var experience: Int? = null
             val categories = mutableListOf<String>()
 
@@ -164,6 +165,7 @@ class SignupActivity : AppCompatActivity() {
                     hrName = findViewById<EditText>(R.id.etHRName).text.toString()
                     phone = findViewById<EditText>(R.id.etCompanyPhone).text.toString()
                     address = findViewById<EditText>(R.id.etCompanyAddress).text.toString()
+                    aboutUs = findViewById<EditText>(R.id.etAboutUs).text.toString().takeIf { it.isNotBlank() }
                 }
             }
 
@@ -181,6 +183,7 @@ class SignupActivity : AppCompatActivity() {
                 longitude = detectedLng,
                 companyName = companyName,
                 hrName = hrName,
+                aboutUs = aboutUs,
                 categories = categories,
                 experience = experience
             )

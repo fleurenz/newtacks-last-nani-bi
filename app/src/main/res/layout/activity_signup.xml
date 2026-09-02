@@ -175,7 +175,8 @@
                         android:id="@+id/etClientPhone"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="phone" />
+                        android:inputType="phone"
+                        android:maxLength="11" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <LinearLayout
@@ -239,7 +240,8 @@
                         android:id="@+id/etWorkerPhone"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="phone" />
+                        android:inputType="phone"
+                        android:maxLength="11" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <LinearLayout
@@ -362,7 +364,8 @@
                         android:id="@+id/etCompanyPhone"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="phone" />
+                        android:inputType="phone"
+                        android:maxLength="11" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <LinearLayout
@@ -394,6 +397,21 @@
                         app:tint="#004A99"
                         android:contentDescription="Detect Location" />
                 </LinearLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="About Us (Optional)"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_marginBottom="20dp">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etAboutUs"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="top"
+                        android:inputType="textMultiLine"
+                        android:minLines="3" />
+                </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <!-- ===== REGISTER BUTTON ===== -->

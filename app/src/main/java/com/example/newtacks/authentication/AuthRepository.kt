@@ -25,6 +25,7 @@ class AuthRepository(
         longitude: Double?,
         companyName: String?,
         hrName: String?,
+        aboutUs: String?,
         categories: List<String>?,
         experience: Int?,
         onProgress: (String) -> Unit,       // ✅ new
@@ -65,6 +66,7 @@ class AuthRepository(
                             longitude   = longitude,
                             companyName = companyName,
                             hrName      = hrName,
+                            aboutUs     = aboutUs,
                             categories  = categories,
                             experience  = experience,
                             profileImage = imageUrl,
@@ -93,6 +95,7 @@ class AuthRepository(
                 longitude    = longitude,
                 companyName  = companyName,
                 hrName       = hrName,
+                aboutUs      = aboutUs,
                 categories   = categories,
                 experience   = experience,
                 profileImage = "",
@@ -113,6 +116,7 @@ class AuthRepository(
         longitude: Double?,
         companyName: String?,
         hrName: String?,
+        aboutUs: String?,
         categories: List<String>?,
         experience: Int?,
         profileImage: String,
@@ -135,6 +139,7 @@ class AuthRepository(
                     profileImage     = profileImage,
                     companyName      = if (role == "COMPANY") companyName else null,
                     hrName           = if (role == "COMPANY") hrName else null,
+                    aboutUs          = if (role == "COMPANY") aboutUs else null,
                     serviceCategories = if (role == "WORKER") categories else null,
                     serviceExperience = if (role == "WORKER") experience else null
                 )

@@ -17,6 +17,7 @@ data class User(
     // 🏢 COMPANY ONLY
     val companyName: String? = null,
     val hrName: String? = null,
+    val aboutUs: String? = null,
 
     // 🔧 WORKER ONLY
     val serviceCategories: List<String>? = null,

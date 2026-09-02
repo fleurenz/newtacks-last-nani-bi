@@ -23,11 +23,16 @@ class SignupViewModel(
         longitude: Double? = null,
         companyName: String? = null,
         hrName: String? = null,
+        aboutUs: String? = null,
         categories: List<String>? = null,
         experience: Int? = null
     ) {
-        if (email.isEmpty() || password.isEmpty()) {
+        if (email.isEmpty() || password.isEmpty() || phone.isEmpty()) {
             signupState.value = SignupState.Error("Fields cannot be empty")
+            return
+        }
+        if (phone.length != 11) {
+            signupState.value = SignupState.Error("Contact number must be 11 digits")
             return
         }
         if (password != confirmPassword) {
@@ -49,6 +54,7 @@ class SignupViewModel(
             longitude = longitude,
             companyName = companyName,
             hrName = hrName,
+            aboutUs = aboutUs,
             categories = categories,
             experience = experience,
             onProgress = { message ->
