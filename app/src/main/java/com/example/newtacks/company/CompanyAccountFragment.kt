@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import coil.load
 import coil.transform.CircleCropTransformation
 import com.example.newtacks.R
@@ -33,6 +34,7 @@ class CompanyAccountFragment : Fragment() {
     private lateinit var layoutHeader: LinearLayout
     private lateinit var menuLogout: LinearLayout
     private lateinit var menuReviews: LinearLayout
+    private lateinit var swipeRefresh: SwipeRefreshLayout
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,6 +49,7 @@ class CompanyAccountFragment : Fragment() {
         layoutHeader = view.findViewById(R.id.layoutHeader)
         menuLogout = view.findViewById(R.id.menuLogout)
         menuReviews = view.findViewById(R.id.menuReviews)
+        swipeRefresh = view.findViewById(R.id.swipeRefreshAccount)
 
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -62,6 +65,10 @@ class CompanyAccountFragment : Fragment() {
         loadProfile()
         setupLogout()
         setupReviewsMenu()
+
+        swipeRefresh.setOnRefreshListener {
+            loadProfile()
+        }
 
         return view
     }
@@ -90,6 +97,9 @@ class CompanyAccountFragment : Fragment() {
                     transformations(CircleCropTransformation())
                 }
             }
+            swipeRefresh.isRefreshing = false
+        }.addOnFailureListener {
+            swipeRefresh.isRefreshing = false
         }
     }
 

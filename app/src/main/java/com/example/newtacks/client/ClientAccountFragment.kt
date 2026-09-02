@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import coil.load
 import coil.transform.CircleCropTransformation
 import com.example.newtacks.authentication.OnboardingActivity
@@ -34,6 +35,7 @@ class ClientAccountFragment : Fragment() {
     private lateinit var ivProfile: ImageView
     private lateinit var btnLogout: Button
     private lateinit var layoutHeader: LinearLayout
+    private lateinit var swipeRefresh: SwipeRefreshLayout
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,6 +52,7 @@ class ClientAccountFragment : Fragment() {
         ivProfile           = view.findViewById(R.id.ivProfile)
         btnLogout           = view.findViewById(R.id.btnLogout)
         layoutHeader        = view.findViewById(R.id.layoutHeader)
+        swipeRefresh        = view.findViewById(R.id.swipeRefreshAccount)
 
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -65,6 +68,12 @@ class ClientAccountFragment : Fragment() {
         loadProfile()
         loadStats()
         setupLogout()
+
+        swipeRefresh.setOnRefreshListener {
+            loadProfile()
+            loadStats()
+        }
+
         return view
     }
 
@@ -90,6 +99,10 @@ class ClientAccountFragment : Fragment() {
                         transformations(CircleCropTransformation())
                     }
                 }
+                swipeRefresh.isRefreshing = false
+            }
+            .addOnFailureListener {
+                swipeRefresh.isRefreshing = false
             }
     }
 

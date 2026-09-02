@@ -11,6 +11,7 @@ import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import coil.load
 import com.example.newtacks.R
 import com.example.newtacks.models.Job
@@ -45,6 +46,7 @@ class WorkerFeedFragment : Fragment() {
     private lateinit var adapter: WorkerJobAdapter
     private lateinit var fabToggleList: FloatingActionButton
     private lateinit var fabMyLocation: FloatingActionButton
+    private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var cardListOverlay: View
     private lateinit var cardNavInfo: View
     private lateinit var tvNavDistance: TextView
@@ -110,6 +112,7 @@ class WorkerFeedFragment : Fragment() {
         recyclerView        = view.findViewById(R.id.workerFeedRecycler)
         fabToggleList       = view.findViewById(R.id.fabToggleList)
         fabMyLocation       = view.findViewById(R.id.fabMyLocation)
+        swipeRefresh        = view.findViewById(R.id.swipeRefreshFeed)
         cardListOverlay     = view.findViewById(R.id.cardListOverlay)
         cardNavInfo         = view.findViewById(R.id.cardNavInfo)
         tvNavDistance       = view.findViewById(R.id.tvNavDistance)
@@ -130,6 +133,12 @@ class WorkerFeedFragment : Fragment() {
 
         fabToggleList.setOnClickListener {
             cardListOverlay.visibility = if (cardListOverlay.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+        }
+
+        swipeRefresh.setOnRefreshListener {
+            // Force a refresh of everything
+            listenForJobs()
+            // Map style might also need a refresh if offline server was restarted, but usually not needed.
         }
 
         fabMyLocation.setOnClickListener {
@@ -224,6 +233,7 @@ class WorkerFeedFragment : Fragment() {
                     availableJobs.add(job)
                 }
                 adapter.notifyDataSetChanged()
+                swipeRefresh.isRefreshing = false
                 updateMapMarkers()
             }
 
@@ -281,6 +291,11 @@ class WorkerFeedFragment : Fragment() {
             map.setStyle("asset://map_style.json") {
                 map.setMinZoomPreference(2.0)
                 map.setMaxZoomPreference(18.0)
+                
+                // Position compass above MapLibre label
+                map.uiSettings.setCompassGravity(Gravity.BOTTOM or Gravity.START)
+                map.uiSettings.setCompassMargins(48, 0, 0, 48) // Left, Top, Right, Bottom in pixels
+                
                 enableUserLocation(map, moveCamera = true)
                 updateMapMarkers()
             }
@@ -621,12 +636,27 @@ class WorkerFeedFragment : Fragment() {
     override fun onResume() { 
         super.onResume()
         mapView.onResume()
-        handler.post(refreshWaypointTask)
+        if (!isHidden) {
+            handler.post(refreshWaypointTask)
+        }
     }
+    
     override fun onPause() { 
         super.onPause()
         mapView.onPause()
         handler.removeCallbacks(refreshWaypointTask)
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (hidden) {
+            handler.removeCallbacks(refreshWaypointTask)
+            mapView.onPause()
+        } else {
+            handler.post(refreshWaypointTask)
+            mapView.onResume()
+            updateMapMarkers()
+        }
     }
     override fun onStop() { super.onStop(); mapView.onStop() }
     override fun onLowMemory() { super.onLowMemory(); mapView.onLowMemory() }

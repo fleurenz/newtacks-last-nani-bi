@@ -8,6 +8,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.newtacks.R
 import com.example.newtacks.models.HiringPost
 import com.google.android.material.tabs.TabLayout
@@ -19,6 +20,7 @@ class WorkerHiringFragment : Fragment() {
 
     private lateinit var rvHiring: RecyclerView
     private lateinit var tabLayout: TabLayout
+    private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var layoutHeader: LinearLayout
     private lateinit var layoutEmptyState: LinearLayout
     private lateinit var tvEmptyTitle: TextView
@@ -41,6 +43,7 @@ class WorkerHiringFragment : Fragment() {
 
         rvHiring         = view.findViewById(R.id.rvHiring)
         tabLayout        = view.findViewById(R.id.tabLayoutHiring)
+        swipeRefresh     = view.findViewById(R.id.swipeRefreshHiring)
         layoutHeader     = view.findViewById(R.id.layoutHeader)
         layoutEmptyState = view.findViewById(R.id.layoutEmptyState)
         tvEmptyTitle     = view.findViewById(R.id.tvEmptyTitle)
@@ -72,6 +75,11 @@ class WorkerHiringFragment : Fragment() {
         }
 
         listenForHiringPosts()
+
+        swipeRefresh.setOnRefreshListener {
+            listenForHiringPosts()
+        }
+
         return view
     }
 
@@ -88,6 +96,7 @@ class WorkerHiringFragment : Fragment() {
                         fullHiringList.add(post)
                     }
                 }
+                swipeRefresh.isRefreshing = false
                 filterList()
             }
     }

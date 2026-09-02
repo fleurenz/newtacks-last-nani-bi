@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import coil.load
 import coil.transform.CircleCropTransformation
 import com.example.newtacks.R
@@ -29,6 +30,7 @@ class CompanyHiringFragment : Fragment() {
     private lateinit var tvPostDetails: TextView
     private lateinit var tvApplicantCount: TextView
     private lateinit var cardPostDetails: View
+    private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var layoutEmptyState: LinearLayout
     private lateinit var layoutApplicants: View
     private lateinit var rvApplicants: RecyclerView
@@ -49,6 +51,7 @@ class CompanyHiringFragment : Fragment() {
         tvPostDetails   = view.findViewById(R.id.tvPostDetails)
         tvApplicantCount = view.findViewById(R.id.tvApplicantCount)
         cardPostDetails  = view.findViewById(R.id.cardPostDetails)
+        swipeRefresh     = view.findViewById(R.id.swipeRefreshCompanyHiring)
         layoutEmptyState = view.findViewById(R.id.layoutEmptyState)
         layoutApplicants = view.findViewById(R.id.layoutApplicants)
         rvApplicants     = view.findViewById(R.id.rvApplicants)
@@ -63,6 +66,10 @@ class CompanyHiringFragment : Fragment() {
         btnDeletePost.setOnClickListener { confirmCancelPost() }
         
         listenForActiveHiring()
+
+        swipeRefresh.setOnRefreshListener {
+            listenForActiveHiring()
+        }
         
         return view
     }
@@ -75,6 +82,7 @@ class CompanyHiringFragment : Fragment() {
             .whereEqualTo("status", "OPEN")
             .limit(1)
             .addSnapshotListener { snapshots, error ->
+                swipeRefresh.isRefreshing = false
                 if (error != null) return@addSnapshotListener
                 
                 val post = snapshots?.documents?.firstOrNull()?.toObject(HiringPost::class.java)

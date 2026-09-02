@@ -25,6 +25,11 @@ class ClientDashboardActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var locationCallback: LocationCallback? = null
     
+    private var fragmentHome: ClientHomeFragment? = null
+    private var fragmentRequests: ClientRequestsFragment? = null
+    private var fragmentHistory: ClientHistoryFragment? = null
+    private var fragmentAccount: ClientAccountFragment? = null
+    
     private var activeFragment: Fragment? = null
 
     fun switchTab(tabId: Int) {
@@ -34,15 +39,11 @@ class ClientDashboardActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // ✅ Edge-to-edge
         WindowCompat.setDecorFitsSystemWindows(window, false)
-
         setContentView(R.layout.activity_client_dashboard)
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.clientBottomNav)
 
-        // ✅ Apply insets
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.clientRootLayout)) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             bottomNav.setPadding(
@@ -57,42 +58,38 @@ class ClientDashboardActivity : AppCompatActivity() {
         val fragmentToOpen = intent.getStringExtra(OPEN_FRAGMENT)
         
         if (savedInstanceState == null) {
-            // Initial load
-            if (fragmentToOpen == "REQUESTS") {
-                bottomNav.selectedItemId = R.id.nav_requests
-                activeFragment = ClientRequestsFragment()
-            } else {
-                // Determine initial fragment based on active job
-                val uid = FirebaseAuth.getInstance().currentUser?.uid
-                if (uid != null) {
-                    // Start with home, then switch if needed
-                    activeFragment = ClientHomeFragment()
-                    
-                    FirebaseFirestore.getInstance().collection("jobs")
-                        .whereEqualTo("clientId", uid)
-                        .get(com.google.firebase.firestore.Source.SERVER)
-                        .addOnSuccessListener { snapshots ->
-                            val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
-                            val hasActiveJob = snapshots.documents.any { it.getString("status") in activeStatuses }
-                            
-                            if (hasActiveJob && bottomNav.selectedItemId != R.id.nav_requests) {
-                                switchTab(R.id.nav_requests)
-                            }
-                        }
-                } else {
-                    activeFragment = ClientHomeFragment()
-                }
+            fragmentHome = ClientHomeFragment()
+            fragmentRequests = ClientRequestsFragment()
+            fragmentHistory = ClientHistoryFragment()
+            fragmentAccount = ClientAccountFragment()
+
+            activeFragment = when (fragmentToOpen) {
+                "REQUESTS" -> fragmentRequests
+                "HISTORY"  -> fragmentHistory
+                "ACCOUNT"  -> fragmentAccount
+                else       -> fragmentHome
             }
-            
-            // Only add if we have an active fragment
-            activeFragment?.let { frag ->
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.clientFragmentContainer, frag, "active_client_frag")
-                    .commit()
+
+            supportFragmentManager.beginTransaction().apply {
+                add(R.id.clientFragmentContainer, fragmentAccount!!, "account").hide(fragmentAccount!!)
+                add(R.id.clientFragmentContainer, fragmentHistory!!, "history").hide(fragmentHistory!!)
+                add(R.id.clientFragmentContainer, fragmentRequests!!, "requests").hide(fragmentRequests!!)
+                add(R.id.clientFragmentContainer, fragmentHome!!, "home").hide(fragmentHome!!)
+                show(activeFragment!!)
+            }.commit()
+
+            // Pre-check for active jobs to auto-switch if needed
+            if (fragmentToOpen == null) {
+                checkActiveJobs(bottomNav)
             }
         } else {
-            // Restore active fragment reference
-            activeFragment = supportFragmentManager.findFragmentByTag("active_client_frag")
+            fragmentHome = supportFragmentManager.findFragmentByTag("home") as? ClientHomeFragment
+            fragmentRequests = supportFragmentManager.findFragmentByTag("requests") as? ClientRequestsFragment
+            fragmentHistory = supportFragmentManager.findFragmentByTag("history") as? ClientHistoryFragment
+            fragmentAccount = supportFragmentManager.findFragmentByTag("account") as? ClientAccountFragment
+
+            val fragments = listOf(fragmentHome, fragmentRequests, fragmentHistory, fragmentAccount)
+            activeFragment = fragments.find { it?.isVisible == true } ?: fragmentHome
         }
 
         val fabChat = findViewById<FloatingActionButton>(R.id.fabChat)
@@ -101,18 +98,22 @@ class ClientDashboardActivity : AppCompatActivity() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         listenForJobHandshake()
 
-        bottomNav.setOnItemSelectedListener {
-            val target = when (it.itemId) {
-                R.id.nav_home     -> ClientHomeFragment()
-                R.id.nav_requests -> ClientRequestsFragment()
-                R.id.nav_history  -> ClientHistoryFragment()
-                R.id.nav_account  -> ClientAccountFragment()
+        bottomNav.setOnItemSelectedListener { item ->
+            val target = when (item.itemId) {
+                R.id.nav_home     -> fragmentHome
+                R.id.nav_requests -> fragmentRequests
+                R.id.nav_history  -> fragmentHistory
+                R.id.nav_account  -> fragmentAccount
                 else -> null
             }
             
-            if (target != null) {
+            if (target != null && target !== activeFragment) {
+                supportFragmentManager.beginTransaction()
+                    .setCustomAnimations(R.anim.smooth_fade_in, R.anim.smooth_fade_out)
+                    .hide(activeFragment!!)
+                    .show(target)
+                    .commit()
                 activeFragment = target
-                replaceFragment(target)
                 true
             } else false
         }
@@ -129,17 +130,19 @@ class ClientDashboardActivity : AppCompatActivity() {
         })
     }
 
-    private fun replaceFragment(fragment: Fragment) {
-        supportFragmentManager
-            .beginTransaction()
-            .setCustomAnimations(
-                R.anim.fade_in,
-                R.anim.fade_out,
-                R.anim.fade_in,
-                R.anim.fade_out
-            )
-            .replace(R.id.clientFragmentContainer, fragment, "active_client_frag")
-            .commit()
+    private fun checkActiveJobs(bottomNav: BottomNavigationView) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        FirebaseFirestore.getInstance().collection("jobs")
+            .whereEqualTo("clientId", uid)
+            .get(com.google.firebase.firestore.Source.SERVER)
+            .addOnSuccessListener { snapshots ->
+                val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
+                val hasActiveJob = snapshots.documents.any { it.getString("status") in activeStatuses }
+                
+                if (hasActiveJob && bottomNav.selectedItemId != R.id.nav_requests) {
+                    switchTab(R.id.nav_requests)
+                }
+            }
     }
 
     private fun listenForJobHandshake() {
@@ -174,7 +177,6 @@ class ClientDashboardActivity : AppCompatActivity() {
     private fun startLocationUpdates() {
         if (locationCallback != null) return
 
-        // Silent permission check
         val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
         if (!hasPermission) return
 

@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.maplibre.android)
     implementation(libs.nanohttpd)
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

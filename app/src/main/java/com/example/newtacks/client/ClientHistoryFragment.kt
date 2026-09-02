@@ -8,6 +8,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.newtacks.R
 import com.example.newtacks.receipt.ReceiptAdapter
 import com.example.newtacks.receipt.ReceiptDetailActivity
@@ -23,6 +24,7 @@ class ClientHistoryFragment : Fragment(R.layout.fragment_client_history) {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ReceiptAdapter
+    private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var layoutHeader: LinearLayout
     private lateinit var layoutEmptyState: LinearLayout
 
@@ -30,6 +32,7 @@ class ClientHistoryFragment : Fragment(R.layout.fragment_client_history) {
         super.onViewCreated(view, savedInstanceState)
 
         recyclerView     = view.findViewById(R.id.recyclerHistory)
+        swipeRefresh     = view.findViewById(R.id.swipeRefreshClientHistory)
         layoutHeader     = view.findViewById(R.id.layoutHeader)
         layoutEmptyState = view.findViewById(R.id.layoutEmptyState)
 
@@ -54,6 +57,10 @@ class ClientHistoryFragment : Fragment(R.layout.fragment_client_history) {
         }
 
         listenReceipts()
+
+        swipeRefresh.setOnRefreshListener {
+            listenReceipts()
+        }
     }
 
     private fun listenReceipts() {
@@ -63,6 +70,7 @@ class ClientHistoryFragment : Fragment(R.layout.fragment_client_history) {
             .addSnapshotListener { snapshots, _ ->
                 val receipts = snapshots?.toObjects(Receipt::class.java) ?: emptyList()
                 adapter.submitList(receipts)
+                swipeRefresh.isRefreshing = false
 
                 // toggle empty state
                 layoutEmptyState.visibility =

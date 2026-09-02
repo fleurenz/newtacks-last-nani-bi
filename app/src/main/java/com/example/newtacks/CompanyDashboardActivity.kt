@@ -77,7 +77,7 @@ class CompanyDashboardActivity : AppCompatActivity() {
 
             if (target != null && target !== activeFragment) {
                 supportFragmentManager.beginTransaction()
-                    .setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
+                    .setCustomAnimations(R.anim.smooth_fade_in, R.anim.smooth_fade_out)
                     .hide(activeFragment!!)
                     .show(target)
                     .commit()

@@ -17,6 +17,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import coil.load
 import coil.transform.CircleCropTransformation
 import com.cloudinary.android.MediaManager
@@ -55,6 +56,7 @@ class WorkerAccountFragment : Fragment() {
     private lateinit var menuCertificates: LinearLayout
     private lateinit var layoutNCButtons: LinearLayout
     private lateinit var menuReviews: LinearLayout
+    private lateinit var swipeRefresh: SwipeRefreshLayout
 
     private val pickCertificate =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -78,6 +80,7 @@ class WorkerAccountFragment : Fragment() {
         layoutNCButtons = view.findViewById(R.id.layoutNCButtons)
         menuReviews = view.findViewById(R.id.menuReviews)
         layoutHeader = view.findViewById(R.id.layoutHeader)
+        swipeRefresh = view.findViewById(R.id.swipeRefreshAccount)
 
         tvVerificationBadge = view.findViewById(R.id.tvVerificationBadge)
         tvVerificationLevel = view.findViewById(R.id.tvVerificationLevel)
@@ -111,6 +114,11 @@ class WorkerAccountFragment : Fragment() {
         setupLogout()
         setupCertificatesMenu()
         setupReviewsMenu()
+
+        swipeRefresh.setOnRefreshListener {
+            loadProfile()
+            loadStats()
+        }
 
         return view
     }
@@ -151,6 +159,10 @@ class WorkerAccountFragment : Fragment() {
                 }
 
                 updateVerificationUI(user.verificationStatus)
+                swipeRefresh.isRefreshing = false
+            }
+            .addOnFailureListener {
+                swipeRefresh.isRefreshing = false
             }
     }
 
