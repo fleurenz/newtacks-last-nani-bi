@@ -11,7 +11,7 @@
         android:id="@+id/layoutHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_header_rounded"
+        android:background="@drawable/bg_worker_header"
         android:orientation="vertical"
         android:paddingStart="24dp"
         android:paddingEnd="24dp"
