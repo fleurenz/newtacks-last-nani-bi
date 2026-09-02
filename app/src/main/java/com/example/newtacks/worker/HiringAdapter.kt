@@ -42,8 +42,16 @@ class HiringAdapter(
         // Company / Location
         holder.tvCompany.text = "${post.companyName} / ${post.companyAddress}"
         
-        // Placeholder image for now
-        holder.ivImage.load(R.drawable.bg_image_placeholder)
+        // Image: Load first image if available, otherwise placeholder
+        if (post.images.isNotEmpty()) {
+            holder.ivImage.load(post.images[0]) {
+                crossfade(true)
+                placeholder(R.drawable.bg_image_placeholder)
+                error(R.drawable.bg_image_placeholder)
+            }
+        } else {
+            holder.ivImage.load(R.drawable.bg_image_placeholder)
+        }
         
         // Dynamic tags
         holder.layoutTags.removeAllViews()

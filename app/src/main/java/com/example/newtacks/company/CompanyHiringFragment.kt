@@ -35,6 +35,8 @@ class CompanyHiringFragment : Fragment() {
     private lateinit var layoutApplicants: View
     private lateinit var rvApplicants: RecyclerView
     private lateinit var btnDeletePost: View
+    private lateinit var layoutPostImages: LinearLayout
+    private lateinit var scrollPostImages: View
     
     private var hiringListener: ListenerRegistration? = null
     private val applicantList = mutableListOf<com.example.newtacks.models.User>()
@@ -56,6 +58,8 @@ class CompanyHiringFragment : Fragment() {
         layoutApplicants = view.findViewById(R.id.layoutApplicants)
         rvApplicants     = view.findViewById(R.id.rvApplicants)
         btnDeletePost    = view.findViewById(R.id.btnDeletePost)
+        layoutPostImages = view.findViewById(R.id.layoutPostImages)
+        scrollPostImages = view.findViewById(R.id.scrollPostImages)
         
         adapter = ApplicantAdapter(applicantList) { user ->
             showWorkerDetailsDialog(user)
@@ -118,7 +122,44 @@ class CompanyHiringFragment : Fragment() {
             Type: ${post.employmentType}
             Services: ${post.serviceCategories.joinToString(", ")}
             Location: ${post.companyAddress}
+            
+            Description: ${post.description}
+            
+            Responsibilities: ${post.responsibilities}
         """.trimIndent()
+
+        cardPostDetails.setOnClickListener {
+            val intent = android.content.Intent(requireContext(), HiringDetailsActivity::class.java)
+            intent.putExtra("HIRING_POST_JSON", com.google.gson.Gson().toJson(post))
+            startActivity(intent)
+        }
+        
+        // Handle Images
+        if (post.images.isEmpty()) {
+            scrollPostImages.visibility = View.GONE
+        } else {
+            scrollPostImages.visibility = View.VISIBLE
+            layoutPostImages.removeAllViews()
+            post.images.forEach { url ->
+                val iv = ImageView(requireContext())
+                val params = LinearLayout.LayoutParams(
+                    (100 * resources.displayMetrics.density).toInt(),
+                    (100 * resources.displayMetrics.density).toInt()
+                )
+                params.setMargins(0, 0, (8 * resources.displayMetrics.density).toInt(), 0)
+                iv.layoutParams = params
+                iv.scaleType = ImageView.ScaleType.CENTER_CROP
+                iv.load(url) {
+                    crossfade(true)
+                    placeholder(R.drawable.bg_image_placeholder)
+                    transformations(coil.transform.RoundedCornersTransformation(12f))
+                }
+                iv.setOnClickListener {
+                    ImageUtils.showFullscreenImage(requireContext(), url)
+                }
+                layoutPostImages.addView(iv)
+            }
+        }
         
         fetchApplicants(post.applicants)
     }

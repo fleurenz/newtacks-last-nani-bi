@@ -3,9 +3,17 @@ package com.example.newtacks.company
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.location.Geocoder
+import android.net.Uri
 import android.os.Bundle
+import android.view.View
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import coil.load
+import coil.transform.RoundedCornersTransformation
+import com.cloudinary.android.MediaManager
+import com.cloudinary.android.callback.ErrorInfo
+import com.cloudinary.android.callback.UploadCallback
 import com.example.newtacks.CompanyDashboardActivity
 import com.example.newtacks.R
 import com.example.newtacks.models.HiringPost
@@ -36,6 +44,12 @@ class CreateHiringActivity : AppCompatActivity() {
     
     private lateinit var rgEmployment: RadioGroup
     private lateinit var etDailyRate: EditText
+    
+    private lateinit var layoutSelectedImages: LinearLayout
+    private lateinit var btnAddPhoto: Button
+    private lateinit var etJobDescription: EditText
+    private lateinit var etResponsibilities: EditText
+    
     private lateinit var btnSelectClosingDate: Button
     private lateinit var btnSubmit: Button
 
@@ -45,6 +59,15 @@ class CreateHiringActivity : AppCompatActivity() {
     private var profileLat = 0.0
     private var profileLng = 0.0
     private var expiresAtTimestamp: Long = 0
+    
+    private val selectedImageUris = mutableListOf<Uri>()
+
+    private val pickImages = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+        if (uris.isNotEmpty()) {
+            selectedImageUris.addAll(uris)
+            updateImagesUI()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,8 +103,35 @@ class CreateHiringActivity : AppCompatActivity() {
         
         rgEmployment = findViewById(R.id.rgEmploymentType)
         etDailyRate = findViewById(R.id.etDailyRate)
+        
+        layoutSelectedImages = findViewById(R.id.layoutSelectedImages)
+        btnAddPhoto = findViewById(R.id.btnAddPhoto)
+        etJobDescription = findViewById(R.id.etJobDescription)
+        etResponsibilities = findViewById(R.id.etResponsibilities)
+        
         btnSelectClosingDate = findViewById(R.id.btnSelectClosingDate)
         btnSubmit = findViewById(R.id.btnSubmitHiring)
+    }
+
+    private fun updateImagesUI() {
+        layoutSelectedImages.removeAllViews()
+        selectedImageUris.forEachIndexed { index, uri ->
+            val imageView = ImageView(this)
+            val params = LinearLayout.LayoutParams(200, 200)
+            params.setMargins(0, 0, 16, 0)
+            imageView.layoutParams = params
+            imageView.scaleType = ImageView.ScaleType.CENTER_CROP
+            imageView.load(uri) {
+                transformations(RoundedCornersTransformation(8f))
+            }
+            
+            imageView.setOnClickListener {
+                selectedImageUris.removeAt(index)
+                updateImagesUI()
+            }
+            
+            layoutSelectedImages.addView(imageView)
+        }
     }
 
     private fun loadCompanyInfo() {
@@ -105,6 +155,10 @@ class CreateHiringActivity : AppCompatActivity() {
     private fun setupListeners() {
         switchLocation.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) detectLocation() else restoreProfileLocation()
+        }
+
+        btnAddPhoto.setOnClickListener {
+            pickImages.launch("image/*")
         }
 
         btnSelectClosingDate.setOnClickListener {
@@ -158,6 +212,8 @@ class CreateHiringActivity : AppCompatActivity() {
     private fun submitHiring() {
         val title = etHiringTitle.text.toString().trim()
         val rateText = etDailyRate.text.toString().trim()
+        val description = etJobDescription.text.toString().trim()
+        val responsibilities = etResponsibilities.text.toString().trim()
         
         val services = mutableListOf<String>()
         if (cbCarpentry.isChecked) services.add("Carpentry")
@@ -174,8 +230,8 @@ class CreateHiringActivity : AppCompatActivity() {
             else -> ""
         }
 
-        if (title.isEmpty() || rateText.isEmpty() || services.isEmpty() || empType.isEmpty() || expiresAtTimestamp == 0L) {
-            Toast.makeText(this, "Please fill all fields, including the closing date", Toast.LENGTH_SHORT).show()
+        if (title.isEmpty() || rateText.isEmpty() || services.isEmpty() || empType.isEmpty() || expiresAtTimestamp == 0L || description.isEmpty() || responsibilities.isEmpty()) {
+            Toast.makeText(this, "Please fill all required fields", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -183,35 +239,81 @@ class CreateHiringActivity : AppCompatActivity() {
         val uid = auth.currentUser?.uid ?: return
         
         btnSubmit.isEnabled = false
-        
-        val hiringId = db.collection("hiring").document().id
-        val now = System.currentTimeMillis()
-        val post = HiringPost(
-            hiringId = hiringId,
-            companyId = uid,
-            companyName = etCompanyName.text.toString(),
-            companyAddress = etCompanyAddress.text.toString(),
-            jobTitle = title,
-            serviceCategories = services,
-            employmentType = empType,
-            latitude = selectedLat,
-            longitude = selectedLng,
-            dailyRate = rate,
-            createdAt = now,
-            expiresAt = expiresAtTimestamp
-        )
+        Toast.makeText(this, "Publishing...", Toast.LENGTH_SHORT).show()
 
-        db.collection("hiring").document(hiringId).set(post)
-            .addOnSuccessListener {
-                Toast.makeText(this, "Hiring post published", Toast.LENGTH_SHORT).show()
-                val intent = Intent(this, CompanyDashboardActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-                finish()
-            }
-            .addOnFailureListener {
-                btnSubmit.isEnabled = true
-                Toast.makeText(this, "Failed to post", Toast.LENGTH_SHORT).show()
-            }
+        uploadImagesAndSubmit(selectedImageUris) { imageUrls ->
+            val hiringId = db.collection("hiring").document().id
+            val now = System.currentTimeMillis()
+            val post = HiringPost(
+                hiringId = hiringId,
+                companyId = uid,
+                companyName = etCompanyName.text.toString(),
+                companyAddress = etCompanyAddress.text.toString(),
+                jobTitle = title,
+                serviceCategories = services,
+                employmentType = empType,
+                latitude = selectedLat,
+                longitude = selectedLng,
+                dailyRate = rate,
+                description = description,
+                responsibilities = responsibilities,
+                images = imageUrls,
+                createdAt = now,
+                expiresAt = expiresAtTimestamp
+            )
+
+            db.collection("hiring").document(hiringId).set(post)
+                .addOnSuccessListener {
+                    Toast.makeText(this, "Hiring post published", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, CompanyDashboardActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                    finish()
+                }
+                .addOnFailureListener {
+                    btnSubmit.isEnabled = true
+                    Toast.makeText(this, "Failed to post", Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
+
+    private fun uploadImagesAndSubmit(uris: List<Uri>, onComplete: (List<String>) -> Unit) {
+        if (uris.isEmpty()) {
+            onComplete(emptyList())
+            return
+        }
+
+        val uploadedUrls = Collections.synchronizedList(mutableListOf<String>())
+        var uploadCount = 0
+
+        uris.forEach { uri ->
+            MediaManager.get().upload(uri)
+                .option("folder", "hiring_posts")
+                .callback(object : UploadCallback {
+                    override fun onStart(requestId: String?) {}
+                    override fun onProgress(requestId: String?, bytes: Long, totalBytes: Long) {}
+                    override fun onSuccess(requestId: String?, resultData: MutableMap<Any?, Any?>?) {
+                        val imageUrl = resultData?.get("secure_url").toString()
+                        uploadedUrls.add(imageUrl)
+                        synchronized(this@CreateHiringActivity) {
+                            uploadCount++
+                            if (uploadCount == uris.size) {
+                                runOnUiThread { onComplete(uploadedUrls) }
+                            }
+                        }
+                    }
+
+                    override fun onError(requestId: String?, error: ErrorInfo?) {
+                        synchronized(this@CreateHiringActivity) {
+                            uploadCount++
+                            if (uploadCount == uris.size) {
+                                runOnUiThread { onComplete(uploadedUrls) }
+                            }
+                        }
+                    }
+
+                    override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
+                }).dispatch()
+        }
     }
 }

@@ -3,11 +3,11 @@
   <component name="deploymentTargetSelector">
     <selectionStates>
       <SelectionState runConfigName="app">
-        <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-09-02T09:25:23.185950200Z">
+        <option name="selectionMode" value="DIALOG" />
+        <DropdownSelection timestamp="2026-09-02T08:43:35.559063500Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=R9WN80M1YKJ" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\FRUSCHE\.android\avd\Pixel_10a.avd" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -15,12 +15,12 @@
           <targets>
             <Target type="DEFAULT_BOOT">
               <handle>
-                <DeviceId pluginId="PhysicalDevice" identifier="serial=R9WN80M1YKJ" />
+                <DeviceId pluginId="PhysicalDevice" identifier="serial=AB3S6R5325020805" />
               </handle>
             </Target>
             <Target type="DEFAULT_BOOT">
               <handle>
-                <DeviceId pluginId="PhysicalDevice" identifier="serial=AB3S6R5325020805" />
+                <DeviceId pluginId="PhysicalDevice" identifier="serial=R9WN80M1YKJ" />
               </handle>
             </Target>
           </targets>

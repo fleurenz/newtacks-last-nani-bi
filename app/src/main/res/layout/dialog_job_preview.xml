@@ -11,7 +11,6 @@
     app:strokeWidth="1dp"
     app:cardElevation="0dp">
 
-    <!-- ===== SINGLE CHILD: LinearLayout wraps everything ===== -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -29,7 +28,7 @@
             <View
                 android:layout_width="4dp"
                 android:layout_height="22dp"
-                android:background="#0F325E"
+                android:background="#004A99"
                 android:layout_marginEnd="10dp" />
 
             <TextView
@@ -68,10 +67,11 @@
             android:textColor="#475569"
             android:textSize="14sp"
             android:lineSpacingExtra="6dp"
-            android:layout_marginBottom="12dp" />
+            android:layout_marginBottom="16dp" />
 
         <!-- Duration -->
         <LinearLayout
+            android:id="@+id/layoutDuration"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -114,9 +114,7 @@
                 android:id="@+id/layoutImages"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <!-- Dynamic images -->
-            </LinearLayout>
+                android:orientation="horizontal" />
         </HorizontalScrollView>
 
         <TextView
@@ -147,10 +145,8 @@
             android:textSize="15sp"
             android:textStyle="bold"
             android:layout_marginBottom="10dp"
-            app:backgroundTint="#0F325E"
-            app:cornerRadius="12dp"
-            app:iconTint="#FFFFFF"
-            app:iconGravity="textStart" />
+            app:backgroundTint="#004A99"
+            app:cornerRadius="12dp" />
 
         <!-- Close button -->
         <com.google.android.material.button.MaterialButton

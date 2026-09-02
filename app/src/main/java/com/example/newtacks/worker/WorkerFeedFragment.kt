@@ -28,6 +28,8 @@ import com.google.android.material.tabs.TabLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.example.newtacks.models.HiringPost
+import com.example.newtacks.models.FeedOpportunity
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.annotations.PolylineOptions
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -66,6 +68,9 @@ class WorkerFeedFragment : Fragment() {
     private val availableJobs = mutableListOf<Job>()
     private val myActiveHandshakeJobs = mutableListOf<Job>()
     private val hiringList = mutableListOf<com.example.newtacks.models.HiringPost>()
+    private val combinedOpportunities = mutableListOf<com.example.newtacks.models.FeedOpportunity>()
+
+    private val markerIdToEntityId = mutableMapOf<Long, String>()
 
     private val routeService: RouteApiService by lazy {
         Retrofit.Builder()
@@ -125,9 +130,30 @@ class WorkerFeedFragment : Fragment() {
         mapView.onCreate(savedInstanceState)
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = WorkerJobAdapter(availableJobs) { job -> 
+        adapter = WorkerJobAdapter(combinedOpportunities) { opportunity -> 
             cardListOverlay.visibility = View.GONE
-            mapLibreMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(job.latitude, job.longitude), 15.0))
+            
+            val lat: Double
+            val lng: Double
+            
+            when (opportunity) {
+                is FeedOpportunity.ClientJob -> {
+                    lat = opportunity.job.latitude
+                    lng = opportunity.job.longitude
+                }
+                is FeedOpportunity.CompanyHiring -> {
+                    lat = opportunity.post.latitude
+                    lng = opportunity.post.longitude
+                }
+                is FeedOpportunity.ActiveJob -> {
+                    lat = opportunity.job.latitude
+                    lng = opportunity.job.longitude
+                }
+            }
+            
+            if (lat != 0.0 && lng != 0.0) {
+                mapLibreMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 15.0))
+            }
         }
         recyclerView.adapter = adapter
 
@@ -201,6 +227,7 @@ class WorkerFeedFragment : Fragment() {
                 fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                     if (location != null && isAdded) {
                         map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 15.0))
+                        updateCombinedList()
                     } else if (isAdded) {
                         val davaoCityHall = LatLng(7.0648, 125.6079) 
                         map.moveCamera(CameraUpdateFactory.newLatLngZoom(davaoCityHall, 13.0))
@@ -229,10 +256,10 @@ class WorkerFeedFragment : Fragment() {
                 if (snapshots == null) return@addSnapshotListener
                 availableJobs.clear()
                 for (doc in snapshots) {
-                    val job = doc.toObject(Job::class.java)
-                    availableJobs.add(job)
+                    val job = doc.toObject(Job::class.java)?.copy(jobId = doc.id)
+                    if (job != null) availableJobs.add(job)
                 }
-                adapter.notifyDataSetChanged()
+                updateCombinedList()
                 swipeRefresh.isRefreshing = false
                 updateMapMarkers()
             }
@@ -247,8 +274,8 @@ class WorkerFeedFragment : Fragment() {
                     
                     var newActiveJobId: String? = null
                     for (doc in snapshots) {
-                        val job = doc.toObject(Job::class.java)
-                        if (job.status in handshakeStatuses) {
+                        val job = doc.toObject(Job::class.java)?.copy(jobId = doc.id)
+                        if (job != null && job.status in handshakeStatuses) {
                             myActiveHandshakeJobs.add(job)
                             newActiveJobId = job.jobId
                         }
@@ -260,6 +287,7 @@ class WorkerFeedFragment : Fragment() {
                         lastWorkerLatLng = null
                     }
 
+                    updateCombinedList()
                     updateMapMarkers()
                 }
         }
@@ -271,13 +299,49 @@ class WorkerFeedFragment : Fragment() {
                 val now = System.currentTimeMillis()
                 hiringList.clear()
                 for (doc in snapshots) {
-                    val post = doc.toObject(com.example.newtacks.models.HiringPost::class.java)
-                    if (post.expiresAt == 0L || post.expiresAt > now) {
+                    val post = doc.toObject(com.example.newtacks.models.HiringPost::class.java)?.copy(hiringId = doc.id)
+                    if (post != null && (post.expiresAt == 0L || post.expiresAt > now)) {
                         hiringList.add(post)
                     }
                 }
+                updateCombinedList()
                 updateMapMarkers()
             }
+    }
+
+    private fun updateCombinedList() {
+        combinedOpportunities.clear()
+        
+        // Add Client Jobs
+        for (job in availableJobs) {
+            combinedOpportunities.add(FeedOpportunity.ClientJob(job))
+        }
+        
+        // Add Company Posts
+        for (post in hiringList) {
+            combinedOpportunities.add(FeedOpportunity.CompanyHiring(post))
+        }
+
+        // Add Active Handshake Jobs
+        for (job in myActiveHandshakeJobs) {
+            combinedOpportunities.add(FeedOpportunity.ActiveJob(job))
+        }
+
+        // Sort by distance if location is available
+        val workerLoc = mapLibreMap?.locationComponent?.lastKnownLocation
+        if (workerLoc != null) {
+            combinedOpportunities.sortBy { opportunity ->
+                val results = FloatArray(1)
+                android.location.Location.distanceBetween(
+                    workerLoc.latitude, workerLoc.longitude,
+                    opportunity.latitude, opportunity.longitude,
+                    results
+                )
+                results[0]
+            }
+        }
+        
+        adapter.notifyDataSetChanged()
     }
 
     private fun initMap() {
@@ -306,15 +370,19 @@ class WorkerFeedFragment : Fragment() {
             }
 
             map.setOnMarkerClickListener { marker ->
-                val job = availableJobs.find { it.jobTitle == marker.title } 
-                    ?: myActiveHandshakeJobs.find { it.jobTitle == marker.title }
+                val entityId = markerIdToEntityId[marker.id]
                 
-                if (job != null) {
-                    showJobPreview(job)
-                } else {
-                    val hiringPost = hiringList.find { it.jobTitle == marker.title }
-                    if (hiringPost != null) {
-                        showHiringPreview(hiringPost)
+                if (entityId != null) {
+                    val job = availableJobs.find { it.jobId == entityId } 
+                        ?: myActiveHandshakeJobs.find { it.jobId == entityId }
+                    
+                    if (job != null) {
+                        showJobPreview(job)
+                    } else {
+                        val hiringPost = hiringList.find { it.hiringId == entityId }
+                        if (hiringPost != null) {
+                            showHiringPreview(hiringPost)
+                        }
                     }
                 }
                 true
@@ -325,28 +393,31 @@ class WorkerFeedFragment : Fragment() {
     private fun updateMapMarkers() {
         val map = mapLibreMap ?: return
         map.clear()
+        markerIdToEntityId.clear()
         
         var isHeadingToClient = false
 
         for (job in availableJobs) {
             if (job.latitude != 0.0 && job.longitude != 0.0) {
-                map.addMarker(
+                val marker = map.addMarker(
                     MarkerOptions()
                         .position(LatLng(job.latitude, job.longitude))
                         .title(job.jobTitle)
                         .snippet("Available: ₱${job.offeredAmount}")
                 )
+                markerIdToEntityId[marker.id] = job.jobId
             }
         }
 
         for (post in hiringList) {
             if (post.latitude != 0.0 && post.longitude != 0.0) {
-                map.addMarker(
+                val marker = map.addMarker(
                     MarkerOptions()
                         .position(LatLng(post.latitude, post.longitude))
                         .title(post.jobTitle)
                         .snippet("Company: ₱${post.dailyRate}/day")
                 )
+                markerIdToEntityId[marker.id] = post.hiringId
             }
         }
 
@@ -354,12 +425,13 @@ class WorkerFeedFragment : Fragment() {
         
         for (job in myActiveHandshakeJobs) {
             if (job.latitude != 0.0 && job.longitude != 0.0) {
-                map.addMarker(
+                val marker = map.addMarker(
                     MarkerOptions()
                         .position(LatLng(job.latitude, job.longitude))
                         .title(job.jobTitle)
                         .snippet("My Active Job: ${job.status}")
                 )
+                markerIdToEntityId[marker.id] = job.jobId
 
                 if (job.status == "HEADING_TO_CLIENT" && workerLoc != null) {
                     isHeadingToClient = true
@@ -494,61 +566,10 @@ class WorkerFeedFragment : Fragment() {
         dialog.show()
     }
 
-    private fun showHiringPreview(post: com.example.newtacks.models.HiringPost) {
-        val view = layoutInflater.inflate(R.layout.dialog_job_preview, null)
-        val tvTitle   = view.findViewById<TextView>(R.id.tvTitle)
-        val tvDetails = view.findViewById<TextView>(R.id.tvDetails)
-        val btnAccept = view.findViewById<Button>(R.id.btnAccept)
-        val btnClose  = view.findViewById<Button>(R.id.btnClose)
-        
-        tvTitle.text = post.jobTitle
-        tvDetails.text = """
-            Company: ${post.companyName}
-            Address: ${post.companyAddress}
-            Daily Rate: ₱${post.dailyRate}
-            Employment: ${post.employmentType}
-            Services: ${post.serviceCategories.joinToString(", ")}
-        """.trimIndent()
-
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
-        val hasApplied = uid != null && post.applicants.contains(uid)
-
-        if (hasApplied) {
-            btnAccept.text = "Already Applied"
-            btnAccept.isEnabled = false
-            btnAccept.alpha = 0.6f
-        } else {
-            btnAccept.text = "Apply Now"
-            btnAccept.isEnabled = true
-            btnAccept.alpha = 1.0f
-        }
-
-        view.findViewById<View>(R.id.tvImagesLabel).visibility = View.GONE
-        view.findViewById<View>(R.id.scrollImages).visibility = View.GONE
-        view.findViewById<View>(R.id.tvDuration).visibility = View.GONE
-        
-        val dialog = android.app.AlertDialog.Builder(requireContext())
-            .setView(view)
-            .create()
-
-        btnClose.setOnClickListener { dialog.dismiss() }
-        btnAccept.setOnClickListener {
-            dialog.dismiss()
-            applyForHiring(post)
-        }
-
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        dialog.show()
-    }
-
-    private fun applyForHiring(post: com.example.newtacks.models.HiringPost) {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        
-        db.collection("hiring").document(post.hiringId)
-            .update("applicants", com.google.firebase.firestore.FieldValue.arrayUnion(uid))
-            .addOnSuccessListener {
-                Toast.makeText(requireContext(), "Application sent!", Toast.LENGTH_SHORT).show()
-            }
+    private fun showHiringPreview(post: HiringPost) {
+        val intent = android.content.Intent(requireContext(), com.example.newtacks.company.HiringDetailsActivity::class.java)
+        intent.putExtra("HIRING_POST_JSON", com.google.gson.Gson().toJson(post))
+        startActivity(intent)
     }
 
     private fun acceptJob(job: Job) {

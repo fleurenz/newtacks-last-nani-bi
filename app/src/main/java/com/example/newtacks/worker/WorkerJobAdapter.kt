@@ -5,11 +5,11 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.newtacks.R
-import com.example.newtacks.models.Job
+import com.example.newtacks.models.FeedOpportunity
 
 class WorkerJobAdapter(
-    private val jobs: List<Job>,
-    private val onAccept: (Job) -> Unit
+    private val opportunities: List<FeedOpportunity>,
+    private val onClick: (FeedOpportunity) -> Unit
 ) : RecyclerView.Adapter<WorkerJobAdapter.JobViewHolder>() {
 
     class JobViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -26,17 +26,22 @@ class WorkerJobAdapter(
     }
 
     override fun onBindViewHolder(holder: JobViewHolder, position: Int) {
+        val opportunity = opportunities[position]
 
-        val job = jobs[position]
+        holder.title.text = opportunity.title
+        holder.amount.text = opportunity.amount
+        holder.location.text = opportunity.location
 
-        holder.title.text = job.jobTitle
-        holder.amount.text = "₱${job.offeredAmount}"
-        holder.location.text = job.clientAddress
-
+        holder.acceptBtn.text = "View on Map"
+        
+        holder.itemView.setOnClickListener {
+            onClick(opportunity)
+        }
+        
         holder.acceptBtn.setOnClickListener {
-            onAccept(job)
+            onClick(opportunity)
         }
     }
 
-    override fun getItemCount(): Int = jobs.size
+    override fun getItemCount(): Int = opportunities.size
 }

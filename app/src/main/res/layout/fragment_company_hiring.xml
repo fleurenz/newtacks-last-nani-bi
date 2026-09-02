@@ -73,7 +73,22 @@
                         android:layout_height="wrap_content"
                         android:textColor="#1E293B"
                         android:textSize="14sp"
-                        android:lineSpacingExtra="4dp" />
+                        android:lineSpacingExtra="4dp"
+                        android:layout_marginBottom="12dp" />
+
+                    <HorizontalScrollView
+                        android:id="@+id/scrollPostImages"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:scrollbars="none"
+                        android:layout_marginBottom="12dp"
+                        android:visibility="gone">
+                        <LinearLayout
+                            android:id="@+id/layoutPostImages"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal" />
+                    </HorizontalScrollView>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnDeletePost"

@@ -17,5 +17,9 @@
     <string name="describe_job">Describe the job in detail...</string>
     <string name="cancel">Cancel</string>
     <string name="submit_request">Submit Request</string>
+    <string name="job_description_label">Job Description</string>
+    <string name="about_label">About</string>
+    <string name="rate_format">₱%.0f/day</string>
+    <string name="website_placeholder">www.%1$s.com</string>
 
 </resources>

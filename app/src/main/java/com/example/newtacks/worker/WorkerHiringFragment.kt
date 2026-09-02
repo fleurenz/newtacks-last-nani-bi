@@ -15,6 +15,11 @@ import com.google.android.material.tabs.TabLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import coil.load
+import android.widget.ImageView
+import android.view.View
+import android.widget.LinearLayout
+import com.example.newtacks.utils.ImageUtils
 
 class WorkerHiringFragment : Fragment() {
 
@@ -123,59 +128,9 @@ class WorkerHiringFragment : Fragment() {
     }
 
     private fun showHiringPreview(post: HiringPost) {
-        val view = layoutInflater.inflate(R.layout.dialog_job_preview, null)
-        val tvTitle   = view.findViewById<TextView>(R.id.tvTitle)
-        val tvDetails = view.findViewById<TextView>(R.id.tvDetails)
-        val btnAccept = view.findViewById<Button>(R.id.btnAccept)
-        val btnClose  = view.findViewById<Button>(R.id.btnClose)
-        
-        tvTitle.text = post.jobTitle
-        tvDetails.text = """
-            Company: ${post.companyName}
-            Address: ${post.companyAddress}
-            Daily Rate: ₱${post.dailyRate}
-            Employment: ${post.employmentType}
-            Services: ${post.serviceCategories.joinToString(", ")}
-        """.trimIndent()
-
-        val uid = auth.currentUser?.uid
-        val hasApplied = uid != null && post.applicants.contains(uid)
-
-        if (hasApplied) {
-            btnAccept.text = "Already Applied"
-            btnAccept.isEnabled = false
-            btnAccept.alpha = 0.6f
-        } else {
-            btnAccept.text = "Apply Now"
-            btnAccept.isEnabled = true
-            btnAccept.alpha = 1.0f
-        }
-
-        view.findViewById<View>(R.id.tvImagesLabel).visibility = View.GONE
-        view.findViewById<View>(R.id.scrollImages).visibility = View.GONE
-        view.findViewById<View>(R.id.tvDuration).visibility = View.GONE
-        
-        val dialog = android.app.AlertDialog.Builder(requireContext())
-            .setView(view)
-            .create()
-
-        btnClose.setOnClickListener { dialog.dismiss() }
-        btnAccept.setOnClickListener {
-            dialog.dismiss()
-            applyForHiring(post)
-        }
-
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        dialog.show()
-    }
-
-    private fun applyForHiring(post: HiringPost) {
-        val uid = auth.currentUser?.uid ?: return
-        db.collection("hiring").document(post.hiringId)
-            .update("applicants", com.google.firebase.firestore.FieldValue.arrayUnion(uid))
-            .addOnSuccessListener {
-                Toast.makeText(requireContext(), "Application sent!", Toast.LENGTH_SHORT).show()
-            }
+        val intent = android.content.Intent(requireContext(), com.example.newtacks.company.HiringDetailsActivity::class.java)
+        intent.putExtra("HIRING_POST_JSON", com.google.gson.Gson().toJson(post))
+        startActivity(intent)
     }
 
     override fun onDestroyView() {

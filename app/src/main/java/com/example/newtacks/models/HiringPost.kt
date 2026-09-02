@@ -15,6 +15,10 @@ data class HiringPost(
     
     val dailyRate: Double = 0.0,
     
+    val description: String = "",
+    val responsibilities: String = "",
+    val images: List<String> = emptyList(),
+    
     val status: String = "OPEN",
     val applicants: List<String> = emptyList(),
     val createdAt: Long = System.currentTimeMillis(),
