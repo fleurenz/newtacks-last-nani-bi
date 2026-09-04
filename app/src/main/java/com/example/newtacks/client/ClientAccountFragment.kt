@@ -153,6 +153,9 @@ class ClientAccountFragment : Fragment() {
                 dialog.dismiss()
                 // Clear Tey's memory on logout
                 ChatRepository.getInstance(RetrofitClient.chatApiService).clearSession()
+                // Stop notification service on logout
+                requireContext().stopService(Intent(requireContext(), com.example.newtacks.utils.NotificationService::class.java))
+                
                 auth.signOut()
                 Toast.makeText(requireContext(), "Logged out", Toast.LENGTH_SHORT).show()
                 val intent = Intent(requireContext(), OnboardingActivity::class.java)

@@ -1,5 +1,6 @@
 package com.example.newtacks
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -97,6 +98,15 @@ class ClientDashboardActivity : AppCompatActivity() {
         
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         listenForJobHandshake()
+        listenForUnreadMessages()
+
+        // Start background service for vital notifications
+        val serviceIntent = Intent(this, com.example.newtacks.utils.NotificationService::class.java)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+        } else {
+            startService(serviceIntent)
+        }
 
         bottomNav.setOnItemSelectedListener { item ->
             val target = when (item.itemId) {
@@ -212,8 +222,26 @@ class ClientDashboardActivity : AppCompatActivity() {
             ))
     }
 
+    private var unreadMessagesListener: ListenerRegistration? = null
+    private fun listenForUnreadMessages() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val db = FirebaseFirestore.getInstance()
+        val bottomNav = findViewById<BottomNavigationView>(R.id.clientBottomNav)
+
+        unreadMessagesListener = db.collection("chats")
+            .whereEqualTo("receiverId", uid)
+            .whereEqualTo("read", false)
+            .addSnapshotListener { snapshots, _ ->
+                val unreadCount = snapshots?.size() ?: 0
+                val badge = bottomNav.getOrCreateBadge(R.id.nav_requests)
+                badge.isVisible = unreadCount > 0
+                if (unreadCount > 0) badge.number = unreadCount
+            }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        unreadMessagesListener?.remove()
         stopLocationUpdates()
         jobHandshakeListener?.remove()
     }

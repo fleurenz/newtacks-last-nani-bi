@@ -138,6 +138,15 @@ class TransactionChatActivity : AppCompatActivity() {
                 val messages = snapshots?.toObjects(ChatMessage::class.java) ?: emptyList()
                 val sortedMessages = messages.sortedBy { it.timestamp }
                 
+                // Mark received messages as read
+                val currentUid = auth.currentUser?.uid
+                snapshots?.documents?.forEach { doc ->
+                    val msg = doc.toObject(ChatMessage::class.java)
+                    if (msg != null && msg.receiverId == currentUid && !msg.read) {
+                        doc.reference.update("read", true)
+                    }
+                }
+
                 adapter.submitList(sortedMessages)
                 if (sortedMessages.isNotEmpty()) {
                     rvChat.smoothScrollToPosition(sortedMessages.size - 1)
@@ -178,6 +187,14 @@ class TransactionChatActivity : AppCompatActivity() {
 
         etMessage.setText("")
         db.collection("chats").document(messageId).set(message)
+            .addOnSuccessListener {
+                // Send notification to the other user
+                com.example.newtacks.utils.NotificationHelper.sendNotification(
+                    otherUserId,
+                    "New Message: $jobTitle",
+                    text
+                )
+            }
             .addOnFailureListener {
                 Toast.makeText(this, "Failed to send message", Toast.LENGTH_SHORT).show()
             }

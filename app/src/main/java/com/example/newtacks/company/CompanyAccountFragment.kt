@@ -204,6 +204,9 @@ class CompanyAccountFragment : Fragment() {
             .setOnClickListener {
                 dialog.dismiss()
                 ChatRepository.getInstance(RetrofitClient.chatApiService).clearSession()
+                // Stop notification service on logout
+                requireContext().stopService(android.content.Intent(requireContext(), com.example.newtacks.utils.NotificationService::class.java))
+                
                 auth.signOut()
                 Toast.makeText(requireContext(), "Logged out", Toast.LENGTH_SHORT).show()
                 val intent = Intent(requireContext(), OnboardingActivity::class.java)

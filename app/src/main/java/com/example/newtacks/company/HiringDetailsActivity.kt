@@ -261,6 +261,11 @@ class HiringDetailsActivity : AppCompatActivity() {
         db.collection("hiring").document(post.hiringId)
             .update("applicants", com.google.firebase.firestore.FieldValue.arrayUnion(uid))
             .addOnSuccessListener {
+                com.example.newtacks.utils.NotificationHelper.sendNotification(
+                    post.companyId,
+                    "New Job Applicant",
+                    "Someone has applied for your ${post.jobTitle} position."
+                )
                 Toast.makeText(this, "Application sent successfully!", Toast.LENGTH_SHORT).show()
                 finish()
             }

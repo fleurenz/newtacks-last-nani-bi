@@ -327,6 +327,21 @@ class WorkerJobFragment : Fragment() {
         firestore.collection("jobs").document(jobId)
             .update("status", newStatus)
             .addOnSuccessListener {
+                val title = when (newStatus) {
+                    "HEADING_TO_CLIENT" -> "Worker Heading to Location"
+                    "ARRIVED" -> "Worker Has Arrived"
+                    else -> "Job Update"
+                }
+                val message = when (newStatus) {
+                    "HEADING_TO_CLIENT" -> "Your worker is now on their way to you."
+                    "ARRIVED" -> "Your worker has arrived at your address."
+                    else -> "The status of your job has changed to $newStatus"
+                }
+
+                currentJob?.let { job ->
+                    com.example.newtacks.utils.NotificationHelper.sendNotification(job.clientId, title, message)
+                }
+
                 Toast.makeText(requireContext(), "Status updated: $newStatus", Toast.LENGTH_SHORT).show()
             }
     }
@@ -501,6 +516,13 @@ class WorkerJobFragment : Fragment() {
                 )
             )
             .addOnSuccessListener {
+                currentJob?.let { job ->
+                    com.example.newtacks.utils.NotificationHelper.sendNotification(
+                        job.clientId,
+                        "Job Ready for Verification",
+                        "Your worker has completed the job. Please verify and confirm."
+                    )
+                }
                 Toast.makeText(
                     requireContext(),
                     "Marked as done. Waiting for client verification.",

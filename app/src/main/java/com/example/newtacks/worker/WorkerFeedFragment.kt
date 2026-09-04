@@ -647,6 +647,11 @@ class WorkerFeedFragment : Fragment() {
                                 "lastActive" to System.currentTimeMillis()
                             ))
                         }.addOnSuccessListener {
+                            com.example.newtacks.utils.NotificationHelper.sendNotification(
+                                job.clientId,
+                                "Job Accepted",
+                                "A worker has accepted your ${job.jobTitle} request."
+                            )
                             (activity as? com.example.newtacks.WorkerDashboardActivity)?.switchTab(R.id.nav_job)
                         }
                     }

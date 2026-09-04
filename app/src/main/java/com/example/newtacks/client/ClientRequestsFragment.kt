@@ -554,23 +554,15 @@ class ClientRequestsFragment : Fragment() {
             .document(receiptId)
             .set(receipt)
             .addOnSuccessListener {
-                sendVerificationNotification(job.clientId)
+                job.workerId?.let { workerId ->
+                    com.example.newtacks.utils.NotificationHelper.sendNotification(
+                        workerId,
+                        "Job Confirmed",
+                        "The client has confirmed your work for ${job.jobTitle}. Receipt generated."
+                    )
+                }
                 showReviewDialog(job)
             }
-    }
-
-    // --------------------------------------------------
-    // 🔥 NOTIFICATION
-    // --------------------------------------------------
-    private fun sendVerificationNotification(clientId: String) {
-        firestore.collection("notifications")
-            .add(
-                mapOf(
-                    "to"      to clientId,
-                    "title"   to "Job Ready for Verification",
-                    "message" to "Your worker has completed the job."
-                )
-            )
     }
 
     // --------------------------------------------------
