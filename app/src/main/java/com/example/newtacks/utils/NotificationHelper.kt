@@ -10,11 +10,15 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.newtacks.R
 import com.example.newtacks.authentication.SplashActivity
+import com.google.firebase.firestore.DocumentChange
 
 object NotificationHelper {
     private const val CHANNEL_ID = "newtacks_notifications"
     private const val CHANNEL_NAME = "NewTacks Job Updates"
     private const val CHANNEL_DESC = "Notifications for job acceptance, arrival, and completion."
+
+    // Keep track of IDs we've already notified to prevent duplicates/looping
+    private val processedNotificationIds = mutableSetOf<String>()
 
     fun showNotification(context: Context, title: String, message: String, targetFragment: String? = null) {
         createNotificationChannel(context)
@@ -83,22 +87,39 @@ object NotificationHelper {
         val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
 
         notificationListener?.remove()
+        processedNotificationIds.clear() // Reset cache for new session
 
         notificationListener = db.collection("notifications")
             .whereEqualTo("to", uid)
             .whereEqualTo("read", false)
             .addSnapshotListener { snapshots, error ->
-                if (error != null) return@addSnapshotListener
-                if ((snapshots == null) || snapshots.isEmpty) return@addSnapshotListener
+                if (error != null) {
+                    android.util.Log.e("NotificationHelper", "Listener error: ${error.message}")
+                    return@addSnapshotListener
+                }
+                if (snapshots == null) return@addSnapshotListener
 
-                for (doc in snapshots.documents) {
-                    val title = doc.getString("title") ?: "New Update"
-                    val message = doc.getString("message") ?: ""
-                    val target = doc.getString("targetFragment")
-                    
-                    showNotification(context, title, message, target)
+                for (change in snapshots.documentChanges) {
+                    if (change.type == DocumentChange.Type.ADDED) {
+                        val doc = change.document
+                        val docId = doc.id
+                        
+                        // Prevent duplicate processing in the same listener session
+                        if (processedNotificationIds.contains(docId)) continue
+                        processedNotificationIds.add(docId)
 
-                    doc.reference.delete()
+                        val title = doc.getString("title") ?: "New Update"
+                        val message = doc.getString("message") ?: ""
+                        val target = doc.getString("targetFragment")
+                        
+                        showNotification(context, title, message, target)
+
+                        // Clean up from DB
+                        doc.reference.delete().addOnFailureListener {
+                            // If delete fails, remove from local cache so we can try again if listener refreshes
+                            processedNotificationIds.remove(docId)
+                        }
+                    }
                 }
             }
     }
@@ -121,5 +142,6 @@ object NotificationHelper {
     fun stopListening() {
         notificationListener?.remove()
         notificationListener = null
+        processedNotificationIds.clear()
     }
 }
