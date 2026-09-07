@@ -192,7 +192,8 @@ class TransactionChatActivity : AppCompatActivity() {
                 com.example.newtacks.utils.NotificationHelper.sendNotification(
                     otherUserId,
                     "New Message: $jobTitle",
-                    text
+                    text,
+                    if (auth.currentUser?.uid == workerId) "REQUESTS" else "JOB" // If sender is worker, target is client (REQUESTS), else target is worker (JOB)
                 )
             }
             .addOnFailureListener {

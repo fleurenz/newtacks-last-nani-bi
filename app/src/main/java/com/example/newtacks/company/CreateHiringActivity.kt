@@ -21,6 +21,7 @@ import com.example.newtacks.models.User
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.*
@@ -33,7 +34,6 @@ class CreateHiringActivity : AppCompatActivity() {
 
     private lateinit var etCompanyName: EditText
     private lateinit var etCompanyAddress: EditText
-    private lateinit var switchLocation: com.google.android.material.switchmaterial.SwitchMaterial
     
     private lateinit var etHiringTitle: EditText
     private lateinit var cbCarpentry: CheckBox
@@ -41,17 +41,21 @@ class CreateHiringActivity : AppCompatActivity() {
     private lateinit var cbMasonry: CheckBox
     private lateinit var cbWelding: CheckBox
     private lateinit var cbPainting: CheckBox
+    private lateinit var cbOthers: CheckBox
+    private lateinit var etOtherService: EditText
     
-    private lateinit var rgEmployment: RadioGroup
+    private lateinit var toggleEmploymentType: MaterialButtonToggleGroup
     private lateinit var etDailyRate: EditText
+    private lateinit var etVacancies: EditText
     
     private lateinit var layoutSelectedImages: LinearLayout
-    private lateinit var btnAddPhoto: Button
+    private lateinit var btnAddPhoto: View
     private lateinit var etJobDescription: EditText
     private lateinit var etResponsibilities: EditText
     
     private lateinit var btnSelectClosingDate: Button
     private lateinit var btnSubmit: Button
+    private lateinit var btnDraft: Button
 
     private var selectedLat: Double = 0.0
     private var selectedLng: Double = 0.0
@@ -86,13 +90,16 @@ class CreateHiringActivity : AppCompatActivity() {
     private fun setupToolbar() {
         val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
         toolbar.setNavigationOnClickListener { finish() }
     }
 
     private fun initializeViews() {
-        etCompanyName = findViewById(R.id.etCompanyName)
+        // We removed etCompanyName from XML as per image (it shows "Job Title" as first field)
+        // But we still need the company name for the HiringPost model.
+        // We'll keep the variables but they might be null or hidden.
+        
         etCompanyAddress = findViewById(R.id.etCompanyAddress)
-        switchLocation = findViewById(R.id.switchRealTimeLocation)
         etHiringTitle = findViewById(R.id.etHiringTitle)
         
         cbCarpentry = findViewById(R.id.cbCarpentry)
@@ -100,24 +107,28 @@ class CreateHiringActivity : AppCompatActivity() {
         cbMasonry = findViewById(R.id.cbMasonry)
         cbWelding = findViewById(R.id.cbWelding)
         cbPainting = findViewById(R.id.cbPainting)
+        cbOthers = findViewById(R.id.cbOthers)
+        etOtherService = findViewById(R.id.etOtherService)
         
-        rgEmployment = findViewById(R.id.rgEmploymentType)
+        toggleEmploymentType = findViewById(R.id.toggleEmploymentType)
         etDailyRate = findViewById(R.id.etDailyRate)
+        etVacancies = findViewById(R.id.etVacancies)
         
         layoutSelectedImages = findViewById(R.id.layoutSelectedImages)
-        btnAddPhoto = findViewById(R.id.btnAddPhoto)
+        btnAddPhoto = findViewById(R.id.btnAddPhotoCard)
         etJobDescription = findViewById(R.id.etJobDescription)
         etResponsibilities = findViewById(R.id.etResponsibilities)
         
         btnSelectClosingDate = findViewById(R.id.btnSelectClosingDate)
         btnSubmit = findViewById(R.id.btnSubmitHiring)
+        btnDraft = findViewById(R.id.btnDraft)
     }
 
     private fun updateImagesUI() {
         layoutSelectedImages.removeAllViews()
         selectedImageUris.forEachIndexed { index, uri ->
             val imageView = ImageView(this)
-            val params = LinearLayout.LayoutParams(200, 200)
+            val params = LinearLayout.LayoutParams(160, 160)
             params.setMargins(0, 0, 16, 0)
             imageView.layoutParams = params
             imageView.scaleType = ImageView.ScaleType.CENTER_CROP
@@ -139,24 +150,21 @@ class CreateHiringActivity : AppCompatActivity() {
         db.collection("users").document(uid).get().addOnSuccessListener { doc ->
             val user = doc.toObject(User::class.java)
             if (user != null) {
-                etCompanyName.setText(user.companyName ?: user.name)
-                etCompanyAddress.setText(user.address)
-                
-                profileAddress = user.address
+                profileAddress = user.address ?: ""
                 profileLat = user.latitude ?: 0.0
                 profileLng = user.longitude ?: 0.0
                 
                 selectedLat = profileLat
                 selectedLng = profileLng
+                
+                if (etCompanyAddress.text.isEmpty()) {
+                    etCompanyAddress.setText(profileAddress)
+                }
             }
         }
     }
 
     private fun setupListeners() {
-        switchLocation.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) detectLocation() else restoreProfileLocation()
-        }
-
         btnAddPhoto.setOnClickListener {
             pickImages.launch("image/*")
         }
@@ -173,47 +181,16 @@ class CreateHiringActivity : AppCompatActivity() {
             }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
         }
 
-        btnSubmit.setOnClickListener { submitHiring() }
+        btnSubmit.setOnClickListener { submitHiring(status = "OPEN") }
+        btnDraft.setOnClickListener { submitHiring(status = "DRAFT") }
     }
 
-    private fun detectLocation() {
-        if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) 
-            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Location permission required", Toast.LENGTH_SHORT).show()
-            switchLocation.isChecked = false
-            return
-        }
-
-        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-            .addOnSuccessListener { loc ->
-                if (loc != null) {
-                    selectedLat = loc.latitude
-                    selectedLng = loc.longitude
-                    reverseGeocode(loc.latitude, loc.longitude)
-                }
-            }
-    }
-
-    private fun reverseGeocode(lat: Double, lng: Double) {
-        try {
-            val addresses = Geocoder(this, Locale.getDefault()).getFromLocation(lat, lng, 1)
-            if (!addresses.isNullOrEmpty()) {
-                etCompanyAddress.setText(addresses[0].getAddressLine(0))
-            }
-        } catch (e: Exception) { e.printStackTrace() }
-    }
-
-    private fun restoreProfileLocation() {
-        etCompanyAddress.setText(profileAddress)
-        selectedLat = profileLat
-        selectedLng = profileLng
-    }
-
-    private fun submitHiring() {
+    private fun submitHiring(status: String) {
         val title = etHiringTitle.text.toString().trim()
         val rateText = etDailyRate.text.toString().trim()
         val description = etJobDescription.text.toString().trim()
         val responsibilities = etResponsibilities.text.toString().trim()
+        val vacanciesText = etVacancies.text.toString().trim()
         
         val services = mutableListOf<String>()
         if (cbCarpentry.isChecked) services.add("Carpentry")
@@ -221,59 +198,73 @@ class CreateHiringActivity : AppCompatActivity() {
         if (cbMasonry.isChecked) services.add("Masonry")
         if (cbWelding.isChecked) services.add("Welding")
         if (cbPainting.isChecked) services.add("Painting")
+        if (cbOthers.isChecked) {
+            val other = etOtherService.text.toString().trim()
+            if (other.isNotEmpty()) services.add(other)
+        }
 
-        val selectedRbId = rgEmployment.checkedRadioButtonId
-        val empType = when (selectedRbId) {
-            R.id.rbPartTime -> "PART_TIME"
-            R.id.rbFullTime -> "FULL_TIME"
-            R.id.rbProject -> "PROJECT"
+        val empType = when (toggleEmploymentType.checkedButtonId) {
+            R.id.btnFullTime -> "FULL_TIME"
+            R.id.btnPartTime -> "PART_TIME"
+            R.id.btnContract -> "CONTRACT"
             else -> ""
         }
 
-        if (title.isEmpty() || rateText.isEmpty() || services.isEmpty() || empType.isEmpty() || expiresAtTimestamp == 0L || description.isEmpty() || responsibilities.isEmpty()) {
+        if (title.isEmpty() || rateText.isEmpty() || services.isEmpty() || empType.isEmpty() || expiresAtTimestamp == 0L || description.isEmpty() || responsibilities.isEmpty() || vacanciesText.isEmpty()) {
             Toast.makeText(this, "Please fill all required fields", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val rate = rateText.toDoubleOrNull() ?: 0.0
+        val rate = rateText.replace(Regex("[^0-9.]"), "").toDoubleOrNull() ?: 0.0
+        val vacancies = vacanciesText.toIntOrNull() ?: 1
         val uid = auth.currentUser?.uid ?: return
         
         btnSubmit.isEnabled = false
-        Toast.makeText(this, "Publishing...", Toast.LENGTH_SHORT).show()
+        btnDraft.isEnabled = false
+        Toast.makeText(this, if (status == "OPEN") "Publishing..." else "Saving draft...", Toast.LENGTH_SHORT).show()
 
         uploadImagesAndSubmit(selectedImageUris) { imageUrls ->
             val hiringId = db.collection("hiring").document().id
             val now = System.currentTimeMillis()
-            val post = HiringPost(
-                hiringId = hiringId,
-                companyId = uid,
-                companyName = etCompanyName.text.toString(),
-                companyAddress = etCompanyAddress.text.toString(),
-                jobTitle = title,
-                serviceCategories = services,
-                employmentType = empType,
-                latitude = selectedLat,
-                longitude = selectedLng,
-                dailyRate = rate,
-                description = description,
-                responsibilities = responsibilities,
-                images = imageUrls,
-                createdAt = now,
-                expiresAt = expiresAtTimestamp
-            )
+            
+            // Get company name from user profile (since we removed the field from UI for cleaner look)
+            db.collection("users").document(uid).get().addOnSuccessListener { userDoc ->
+                val companyName = userDoc.getString("companyName") ?: userDoc.getString("name") ?: "Company"
+                
+                val post = HiringPost(
+                    hiringId = hiringId,
+                    companyId = uid,
+                    companyName = companyName,
+                    companyAddress = etCompanyAddress.text.toString(),
+                    jobTitle = title,
+                    serviceCategories = services,
+                    employmentType = empType,
+                    latitude = selectedLat,
+                    longitude = selectedLng,
+                    dailyRate = rate,
+                    vacancies = vacancies,
+                    description = description,
+                    responsibilities = responsibilities,
+                    images = imageUrls,
+                    status = status,
+                    createdAt = now,
+                    expiresAt = expiresAtTimestamp
+                )
 
-            db.collection("hiring").document(hiringId).set(post)
-                .addOnSuccessListener {
-                    Toast.makeText(this, "Hiring post published", Toast.LENGTH_SHORT).show()
-                    val intent = Intent(this, CompanyDashboardActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
-                    finish()
-                }
-                .addOnFailureListener {
-                    btnSubmit.isEnabled = true
-                    Toast.makeText(this, "Failed to post", Toast.LENGTH_SHORT).show()
-                }
+                db.collection("hiring").document(hiringId).set(post)
+                    .addOnSuccessListener {
+                        Toast.makeText(this, if (status == "OPEN") "Hiring post published" else "Draft saved", Toast.LENGTH_SHORT).show()
+                        val intent = Intent(this, CompanyDashboardActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent)
+                        finish()
+                    }
+                    .addOnFailureListener {
+                        btnSubmit.isEnabled = true
+                        btnDraft.isEnabled = true
+                        Toast.makeText(this, "Failed to post", Toast.LENGTH_SHORT).show()
+                    }
+            }
         }
     }
 

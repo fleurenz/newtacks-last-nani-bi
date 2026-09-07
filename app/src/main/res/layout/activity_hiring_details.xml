@@ -196,7 +196,7 @@
                     android:gravity="center"
                     android:text="Job Details"
                     android:textColor="#1E293B"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -207,7 +207,18 @@
                     android:gravity="center"
                     android:text="About Company"
                     android:textColor="#64748B"
-                    android:textSize="14sp" />
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/tabApplicants"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="Applicants"
+                    android:textColor="#64748B"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
 
             </LinearLayout>
 
@@ -385,6 +396,33 @@
                             android:textColor="#475569"
                             android:textSize="14sp" />
                     </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- APPLICANTS CONTENT -->
+                <LinearLayout
+                    android:id="@+id/layoutApplicantsContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tvApplicantStats"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0 of 1 positions filled"
+                        android:textColor="#1E293B"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvApplicants"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false"
+                        tools:listitem="@layout/item_applicant" />
 
                 </LinearLayout>
 

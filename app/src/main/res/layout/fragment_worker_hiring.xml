@@ -22,7 +22,7 @@
             android:layout_marginBottom="4dp"
             android:alpha="0.7"
             android:letterSpacing="0.15"
-            android:text="COMPANY HIRING"
+            android:text="COMPANY POSTS"
             android:textColor="#FFFFFF"
             android:textSize="10sp"
             android:textStyle="bold" />
@@ -53,6 +53,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="For Interview" />
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Interviews" />
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hired" />
     </com.google.android.material.tabs.TabLayout>
     <!-- ===== FILTER BAR ===== -->
     <LinearLayout

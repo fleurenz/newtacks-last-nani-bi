@@ -1,14 +1,20 @@
 package com.example.newtacks.company
 
+import android.app.DatePickerDialog
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.toColorInt
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import coil.transform.CircleCropTransformation
 import com.example.newtacks.R
+import com.example.newtacks.models.Application
 import com.example.newtacks.models.HiringPost
 import com.example.newtacks.models.User
 import com.example.newtacks.utils.ImageUtils
@@ -17,8 +23,10 @@ import com.google.android.material.chip.ChipGroup
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FieldValue
 import com.google.gson.Gson
 import java.util.Locale
+import java.util.Calendar
 
 class HiringDetailsActivity : AppCompatActivity() {
 
@@ -41,9 +49,11 @@ class HiringDetailsActivity : AppCompatActivity() {
     
     private lateinit var tabJobDetails: TextView
     private lateinit var tabAboutCompany: TextView
+    private lateinit var tabApplicants: TextView
     
     private lateinit var layoutJobDetailsContent: LinearLayout
     private lateinit var layoutAboutCompanyContent: LinearLayout
+    private lateinit var layoutApplicantsContent: LinearLayout
     
     private lateinit var tvDescription: TextView
     private lateinit var tvResponsibilities: TextView
@@ -53,6 +63,12 @@ class HiringDetailsActivity : AppCompatActivity() {
     private lateinit var tvCompanyEmail: TextView
     private lateinit var tvCompanyPhone: TextView
     private lateinit var tvCompanyWebsite: TextView
+
+    private lateinit var tvApplicantStats: TextView
+    private lateinit var rvApplicants: RecyclerView
+    private val applicantList = mutableListOf<User>()
+    private val applicationMap = mutableMapOf<String, Application>()
+    private lateinit var applicantAdapter: ApplicantAdapter
     
     private lateinit var btnApply: Button
 
@@ -75,6 +91,18 @@ class HiringDetailsActivity : AppCompatActivity() {
         setupTabs()
         displayDetails()
         loadCompanyExtraInfo()
+        
+        if (auth.currentUser?.uid == hiringPost?.companyId) {
+            setupApplicantsList()
+            listenForApplications()
+            listenForPostUpdates()
+
+            // Handle automatic tab focus if requested
+            val focusTab = intent.getIntExtra("FOCUS_TAB", -1)
+            if (focusTab != -1) {
+                selectTab(focusTab)
+            }
+        }
     }
 
     private fun initializeViews() {
@@ -92,9 +120,11 @@ class HiringDetailsActivity : AppCompatActivity() {
         
         tabJobDetails = findViewById(R.id.tabJobDetails)
         tabAboutCompany = findViewById(R.id.tabAboutCompany)
+        tabApplicants = findViewById(R.id.tabApplicants)
         
         layoutJobDetailsContent = findViewById(R.id.layoutJobDetailsContent)
         layoutAboutCompanyContent = findViewById(R.id.layoutAboutCompanyContent)
+        layoutApplicantsContent = findViewById(R.id.layoutApplicantsContent)
         
         tvDescription = findViewById(R.id.tvDescription)
         tvResponsibilities = findViewById(R.id.tvResponsibilities)
@@ -104,6 +134,9 @@ class HiringDetailsActivity : AppCompatActivity() {
         tvCompanyEmail = findViewById(R.id.tvCompanyEmail)
         tvCompanyPhone = findViewById(R.id.tvCompanyPhone)
         tvCompanyWebsite = findViewById(R.id.tvCompanyWebsite)
+
+        tvApplicantStats = findViewById(R.id.tvApplicantStats)
+        rvApplicants = findViewById(R.id.rvApplicants)
         
         btnApply = findViewById(R.id.btnApply)
     }
@@ -116,41 +149,54 @@ class HiringDetailsActivity : AppCompatActivity() {
     }
 
     private fun setupTabs() {
-        tabJobDetails.setOnClickListener {
-            selectTab(isJobDetails = true)
-        }
-        tabAboutCompany.setOnClickListener {
-            selectTab(isJobDetails = false)
+        tabJobDetails.setOnClickListener { selectTab(0) }
+        tabAboutCompany.setOnClickListener { selectTab(1) }
+        tabApplicants.setOnClickListener { selectTab(2) }
+
+        if (auth.currentUser?.uid == hiringPost?.companyId) {
+            tabApplicants.visibility = View.VISIBLE
         }
     }
 
-    private fun selectTab(isJobDetails: Boolean) {
-        if (isJobDetails) {
-            tvToolbarTitle.text = getString(R.string.job_description_label)
-            tabJobDetails.setBackgroundResource(R.drawable.bg_tab_left_selected)
-            tabJobDetails.setTextColor("#1E293B".toColorInt())
-            tabAboutCompany.background = null
-            tabAboutCompany.setTextColor("#64748B".toColorInt())
-            
-            layoutJobDetailsContent.visibility = View.VISIBLE
-            layoutAboutCompanyContent.visibility = View.GONE
-            
-            ivMainJobImage.visibility = View.VISIBLE
-            ivCompanyProfileCircle.visibility = View.GONE
-            layoutCarouselControls.visibility = if ((hiringPost?.images?.size ?: 0) > 1) View.VISIBLE else View.GONE
-        } else {
-            tvToolbarTitle.text = getString(R.string.about_label)
-            tabAboutCompany.setBackgroundResource(R.drawable.bg_tab_right_selected)
-            tabAboutCompany.setTextColor("#1E293B".toColorInt())
-            tabJobDetails.background = null
-            tabJobDetails.setTextColor("#64748B".toColorInt())
-            
-            layoutJobDetailsContent.visibility = View.GONE
-            layoutAboutCompanyContent.visibility = View.VISIBLE
-            
-            ivMainJobImage.visibility = View.GONE
-            ivCompanyProfileCircle.visibility = View.VISIBLE
-            layoutCarouselControls.visibility = View.GONE
+    private fun selectTab(index: Int) {
+        // Reset all
+        tabJobDetails.background = null
+        tabAboutCompany.background = null
+        tabApplicants.background = null
+        tabJobDetails.setTextColor("#64748B".toColorInt())
+        tabAboutCompany.setTextColor("#64748B".toColorInt())
+        tabApplicants.setTextColor("#64748B".toColorInt())
+        
+        layoutJobDetailsContent.visibility = View.GONE
+        layoutAboutCompanyContent.visibility = View.GONE
+        layoutApplicantsContent.visibility = View.GONE
+        ivMainJobImage.visibility = View.GONE
+        ivCompanyProfileCircle.visibility = View.GONE
+        layoutCarouselControls.visibility = View.GONE
+
+        when (index) {
+            0 -> {
+                tvToolbarTitle.text = getString(R.string.job_description_label)
+                tabJobDetails.setBackgroundResource(R.drawable.bg_tab_left_selected)
+                tabJobDetails.setTextColor("#1E293B".toColorInt())
+                layoutJobDetailsContent.visibility = View.VISIBLE
+                ivMainJobImage.visibility = View.VISIBLE
+                layoutCarouselControls.visibility = if ((hiringPost?.images?.size ?: 0) > 1) View.VISIBLE else View.GONE
+            }
+            1 -> {
+                tvToolbarTitle.text = getString(R.string.about_label)
+                tabAboutCompany.setBackgroundColor("#D1E2FF".toColorInt())
+                tabAboutCompany.setTextColor("#1E293B".toColorInt())
+                layoutAboutCompanyContent.visibility = View.VISIBLE
+                ivCompanyProfileCircle.visibility = View.VISIBLE
+            }
+            2 -> {
+                tvToolbarTitle.text = "Applicants"
+                tabApplicants.setBackgroundResource(R.drawable.bg_tab_right_selected)
+                tabApplicants.setTextColor("#1E293B".toColorInt())
+                layoutApplicantsContent.visibility = View.VISIBLE
+                ivCompanyProfileCircle.visibility = View.VISIBLE
+            }
         }
     }
 
@@ -227,8 +273,188 @@ class HiringDetailsActivity : AppCompatActivity() {
             if (company.profileImage.isNotEmpty()) {
                 ivCompanyProfileCircle.load(company.profileImage) {
                     placeholder(R.drawable.ic_user_placeholder)
+                    transformations(CircleCropTransformation())
                 }
             }
+        }
+    }
+
+    private fun setupApplicantsList() {
+        applicantAdapter = ApplicantAdapter(applicantList) { user ->
+            showWorkerDetailsDialog(user)
+        }
+        rvApplicants.layoutManager = LinearLayoutManager(this)
+        rvApplicants.adapter = applicantAdapter
+    }
+
+    private fun listenForApplications() {
+        val postId = hiringPost?.hiringId ?: return
+        db.collection("applications")
+            .whereEqualTo("hiringId", postId)
+            .addSnapshotListener { snapshots, _ ->
+                if (snapshots == null) return@addSnapshotListener
+                
+                val workerIds = mutableListOf<String>()
+                applicationMap.clear()
+                
+                for (doc in snapshots.documents) {
+                    val app = doc.toObject(Application::class.java) ?: continue
+                    applicationMap[app.workerId] = app
+                    workerIds.add(app.workerId)
+                }
+                
+                if (workerIds.isNotEmpty()) {
+                    fetchApplicantProfiles(workerIds)
+                } else {
+                    applicantList.clear()
+                    applicantAdapter.notifyDataSetChanged()
+                }
+            }
+    }
+
+    private fun fetchApplicantProfiles(uids: List<String>) {
+        db.collection("users")
+            .whereIn("uid", uids.take(10))
+            .get()
+            .addOnSuccessListener { snapshots ->
+                applicantList.clear()
+                for (doc in snapshots) {
+                    val user = doc.toObject(User::class.java)
+                    if (user != null) applicantList.add(user)
+                }
+                applicantAdapter.notifyDataSetChanged()
+            }
+    }
+
+    private fun listenForPostUpdates() {
+        val postId = hiringPost?.hiringId ?: return
+        db.collection("hiring").document(postId).addSnapshotListener { snapshot, _ ->
+            val updatedPost = snapshot?.toObject(HiringPost::class.java)
+            if (updatedPost != null) {
+                hiringPost = updatedPost
+                tvApplicantStats.text = "${updatedPost.acceptedWorkers.size} of ${updatedPost.vacancies} positions filled"
+            }
+        }
+    }
+
+    private fun showWorkerDetailsDialog(worker: User) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_worker_details_preview, null)
+        val ivProfile = dialogView.findViewById<ImageView>(R.id.ivWorkerProfile)
+        val tvName = dialogView.findViewById<TextView>(R.id.tvWorkerName)
+        val tvRating = dialogView.findViewById<TextView>(R.id.tvWorkerRating)
+        val tvStatus = dialogView.findViewById<TextView>(R.id.tvWorkerBadge)
+        
+        tvName.text = worker.name
+        tvRating.text = "⭐ %.1f (%d reviews)".format(worker.rating, worker.totalRatings)
+
+        val app = applicationMap[worker.uid]
+        tvStatus.visibility = View.VISIBLE
+        tvStatus.text = app?.status ?: "APPLIED"
+
+        ivProfile.load(worker.profileImage) {
+            crossfade(true)
+            placeholder(R.drawable.ic_user_placeholder)
+            transformations(CircleCropTransformation())
+        }
+
+        val builder = android.app.AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setNeutralButton("Reject", { _, _ -> rejectApplicant(worker) })
+            .setNegativeButton("Close", null)
+
+        when (app?.status) {
+            "APPLIED" -> {
+                builder.setPositiveButton("Schedule Interview", { _, _ -> showScheduleInterviewDialog(worker) })
+            }
+            "INTERVIEW_SCHEDULED" -> {
+                if (app.workerResponse == "ACCEPTED") {
+                    builder.setPositiveButton("Hire", { _, _ -> confirmHiring(worker) })
+                } else if (app.workerResponse == "RESCHEDULE") {
+                    builder.setPositiveButton("Reschedule", { _, _ -> showScheduleInterviewDialog(worker) })
+                }
+            }
+        }
+        
+        builder.show()
+    }
+
+    private fun showScheduleInterviewDialog(worker: User) {
+        val cal = Calendar.getInstance()
+        DatePickerDialog(this, { _, y, m, d ->
+            val interviewCal = Calendar.getInstance()
+            interviewCal.set(y, m, d, 10, 0) // Default 10 AM
+            scheduleInterview(worker, interviewCal.timeInMillis)
+        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
+    }
+
+    private fun scheduleInterview(worker: User, timestamp: Long) {
+        val app = applicationMap[worker.uid] ?: return
+        val post = hiringPost ?: return
+        
+        db.collection("applications").document(app.applicationId)
+            .update(mapOf(
+                "status" to "INTERVIEW_SCHEDULED",
+                "interviewDate" to timestamp,
+                "interviewLocation" to post.companyAddress,
+                "workerResponse" to null // Reset response for new date
+            ))
+            .addOnSuccessListener {
+                com.example.newtacks.utils.NotificationHelper.sendNotification(
+                    worker.uid,
+                    "Interview Scheduled",
+                    "You have been invited for an interview for ${post.jobTitle} on ${java.text.SimpleDateFormat("MMM dd", Locale.getDefault()).format(timestamp)}.",
+                    "HIRING"
+                )
+                Toast.makeText(this, "Interview scheduled", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun rejectApplicant(worker: User) {
+        val app = applicationMap[worker.uid] ?: return
+        db.collection("applications").document(app.applicationId)
+            .update("status", "REJECTED")
+            .addOnSuccessListener {
+                Toast.makeText(this, "Applicant rejected", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun confirmHiring(worker: User) {
+        val post = hiringPost ?: return
+        val currentAccepted = post.acceptedWorkers.size
+        
+        if (currentAccepted >= post.vacancies) {
+            Toast.makeText(this, "Threshold reached.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        db.runTransaction { transaction ->
+            val ref = db.collection("hiring").document(post.hiringId)
+            val appRef = db.collection("applications").document(applicationMap[worker.uid]!!.applicationId)
+            
+            val snapshot = transaction.get(ref)
+            val updatedAccepted = snapshot.toObject(HiringPost::class.java)?.acceptedWorkers ?: emptyList()
+            
+            if (updatedAccepted.size >= post.vacancies) {
+                throw Exception("Vacancy full")
+            }
+
+            val newList = updatedAccepted.toMutableList()
+            newList.add(worker.uid)
+            
+            transaction.update(ref, mapOf(
+                "acceptedWorkers" to newList,
+                "status" to if (newList.size >= post.vacancies) "CLOSED" else "OPEN"
+            ))
+            transaction.update(appRef, mapOf("status" to "HIRED"))
+            
+        }.addOnSuccessListener {
+            Toast.makeText(this, "Worker hired successfully!", Toast.LENGTH_SHORT).show()
+            com.example.newtacks.utils.NotificationHelper.sendNotification(
+                worker.uid,
+                "Status: Hired!",
+                "Congratulations! You have been officially hired for ${post.jobTitle}.",
+                "HIRING"
+            )
         }
     }
 
@@ -236,21 +462,18 @@ class HiringDetailsActivity : AppCompatActivity() {
         val uid = auth.currentUser?.uid
         
         if (uid == post.companyId) {
-            btnApply.text = "You posted this"
-            btnApply.isEnabled = false
-            btnApply.alpha = 0.6f
+            btnApply.text = "View Applicants"
+            btnApply.setOnClickListener { selectTab(2) }
             return
         }
 
-        val hasApplied = uid != null && post.applicants.contains(uid)
+        val hasApplied = uid != null && applicationMap.containsKey(uid)
         if (hasApplied) {
             btnApply.text = "Already Applied"
             btnApply.isEnabled = false
             btnApply.alpha = 0.6f
         } else {
-            btnApply.setOnClickListener {
-                applyForHiring(post)
-            }
+            btnApply.setOnClickListener { applyForHiring(post) }
         }
     }
 
@@ -258,20 +481,26 @@ class HiringDetailsActivity : AppCompatActivity() {
         val uid = auth.currentUser?.uid ?: return
         btnApply.isEnabled = false
         
-        db.collection("hiring").document(post.hiringId)
-            .update("applicants", com.google.firebase.firestore.FieldValue.arrayUnion(uid))
+        val appId = db.collection("applications").document().id
+        val app = Application(
+            applicationId = appId,
+            hiringId = post.hiringId,
+            companyId = post.companyId,
+            workerId = uid,
+            jobTitle = post.jobTitle,
+            status = "APPLIED"
+        )
+
+        db.collection("applications").document(appId).set(app)
             .addOnSuccessListener {
                 com.example.newtacks.utils.NotificationHelper.sendNotification(
                     post.companyId,
                     "New Job Applicant",
-                    "Someone has applied for your ${post.jobTitle} position."
+                    "Someone has applied for your ${post.jobTitle} position.",
+                    "APPLICANTS"
                 )
-                Toast.makeText(this, "Application sent successfully!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Application sent!", Toast.LENGTH_SHORT).show()
                 finish()
-            }
-            .addOnFailureListener {
-                btnApply.isEnabled = true
-                Toast.makeText(this, "Failed to apply", Toast.LENGTH_SHORT).show()
             }
     }
 }

@@ -21,7 +21,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Job Postings"
+            android:text="Applicants"
             android:textColor="#FFFFFF"
             android:textSize="24sp"
             android:textStyle="bold" />
@@ -55,46 +55,59 @@
             android:orientation="horizontal"
             android:layout_marginBottom="20dp">
 
-            <LinearLayout
+            <HorizontalScrollView
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="@drawable/bg_tab_container"
-                android:orientation="horizontal">
+                android:scrollbars="none">
 
-                <TextView
-                    android:id="@+id/tabActive"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_tab_left_selected"
-                    android:gravity="center"
-                    android:text="Active"
-                    android:textColor="#1E293B"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_tab_container"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="4dp">
 
-                <TextView
-                    android:id="@+id/tabDraft"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Draft"
-                    android:textColor="#64748B"
-                    android:textSize="13sp" />
+                    <TextView
+                        android:id="@+id/tabAll"
+                        android:layout_width="70dp"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_tab_left_selected"
+                        android:gravity="center"
+                        android:text="All"
+                        android:textColor="#1E293B"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tabClosed"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Closed"
-                    android:textColor="#64748B"
-                    android:textSize="13sp" />
+                    <TextView
+                        android:id="@+id/tabNew"
+                        android:layout_width="70dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="New"
+                        android:textColor="#64748B"
+                        android:textSize="13sp" />
 
-            </LinearLayout>
+                    <TextView
+                        android:id="@+id/tabInterview"
+                        android:layout_width="80dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="Interview"
+                        android:textColor="#64748B"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tabHired"
+                        android:layout_width="70dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="Hired"
+                        android:textColor="#64748B"
+                        android:textSize="13sp" />
+
+                </LinearLayout>
+            </HorizontalScrollView>
 
             <ImageView
                 android:id="@+id/btnFilter"
@@ -107,42 +120,20 @@
         </LinearLayout>
 
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-            android:id="@+id/swipeRefreshPosts"
+            android:id="@+id/swipeRefreshApplicants"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_height="match_parent">
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvJobPosts"
+                android:id="@+id/rvApplicants"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
-                android:paddingBottom="80dp"
-                tools:listitem="@layout/item_company_post" />
+                android:paddingBottom="24dp"
+                tools:listitem="@layout/item_company_applicant_full" />
 
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     </LinearLayout>
-
-    <!-- CREATE BUTTON -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnCreateJobPosting"
-        android:layout_width="wrap_content"
-        android:layout_height="52dp"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="24dp"
-        android:text="Create Job Posting"
-        android:textAllCaps="false"
-        android:textColor="#004A99"
-        android:textStyle="bold"
-        app:backgroundTint="#EBF2FF"
-        app:cornerRadius="26dp"
-        app:icon="@drawable/ic_plus"
-        app:iconGravity="textStart"
-        app:iconPadding="8dp"
-        app:iconTint="#004A99"
-        app:strokeColor="#004A99"
-        app:strokeWidth="1dp" />
 
 </RelativeLayout>

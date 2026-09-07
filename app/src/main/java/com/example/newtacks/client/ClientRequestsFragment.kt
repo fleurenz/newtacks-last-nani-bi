@@ -558,7 +558,8 @@ class ClientRequestsFragment : Fragment() {
                     com.example.newtacks.utils.NotificationHelper.sendNotification(
                         workerId,
                         "Job Confirmed",
-                        "The client has confirmed your work for ${job.jobTitle}. Receipt generated."
+                        "The client has confirmed your work for ${job.jobTitle}. Receipt generated.",
+                        "JOB"
                     )
                 }
                 showReviewDialog(job)

@@ -339,7 +339,7 @@ class WorkerJobFragment : Fragment() {
                 }
 
                 currentJob?.let { job ->
-                    com.example.newtacks.utils.NotificationHelper.sendNotification(job.clientId, title, message)
+                    com.example.newtacks.utils.NotificationHelper.sendNotification(job.clientId, title, message, "REQUESTS")
                 }
 
                 Toast.makeText(requireContext(), "Status updated: $newStatus", Toast.LENGTH_SHORT).show()
@@ -520,7 +520,8 @@ class WorkerJobFragment : Fragment() {
                     com.example.newtacks.utils.NotificationHelper.sendNotification(
                         job.clientId,
                         "Job Ready for Verification",
-                        "Your worker has completed the job. Please verify and confirm."
+                        "Your worker has completed the job. Please verify and confirm.",
+                        "REQUESTS"
                     )
                 }
                 Toast.makeText(

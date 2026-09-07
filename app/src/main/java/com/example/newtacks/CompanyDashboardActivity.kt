@@ -19,7 +19,7 @@ class CompanyDashboardActivity : AppCompatActivity() {
 
     private var fragmentHome: CompanyHomeFragment? = null
     private var fragmentHiring: CompanyHiringFragment? = null
-    private var fragmentHistory: CompanyHistoryFragment? = null
+    private var fragmentApplicants: CompanyApplicantsFragment? = null
     private var fragmentAccount: CompanyAccountFragment? = null
 
     private var activeFragment: Fragment? = null
@@ -38,28 +38,38 @@ class CompanyDashboardActivity : AppCompatActivity() {
             insets
         }
 
+        val fragmentToOpen = intent.getStringExtra("OPEN_FRAGMENT")
+
         // Use savedInstanceState check to prevent duplicate fragments on Activity recreation
         if (savedInstanceState == null) {
             fragmentAccount = CompanyAccountFragment()
-            fragmentHistory = CompanyHistoryFragment()
+            fragmentApplicants = CompanyApplicantsFragment()
             fragmentHiring  = CompanyHiringFragment()
             fragmentHome    = CompanyHomeFragment()
             activeFragment  = fragmentHome
 
+            activeFragment = when (fragmentToOpen) {
+                "ACCOUNT"    -> fragmentAccount
+                "APPLICANTS" -> fragmentApplicants
+                "POSTS"      -> fragmentHiring
+                else         -> fragmentHome
+            }
+
             supportFragmentManager.beginTransaction().apply {
                 add(R.id.companyFragmentContainer, fragmentAccount!!, "account").hide(fragmentAccount!!)
-                add(R.id.companyFragmentContainer, fragmentHistory!!, "history").hide(fragmentHistory!!)
+                add(R.id.companyFragmentContainer, fragmentApplicants!!, "applicants").hide(fragmentApplicants!!)
                 add(R.id.companyFragmentContainer, fragmentHiring!!, "hiring").hide(fragmentHiring!!)
                 add(R.id.companyFragmentContainer, fragmentHome!!, "home")
+                show(activeFragment!!)
             }.commit()
         } else {
             // Restore references
             fragmentAccount = supportFragmentManager.findFragmentByTag("account") as? CompanyAccountFragment
-            fragmentHistory = supportFragmentManager.findFragmentByTag("history") as? CompanyHistoryFragment
+            fragmentApplicants = supportFragmentManager.findFragmentByTag("applicants") as? CompanyApplicantsFragment
             fragmentHiring  = supportFragmentManager.findFragmentByTag("hiring") as? CompanyHiringFragment
             fragmentHome    = supportFragmentManager.findFragmentByTag("home") as? CompanyHomeFragment
 
-            val fragments = listOf(fragmentAccount, fragmentHistory, fragmentHiring, fragmentHome)
+            val fragments = listOf(fragmentAccount, fragmentApplicants, fragmentHiring, fragmentHome)
             activeFragment = fragments.find { it?.isVisible == true } ?: fragmentHome
         }
 
@@ -79,7 +89,7 @@ class CompanyDashboardActivity : AppCompatActivity() {
             val target = when (item.itemId) {
                 R.id.nav_company_home    -> fragmentHome
                 R.id.nav_company_hiring  -> fragmentHiring
-                R.id.nav_company_history -> fragmentHistory
+                R.id.nav_company_history -> fragmentApplicants
                 R.id.nav_company_account -> fragmentAccount
                 else             -> return@setOnItemSelectedListener false
             }

@@ -16,29 +16,32 @@ object NotificationHelper {
     private const val CHANNEL_NAME = "NewTacks Job Updates"
     private const val CHANNEL_DESC = "Notifications for job acceptance, arrival, and completion."
 
-    fun showNotification(context: Context, title: String, message: String) {
+    fun showNotification(context: Context, title: String, message: String, targetFragment: String? = null) {
         createNotificationChannel(context)
 
         val intent = Intent(context, SplashActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            if (targetFragment != null) {
+                putExtra("TARGET_FRAGMENT", targetFragment)
+            }
         }
         val pendingIntent = PendingIntent.getActivity(
             context, 0, intent,
-            PendingIntent.FLAG_IMMUTABLE,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_check_circle) // Use a vector icon for better compatibility
+            .setSmallIcon(R.drawable.ic_check_circle)
             .setContentTitle(title)
             .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_MAX) // Max for heads-up
+            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
-        android.util.Log.d("NotificationHelper", "Showing notification: $title - $message")
+        android.util.Log.d("NotificationHelper", "Showing notification: $title - $message (Target: $targetFragment)")
 
         with(NotificationManagerCompat.from(context)) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -56,7 +59,6 @@ object NotificationHelper {
             val notificationManager: NotificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             
-            // Check if channel already exists with high importance
             val existingChannel = notificationManager.getNotificationChannel(CHANNEL_ID)
             if (existingChannel != null && existingChannel.importance >= NotificationManager.IMPORTANCE_HIGH) {
                 return
@@ -80,49 +82,39 @@ object NotificationHelper {
         val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return
         val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
 
-        // Stop previous listener if any
         notificationListener?.remove()
 
         notificationListener = db.collection("notifications")
             .whereEqualTo("to", uid)
             .whereEqualTo("read", false)
             .addSnapshotListener { snapshots, error ->
-                if (error != null) {
-                    android.util.Log.e("NotificationHelper", "Listener error: ${error.message}")
-                    return@addSnapshotListener
-                }
-
-                if ((snapshots == null) || snapshots.isEmpty) {
-                    android.util.Log.d("NotificationHelper", "No new notifications for $uid")
-                    return@addSnapshotListener
-                }
-
-                android.util.Log.d("NotificationHelper", "Found ${snapshots.size()} new notifications")
+                if (error != null) return@addSnapshotListener
+                if ((snapshots == null) || snapshots.isEmpty) return@addSnapshotListener
 
                 for (doc in snapshots.documents) {
                     val title = doc.getString("title") ?: "New Update"
                     val message = doc.getString("message") ?: ""
+                    val target = doc.getString("targetFragment")
                     
-                    showNotification(context, title, message)
+                    showNotification(context, title, message, target)
 
-                    // Delete from DB after showing (Temporary Notifications)
                     doc.reference.delete()
-                        .addOnSuccessListener {
-                            android.util.Log.d("NotificationHelper", "Deleted temporary notification ${doc.id}")
-                        }
                 }
             }
     }
 
-    fun sendNotification(toUid: String, title: String, message: String) {
+    fun sendNotification(toUid: String, title: String, message: String, targetFragment: String? = null) {
         val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-        val data = mapOf(
+        val data = mutableMapOf<String, Any>(
             "to" to toUid,
             "title" to title,
             "message" to message,
             "timestamp" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
             "read" to false
         )
+        if (targetFragment != null) {
+            data["targetFragment"] = targetFragment
+        }
         db.collection("notifications").add(data)
     }
 

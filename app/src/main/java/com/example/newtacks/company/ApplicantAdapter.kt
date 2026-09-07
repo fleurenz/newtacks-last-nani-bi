@@ -34,6 +34,10 @@ class ApplicantAdapter(
         holder.tvName.text = user.name
         holder.tvRating.text = "⭐ %.1f".format(user.rating)
         
+        // Use user.email as a temporary storage for status display if needed, 
+        // or we'll pass a pair of User and Application.
+        // For now, let's keep it simple and just show the profile.
+
         holder.ivProfile.load(user.profileImage) {
             crossfade(true)
             placeholder(R.drawable.ic_person_placeholder)

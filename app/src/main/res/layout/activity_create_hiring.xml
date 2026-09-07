@@ -5,19 +5,28 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F0F4F8">
+    android:background="#004A99">
 
+    <!-- TOOLBAR -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="#004A99"
-        android:elevation="4dp"
-        app:title="Post Hiring"
-        app:titleTextColor="#FFFFFF"
-        app:navigationIcon="@drawable/ic_back" />
+        app:navigationIcon="@drawable/ic_back"
+        app:titleTextColor="#FFFFFF">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New Job Posting"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_gravity="center"/>
+    </androidx.appcompat.widget.Toolbar>
 
-    <ScrollView
+    <!-- CONTENT -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true">
@@ -26,296 +35,307 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:background="@drawable/rounded_top_white"
+            android:padding="24dp">
 
-            <!-- COMPANY INFO CARD -->
+            <!-- JOB TITLE -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Job Title"
+                android:textColor="#64748B"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_marginBottom="16dp">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etHiringTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="e.g. Hiring Welder" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- EMPLOYMENT TYPE -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Employment Type"
+                android:textColor="#64748B"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggleEmploymentType"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleSelection="true"
+                app:selectionRequired="true"
+                android:layout_marginBottom="16dp">
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFullTime"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Full-time"
+                    android:textAllCaps="false"
+                    app:cornerRadius="20dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPartTime"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Part-time"
+                    android:textAllCaps="false"
+                    app:cornerRadius="20dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnContract"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Contract"
+                    android:textAllCaps="false"
+                    app:cornerRadius="20dp" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <!-- LOCATION -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Location"
+                android:textColor="#64748B"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_marginBottom="16dp">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etCompanyAddress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Davao City" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- SALARY -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Salary (Daily Rate)"
+                android:textColor="#64748B"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_marginBottom="16dp">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDailyRate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal"
+                    android:hint="(e.g. ₱700/per day)" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- VACANCIES (PEOPLE SOUGHT) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="People Sought (Vacancies)"
+                android:textColor="#64748B"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_marginBottom="16dp">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etVacancies"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:hint="e.g. 5" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- JOB DESCRIPTION -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Job Description"
+                android:textColor="#64748B"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_marginBottom="16dp">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etJobDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textMultiLine"
+                    android:minLines="4"
+                    android:gravity="top"
+                    android:hint="Describe duties, hours, site details, etc....." />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- REQUIREMENTS -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Requirements and Responsibilites"
+                android:textColor="#64748B"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_marginBottom="16dp">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etResponsibilities"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textMultiLine"
+                    android:minLines="4"
+                    android:gravity="top"
+                    android:hint="Describe duties, hours, site details, etc....." />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- REQUIRED SERVICES -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Required Services:"
+                android:textColor="#64748B"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+            <CheckBox android:id="@+id/cbCarpentry" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Carpentry" />
+            <CheckBox android:id="@+id/cbPlumbing" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Plumbing" />
+            <CheckBox android:id="@+id/cbMasonry" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Masonry" />
+            <CheckBox android:id="@+id/cbWelding" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Welding" />
+            <CheckBox android:id="@+id/cbPainting" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Painting" />
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_card"
-                android:padding="16dp"
-                android:layout_marginBottom="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="COMPANY INFORMATION"
-                    android:textColor="#004A99"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="14dp" />
-
-                <com.google.android.material.textfield.TextInputLayout
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <CheckBox android:id="@+id/cbOthers" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Others, please specify: " />
+                <EditText
+                    android:id="@+id/etOtherService"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Company Name"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_marginBottom="12dp">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etCompanyName"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:enabled="false" />
-                </com.google.android.material.textfield.TextInputLayout>
+                    android:background="@null"
+                    android:hint="_______________________"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
+            <!-- PHOTOS -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Photos (Optional)"
+                android:textColor="#64748B"
+                android:textSize="13sp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp" />
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="8dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Use Real-time Location"
-                        android:textColor="#004A99"
-                        android:textStyle="bold"
-                        android:textSize="13sp" />
-
-                    <com.google.android.material.switchmaterial.SwitchMaterial
-                        android:id="@+id/switchRealTimeLocation"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
-                </LinearLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Work Area Address"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etCompanyAddress"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-            </LinearLayout>
-
-            <!-- HIRING DETAILS CARD -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_card"
-                android:padding="16dp"
-                android:layout_marginBottom="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="HIRING DETAILS"
-                    android:textColor="#004A99"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="14dp" />
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Job Title"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_marginBottom="14dp">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etHiringTitle"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Required Services:"
-                    android:textColor="#64748B"
-                    android:textSize="12sp"
-                    android:layout_marginBottom="8dp" />
-
-                <CheckBox android:id="@+id/cbCarpentry" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Carpentry" />
-                <CheckBox android:id="@+id/cbPlumbing" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Plumbing" />
-                <CheckBox android:id="@+id/cbMasonry" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Masonry" />
-                <CheckBox android:id="@+id/cbWelding" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Welding" />
-                <CheckBox android:id="@+id/cbPainting" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Painting" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Employment Type:"
-                    android:textColor="#64748B"
-                    android:textSize="12sp"
-                    android:layout_marginTop="12dp"
-                    android:layout_marginBottom="8dp" />
-
-                <RadioGroup
-                    android:id="@+id/rgEmploymentType"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-                    <RadioButton android:id="@+id/rbPartTime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Part-time" />
-                    <RadioButton android:id="@+id/rbFullTime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Full-time" android:layout_marginStart="8dp" />
-                    <RadioButton android:id="@+id/rbProject" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Project" android:layout_marginStart="8dp" />
-                </RadioGroup>
-
-            </LinearLayout>
-
-            <!-- PHOTOS CARD -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_card"
-                android:padding="16dp"
-                android:layout_marginBottom="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="PHOTOS"
-                    android:textColor="#004A99"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="14dp" />
-
-                <HorizontalScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp">
+                    android:gravity="center_vertical">
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btnAddPhotoCard"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        app:cardBackgroundColor="#EBF2FF"
+                        app:cardCornerRadius="4dp"
+                        app:cardElevation="0dp"
+                        android:clickable="true"
+                        android:focusable="true">
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_plus"
+                            app:tint="#004A99" />
+                    </com.google.android.material.card.MaterialCardView>
                     <LinearLayout
                         android:id="@+id/layoutSelectedImages"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal" />
-                </HorizontalScrollView>
+                        android:orientation="horizontal"
+                        android:layout_marginStart="8dp" />
+                </LinearLayout>
+            </HorizontalScrollView>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnAddPhoto"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Add Photo"
-                    app:icon="@drawable/ic_plus" />
-
-            </LinearLayout>
-
-            <!-- JOB DESCRIPTION & RESPONSIBILITIES -->
-            <LinearLayout
-                android:layout_width="match_parent"
+            <!-- DEADLINE -->
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_card"
-                android:padding="16dp"
-                android:layout_marginBottom="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="DETAILED DESCRIPTION"
-                    android:textColor="#004A99"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="14dp" />
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Job Description"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_marginBottom="16dp">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etJobDescription"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textMultiLine"
-                        android:minLines="3"
-                        android:gravity="top" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Responsibilities"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_marginBottom="14dp">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etResponsibilities"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textMultiLine"
-                        android:minLines="3"
-                        android:gravity="top" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-            </LinearLayout>
-
-            <!-- RATE & SCHEDULE CARD -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_card"
-                android:padding="16dp"
-                android:layout_marginBottom="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="RATE &amp; SCHEDULE"
-                    android:textColor="#004A99"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="14dp" />
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Daily Rate"
-                    app:prefixText="₱ "
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_marginBottom="14dp">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etDailyRate"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="numberDecimal" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Hiring Deadline (Post will close after this date)"
-                    android:textColor="#64748B"
-                    android:textSize="12sp"
-                    android:layout_marginTop="14dp"
-                    android:layout_marginBottom="4dp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSelectClosingDate"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:text="Select Closing Date"
-                    app:backgroundTint="#FFFFFF"
-                    android:textColor="#64748B"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#CBD5E1"
-                    app:cornerRadius="8dp"
-                    app:icon="@drawable/ic_calendar"
-                    app:iconTint="#004A99"
-                    app:iconGravity="textStart" />
-
-            </LinearLayout>
-
+                android:text="Hiring Deadline ( Post will close after this date)"
+                android:textColor="#64748B"
+                android:textSize="12sp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp" />
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSubmitHiring"
+                android:id="@+id/btnSelectClosingDate"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:text="Post Hiring Request"
-                android:textStyle="bold"
-                app:cornerRadius="12dp"
-                app:backgroundTint="#004A99"
+                android:layout_height="52dp"
+                android:text="Select closing date"
+                android:textAllCaps="false"
+                android:textColor="#004A99"
+                app:icon="@drawable/ic_calendar"
+                app:iconGravity="textStart"
+                app:iconTint="#004A99"
+                app:cornerRadius="8dp"
+                app:strokeColor="#004A99"
                 android:layout_marginBottom="24dp" />
 
+            <!-- BUTTONS -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="32dp">
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDraft"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:text="Draft"
+                    android:textColor="#1E293B"
+                    android:textAllCaps="false"
+                    app:strokeColor="#CBD5E1"
+                    app:cornerRadius="12dp"
+                    android:layout_marginEnd="8dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSubmitHiring"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1.5"
+                    android:text="Post job"
+                    android:textAllCaps="false"
+                    android:textStyle="bold"
+                    app:backgroundTint="#004A99"
+                    app:cornerRadius="12dp" />
+            </LinearLayout>
+
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
 </LinearLayout>

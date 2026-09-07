@@ -19,7 +19,10 @@ data class HiringPost(
     val responsibilities: String = "",
     val images: List<String> = emptyList(),
     
-    val status: String = "OPEN",
+    val vacancies: Int = 1,
+    val acceptedWorkers: List<String> = emptyList(),
+    
+    val status: String = "OPEN", // OPEN, DRAFT, CLOSED, EXPIRED
     val applicants: List<String> = emptyList(),
     val createdAt: Long = System.currentTimeMillis(),
     val expiresAt: Long = 0

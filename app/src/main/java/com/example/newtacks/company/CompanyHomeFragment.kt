@@ -32,23 +32,7 @@ class CompanyHomeFragment : Fragment() {
     }
 
     private fun checkActiveHiringAndOpen() {
-        val uid = auth.currentUser?.uid ?: return
-        
-        firestore.collection("hiring")
-            .whereEqualTo("companyId", uid)
-            .whereEqualTo("status", "OPEN")
-            .get(com.google.firebase.firestore.Source.SERVER)
-            .addOnSuccessListener { snapshots ->
-                if (!snapshots.isEmpty) {
-                    Toast.makeText(requireContext(), "You already have an active hiring post", Toast.LENGTH_LONG).show()
-                } else {
-                    // Start Activity (To be created)
-                    val intent = Intent(requireContext(), CreateHiringActivity::class.java)
-                    startActivity(intent)
-                }
-            }
-            .addOnFailureListener {
-                Toast.makeText(requireContext(), "Error checking hiring status", Toast.LENGTH_SHORT).show()
-            }
+        val intent = Intent(requireContext(), CreateHiringActivity::class.java)
+        startActivity(intent)
     }
 }

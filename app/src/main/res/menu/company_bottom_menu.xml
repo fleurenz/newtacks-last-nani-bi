@@ -6,12 +6,12 @@
         android:icon="@drawable/ic_nav_home" />
     <item
         android:id="@+id/nav_company_hiring"
-        android:title="Hiring"
-        android:icon="@drawable/ic_nav_requests" />
+        android:title="Posts"
+        android:icon="@drawable/ic_company" />
     <item
         android:id="@+id/nav_company_history"
-        android:title="History"
-        android:icon="@drawable/ic_nav_history" />
+        android:title="Applicants"
+        android:icon="@drawable/ic_nav_requests" />
     <item
         android:id="@+id/nav_company_account"
         android:title="Account"

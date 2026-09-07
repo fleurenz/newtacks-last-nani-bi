@@ -650,7 +650,8 @@ class WorkerFeedFragment : Fragment() {
                             com.example.newtacks.utils.NotificationHelper.sendNotification(
                                 job.clientId,
                                 "Job Accepted",
-                                "A worker has accepted your ${job.jobTitle} request."
+                                "A worker has accepted your ${job.jobTitle} request.",
+                                "REQUESTS"
                             )
                             (activity as? com.example.newtacks.WorkerDashboardActivity)?.switchTab(R.id.nav_job)
                         }
