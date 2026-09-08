@@ -146,7 +146,7 @@ class ClientDashboardActivity : AppCompatActivity() {
             .whereEqualTo("clientId", uid)
             .get(com.google.firebase.firestore.Source.SERVER)
             .addOnSuccessListener { snapshots ->
-                val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
+                val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION", "REJECTED_BY_CLIENT")
                 val hasActiveJob = snapshots.documents.any { it.getString("status") in activeStatuses }
                 
                 if (hasActiveJob && bottomNav.selectedItemId != R.id.nav_requests) {
@@ -166,7 +166,7 @@ class ClientDashboardActivity : AppCompatActivity() {
                     return@addSnapshotListener
                 }
                 
-                val handshakeStatuses = listOf("IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED")
+                val handshakeStatuses = listOf("IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "REJECTED_BY_CLIENT")
                 val activeHandshake = snapshots.documents.find { 
                     it.getString("status") in handshakeStatuses 
                 }

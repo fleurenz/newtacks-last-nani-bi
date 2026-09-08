@@ -95,7 +95,7 @@ class ClientHomeFragment : Fragment() {
                     return@addSnapshotListener
                 }
                 
-                val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
+                val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION", "REJECTED_BY_CLIENT")
                 val job = snapshots?.documents
                     ?.mapNotNull { 
                         try {
@@ -116,6 +116,7 @@ class ClientHomeFragment : Fragment() {
                         "HEADING_TO_CLIENT" -> "Worker is on the way"
                         "ARRIVED" -> "Worker has arrived"
                         "PENDING_VERIFICATION" -> "Waiting for your confirmation"
+                        "REJECTED_BY_CLIENT" -> "Waiting for worker to fix issues"
                         else -> job.status
                     }
                     cardActiveRequest.setOnClickListener {
@@ -139,7 +140,7 @@ class ClientHomeFragment : Fragment() {
             .addOnSuccessListener { snapshots ->
                 if (!isAdded) return@addOnSuccessListener
                 
-                val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
+                val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION", "REJECTED_BY_CLIENT")
                 val hasActiveJob = snapshots.documents.any { 
                     val status = it.getString("status") ?: ""
                     status in activeStatuses 

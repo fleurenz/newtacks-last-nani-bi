@@ -43,6 +43,9 @@
         <activity
             android:name=".worker.account.WorkerReviewsActivity"
             android:windowSoftInputMode="adjustPan" />
+        <activity android:name=".worker.WorkerProfileActivity" />
+        <activity android:name=".worker.WorkerEditProfileActivity" />
+        <activity android:name=".client.RefuseCompletionActivity" />
         <activity android:name=".ClientDashboardActivity" />
         <activity android:name=".WorkerDashboardActivity" />
         <activity android:name=".CompanyDashboardActivity" />

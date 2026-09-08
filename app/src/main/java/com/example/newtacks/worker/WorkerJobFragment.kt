@@ -14,6 +14,7 @@ import com.example.newtacks.R
 import com.example.newtacks.models.Job
 import com.example.newtacks.models.User
 import com.example.newtacks.utils.DistanceUtils
+import com.example.newtacks.utils.RouteApiService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
@@ -24,6 +25,13 @@ class WorkerJobFragment : Fragment() {
 
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private val routeService: RouteApiService by lazy {
+        retrofit2.Retrofit.Builder()
+            .baseUrl("https://router.project-osrm.org/")
+            .addConverterFactory(retrofit2.converter.gson.GsonConverterFactory.create())
+            .build()
+            .create(RouteApiService::class.java)
+    }
     private var listener: ListenerRegistration? = null
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
@@ -56,6 +64,7 @@ class WorkerJobFragment : Fragment() {
     private var currentJob: Job? = null
     private var currentJobId: String? = null
     private var clientLocationListener: ListenerRegistration? = null
+    private var activeRejectionDialog: AlertDialog? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -135,6 +144,18 @@ class WorkerJobFragment : Fragment() {
         return view
     }
 
+    // ✅ Fires every time this fragment is shown via show() in add/hide/show pattern
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden) {
+            currentJob?.let { job ->
+                if (job.status == "REJECTED_BY_CLIENT") {
+                    showRejectionDialog(job)
+                }
+            }
+        }
+    }
+
     // --------------------------------------------------
     // 🔥 ACTIVE JOB LISTENER
     // --------------------------------------------------
@@ -151,7 +172,7 @@ class WorkerJobFragment : Fragment() {
                 }
 
                 // Filter locally for the active handshake statuses
-                val activeStatuses = listOf("IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
+                val activeStatuses = listOf("IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION", "REJECTED_BY_CLIENT")
                 val job = snapshots?.documents
                     ?.mapNotNull { it.toObject(Job::class.java) }
                     ?.firstOrNull { it.status in activeStatuses }
@@ -178,8 +199,8 @@ class WorkerJobFragment : Fragment() {
 
         tvStatus.visibility = View.VISIBLE
         
-        // Listen for client's dynamic location updates
-        listenForClientLocation(job.clientId, job.latitude, job.longitude)
+        // Use job location for distance tracking to ensure consistency with client view
+        updateDistanceUI(job.latitude, job.longitude)
         
         // Default visibility
         layoutHeadingButtons.visibility = View.GONE
@@ -227,12 +248,66 @@ class WorkerJobFragment : Fragment() {
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_green)
                 btnMoreOptions.visibility = View.GONE
             }
+            "REJECTED_BY_CLIENT" -> {
+                tvStatus.text = "Completion Refused"
+                tvStatus.setTextColor(android.graphics.Color.parseColor("#DC2626"))
+                tvStatus.setBackgroundResource(R.drawable.bg_badge_yellow)
+                layoutDoneButtons.visibility = View.VISIBLE
+                btnDone.visibility = View.VISIBLE
+                btnDone.text = "Resubmit for Review"
+                
+                showRejectionDialog(job)
+                
+                // Allow re-opening by clicking status
+                tvStatus.setOnClickListener { showRejectionDialog(job) }
+            }
             else -> {
                 tvStatus.text = job.status
                 tvStatus.setTextColor(android.graphics.Color.parseColor("#FFFFFF"))
                 tvStatus.setBackgroundResource(R.drawable.bg_badge_blue)
             }
         }
+    }
+
+    private fun showRejectionDialog(job: Job) {
+        if (activeRejectionDialog?.isShowing == true) return
+        val details = job.rejectionDetails as? Map<String, Any> ?: return
+        
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_job_rejection, null)
+        val tvReason = dialogView.findViewById<TextView>(R.id.tvRejectionReason)
+        val tvDesc = dialogView.findViewById<TextView>(R.id.tvRejectionDescription)
+        val ivEvidence = dialogView.findViewById<ImageView>(R.id.ivRejectionEvidence)
+        val labelEvidence = dialogView.findViewById<View>(R.id.labelEvidence)
+        val btnAck = dialogView.findViewById<Button>(R.id.btnAcknowledge)
+
+        tvReason.text = details["reason"] as? String ?: "Unknown"
+        tvDesc.text = details["description"] as? String ?: "No details provided."
+        
+        val evidenceUrl = details["evidenceUrl"] as? String
+        if (!evidenceUrl.isNullOrBlank()) {
+            labelEvidence.visibility = View.VISIBLE
+            ivEvidence.visibility = View.VISIBLE
+            ivEvidence.load(evidenceUrl) {
+                crossfade(true)
+                placeholder(R.drawable.bg_image_placeholder)
+            }
+            ivEvidence.setOnClickListener {
+                com.example.newtacks.utils.ImageUtils.showFullscreenImage(requireContext(), evidenceUrl)
+            }
+        }
+
+        activeRejectionDialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+        
+        activeRejectionDialog?.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnAck.setOnClickListener {
+            activeRejectionDialog?.dismiss()
+        }
+        
+        activeRejectionDialog?.show()
     }
 
     private fun showPopupMenu(view: View) {
@@ -263,31 +338,36 @@ class WorkerJobFragment : Fragment() {
                     jobLat, jobLng,
                     results
                 )
-                val distanceStr = DistanceUtils.formatDistance(results[0])
-                
-                // If we have a client location listener, it will update tvStatus
-                // This is just the initial calculation
-                if (clientLocationListener == null) {
-                    tvStatus.text = String.format(Locale.getDefault(), "Heading to Location... (%s away)", distanceStr)
+                // If we are heading, start a periodic update
+                if (currentJob?.status == "HEADING_TO_CLIENT") {
+                    startPeriodicDistanceUpdate(jobLat, jobLng)
                 }
             }
         }
     }
 
-    private fun listenForClientLocation(clientId: String, jobLat: Double, jobLng: Double) {
-        clientLocationListener?.remove()
-        
-        clientLocationListener = firestore.collection("users").document(clientId)
-            .addSnapshotListener { snapshot, _ ->
-                val user = snapshot?.toObject(User::class.java)
-                val cLat = user?.latitude ?: jobLat
-                val cLng = user?.longitude ?: jobLng
-                
-                updateDistanceUI(cLat, cLng)
+    private var distanceUpdateHandler: android.os.Handler? = null
+    private var distanceUpdateRunnable: Runnable? = null
+
+    private fun startPeriodicDistanceUpdate(jobLat: Double, jobLng: Double) {
+        stopPeriodicDistanceUpdate()
+        distanceUpdateHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        distanceUpdateRunnable = object : Runnable {
+            override fun run() {
+                updateDistanceUI(jobLat, jobLng)
+                distanceUpdateHandler?.postDelayed(this, 5000) // Update every 5 seconds
             }
+        }
+        distanceUpdateHandler?.post(distanceUpdateRunnable!!)
     }
 
-    private fun updateDistanceUI(cLat: Double, cLng: Double) {
+    private fun stopPeriodicDistanceUpdate() {
+        distanceUpdateRunnable?.let { distanceUpdateHandler?.removeCallbacks(it) }
+        distanceUpdateHandler = null
+        distanceUpdateRunnable = null
+    }
+
+    private fun updateDistanceUI(jobLat: Double, jobLng: Double) {
         if (!isAdded) return
         val context = context ?: return
         
@@ -296,25 +376,46 @@ class WorkerJobFragment : Fragment() {
 
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             if (location != null) {
-                val results = FloatArray(1)
-                android.location.Location.distanceBetween(
-                    location.latitude, location.longitude,
-                    cLat, cLng,
-                    results
-                )
-                val distanceStr = DistanceUtils.formatDistance(results[0])
-                
-                val currentStatus = currentJob?.status ?: ""
-                when (currentStatus) {
-                    "HEADING_TO_CLIENT" -> {
-                        tvStatus.text = String.format(Locale.getDefault(), "Heading to Client... (%s away)", distanceStr)
-                    }
-                    "ARRIVED" -> {
-                        tvStatus.text = String.format(Locale.getDefault(), "Arrived (%s from client)", distanceStr)
+                fetchRoadDistance(location.latitude, location.longitude, jobLat, jobLng)
+            }
+        }
+    }
+
+    private fun fetchRoadDistance(wLat: Double, wLng: Double, jobLat: Double, jobLng: Double) {
+        val coords = "$wLng,$wLat;$jobLng,$jobLat"
+        routeService.getRoute(coords).enqueue(object : retrofit2.Callback<com.example.newtacks.utils.OsrmResponse> {
+            override fun onResponse(call: retrofit2.Call<com.example.newtacks.utils.OsrmResponse>, response: retrofit2.Response<com.example.newtacks.utils.OsrmResponse>) {
+                if (response.isSuccessful && isAdded) {
+                    val route = response.body()?.routes?.firstOrNull() ?: return
+                    val distanceMeters = route.distance.toFloat()
+                    val distanceStr = DistanceUtils.formatDistance(distanceMeters)
+                    
+                    val currentStatus = currentJob?.status ?: ""
+                    when (currentStatus) {
+                        "HEADING_TO_CLIENT" -> {
+                            tvStatus.text = String.format(Locale.getDefault(), "Heading to Location... (%s away)", distanceStr)
+                            startPeriodicDistanceUpdate(jobLat, jobLng)
+                        }
+                        "ARRIVED" -> {
+                            tvStatus.text = String.format(Locale.getDefault(), "Arrived (%s from job site)", distanceStr)
+                        }
                     }
                 }
             }
-        }
+
+            override fun onFailure(call: retrofit2.Call<com.example.newtacks.utils.OsrmResponse>, t: Throwable) {
+                // Fallback to straight-line if OSRM fails
+                val results = FloatArray(1)
+                android.location.Location.distanceBetween(wLat, wLng, jobLat, jobLng, results)
+                val distanceStr = DistanceUtils.formatDistance(results[0])
+                if (isAdded) {
+                    val currentStatus = currentJob?.status ?: ""
+                    if (currentStatus == "HEADING_TO_CLIENT") {
+                        tvStatus.text = String.format(Locale.getDefault(), "Heading to Location... (%s away)", distanceStr)
+                    }
+                }
+            }
+        })
     }
 
     private fun openChat() {
@@ -568,5 +669,6 @@ class WorkerJobFragment : Fragment() {
         super.onDestroyView()
         listener?.remove()
         clientLocationListener?.remove()
+        stopPeriodicDistanceUpdate()
     }
 }

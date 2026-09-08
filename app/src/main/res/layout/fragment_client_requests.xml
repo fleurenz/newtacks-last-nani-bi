@@ -2,439 +2,493 @@
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#004A99">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#F0F4F8"
         android:orientation="vertical">
 
-        <!-- ===== HEADER ===== -->
+        <!-- HEADER -->
         <RelativeLayout
             android:id="@+id/layoutHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_header_rounded"
-            android:paddingStart="24dp"
+            android:paddingHorizontal="24dp"
             android:paddingTop="36dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="28dp">
+            android:paddingBottom="20dp">
+
+            <!-- Standard Title -->
+            <TextView
+                android:id="@+id/tvHeaderTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="REQUEST"
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
+
+            <!-- Distance Display (Visible when worker heading) -->
+            <LinearLayout
+                android:id="@+id/layoutDistanceHeader"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="bottom"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvDistanceBigValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="3.1"
+                        android:textColor="#FFFFFF"
+                        android:textSize="96sp"
+                        android:textStyle="bold"
+                        android:includeFontPadding="false" />
+
+                    <TextView
+                        android:id="@+id/tvDistanceBigUnit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="24dp"
+                        android:layout_marginStart="4dp"
+                        android:text="km"
+                        android:textColor="#FFFFFF"
+                        android:textSize="28sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="-12dp"
+                    android:text="away"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:alpha="0.8" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/btnNotifications"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_notifications"
+                app:tint="#FFFFFF" />
+        </RelativeLayout>
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_toStartOf="@+id/btnMoreOptions"
-                android:layout_marginEnd="8dp">
+                android:background="@drawable/rounded_top_white">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="6dp"
-                    android:alpha="0.7"
-                    android:letterSpacing="0.15"
-                    android:text="CURRENT REQUEST"
-                    android:textColor="#FFFFFF"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvRequestTitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="14dp"
-                    android:textColor="#FFFFFF"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
-
-                <!-- Status badge -->
-                <TextView
-                    android:id="@+id/tvProgress"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="20dp"
-                    android:paddingStart="14dp"
-                    android:paddingTop="5dp"
-                    android:paddingEnd="14dp"
-                    android:paddingBottom="5dp"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
-
-                <!-- Progress track label row -->
+                <!-- EMPTY STATE -->
                 <LinearLayout
-                    android:id="@+id/layoutProgressLabels"
+                    android:id="@+id/layoutEmptyState"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="6dp"
-                    android:orientation="horizontal"
+                    android:layout_height="400dp"
+                    android:gravity="center"
+                    android:orientation="vertical"
                     android:visibility="gone">
-
+                    <ImageView
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:src="@drawable/ic_inbox"
+                        android:alpha="0.2"
+                        android:layout_marginBottom="16dp" />
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:alpha="0.6"
-                        android:gravity="center"
-                        android:text="Searching"
-                        android:textColor="#FFFFFF"
-                        android:textSize="10sp" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:alpha="0.6"
-                        android:gravity="center"
-                        android:text="In Progress"
-                        android:textColor="#FFFFFF"
-                        android:textSize="10sp" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:alpha="0.6"
-                        android:gravity="center"
-                        android:text="Confirm"
-                        android:textColor="#FFFFFF"
-                        android:textSize="10sp" />
-
+                        android:text="No active requests yet"
+                        android:textColor="#64748B"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- Progress bar -->
-                <ProgressBar
-                    android:id="@+id/progressBar"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="10dp"
-                    android:background="@drawable/bg_progress_track"
-                    android:indeterminate="false"
-                    android:max="100"
-                    android:progress="0"
-                    android:progressBackgroundTint="#3D6FA8"
-                    android:progressTint="#FFFFFF"
-                    android:visibility="gone" />
-
-            </LinearLayout>
-
-            <ImageButton
-                android:id="@+id/btnMoreOptions"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentTop="true"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_more_vert"
-                android:contentDescription="More options"
-                android:visibility="gone" />
-
-        </RelativeLayout>
-
-        <!-- ===== SCROLLABLE BODY ===== -->
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
-
-            <!-- Wrapper so layoutContent and layoutEmptyState are siblings -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <!-- ===== CONTENT (shown when job exists) ===== -->
+                <!-- CONTENT -->
                 <LinearLayout
                     android:id="@+id/layoutContent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="20dp"
-                    android:visibility="gone">
+                    android:padding="24dp">
 
-                    <!-- DETAILS CARD -->
-                    <LinearLayout
-                        android:id="@+id/cardJobDetails"
+                    <!-- Title Row -->
+                    <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="12dp"
-                        android:background="@drawable/bg_card"
-                        android:orientation="vertical"
-                        android:padding="20dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="16dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <View
-                                android:layout_width="4dp"
-                                android:layout_height="20dp"
-                                android:layout_marginEnd="10dp"
-                                android:background="#004A99" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:letterSpacing="0.1"
-                                android:text="JOB DETAILS"
-                                android:textColor="#004A99"
-                                android:textSize="11sp"
-                                android:textStyle="bold" />
-
-                        </LinearLayout>
+                        android:layout_marginBottom="24dp">
 
                         <TextView
-                            android:id="@+id/tvRequestDetails"
-                            android:layout_width="match_parent"
+                            android:id="@+id/tvRequestTitle"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:lineSpacingExtra="6dp"
-                            android:textColor="#1E293B"
-                            android:textSize="14sp" />
+                            android:layout_centerInParent="true"
+                            android:text="Job Title"
+                            android:textColor="#004A99"
+                            android:textSize="28sp"
+                            android:textStyle="bold" />
 
-                    </LinearLayout>
+                        <ImageButton
+                            android:id="@+id/btnMoreOptions"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_more_vert"
+                            app:tint="#004A99" />
+                    </RelativeLayout>
 
-                    <!-- WORKER DETAILS CARD -->
+                    <!-- Standard Progress Bar (5 Steps) -->
                     <LinearLayout
-                        android:id="@+id/cardWorkerInfo"
+                        android:id="@+id/layoutStandardProgress"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="12dp"
-                        android:background="@drawable/bg_card"
                         android:orientation="vertical"
-                        android:padding="20dp"
-                        android:visibility="gone"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground">
+                        android:layout_marginBottom="32dp">
 
-                        <LinearLayout
+                        <RelativeLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="16dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
+                            android:layout_height="wrap_content">
+                            <!-- Track Background -->
                             <View
-                                android:layout_width="4dp"
-                                android:layout_height="20dp"
-                                android:layout_marginEnd="10dp"
-                                android:background="#16A34A" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:letterSpacing="0.1"
-                                android:text="ASSIGNED WORKER"
-                                android:textColor="#16A34A"
-                                android:textSize="11sp"
-                                android:textStyle="bold" />
-
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
+                                android:layout_width="match_parent"
+                                android:layout_height="4dp"
+                                android:layout_centerVertical="true"
+                                android:background="#F1F5F9"
+                                android:layout_marginHorizontal="20dp" />
+                            <!-- Active Track -->
+                            <View
+                                android:id="@+id/progressTrackActive"
+                                android:layout_width="0dp"
+                                android:layout_height="4dp"
+                                android:layout_centerVertical="true"
+                                android:background="#004A99"
+                                android:layout_marginStart="20dp" />
 
                             <LinearLayout
-                                android:layout_width="0dp"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        android:id="@+id/tvWorkerDetailName"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="Worker Name"
-                                        android:textColor="#1E293B"
-                                        android:textSize="16sp"
-                                        android:textStyle="bold" />
-
-                                    <TextView
-                                        android:id="@+id/tvWorkerDetailBadge"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="8dp"
-                                        android:background="@drawable/bg_badge_green1"
-                                        android:paddingHorizontal="6dp"
-                                        android:paddingVertical="2dp"
-                                        android:text="NC3"
-                                        android:textColor="#FFFFFF"
-                                        android:textSize="10sp"
-                                        android:textStyle="bold"
-                                        android:visibility="gone" />
-                                </LinearLayout>
-
-                                <TextView
-                                    android:id="@+id/tvWorkerDetailPhone"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="4dp"
-                                    android:text="Phone: 09123456789"
-                                    android:textColor="#64748B"
-                                    android:textSize="14sp" />
+                                android:orientation="horizontal">
+                                <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                                    <ImageView android:id="@+id/step1" android:layout_width="32dp" android:layout_height="32dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_active" android:src="@drawable/ic_check" android:padding="8dp" />
+                                </FrameLayout>
+                                <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                                    <ImageView android:id="@+id/step2" android:layout_width="32dp" android:layout_height="32dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_inactive" android:src="@drawable/ic_check" android:padding="8dp" />
+                                </FrameLayout>
+                                <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                                    <ImageView android:id="@+id/step3" android:layout_width="32dp" android:layout_height="32dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_inactive" android:src="@drawable/ic_location" android:padding="8dp" />
+                                </FrameLayout>
+                                <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                                    <ImageView android:id="@+id/step4" android:layout_width="32dp" android:layout_height="32dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_inactive" android:src="@drawable/ic_hammer" android:padding="8dp" />
+                                </FrameLayout>
+                                <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                                    <ImageView android:id="@+id/step5" android:layout_width="32dp" android:layout_height="32dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_inactive" android:src="@drawable/ic_rate_review" android:padding="8dp" />
+                                </FrameLayout>
                             </LinearLayout>
-
-                            <ImageButton
-                                android:id="@+id/btnMessageWorkerSmall"
-                                android:layout_width="44dp"
-                                android:layout_height="44dp"
-                                android:layout_marginStart="12dp"
-                                android:background="@drawable/bg_circle_light_blue"
-                                android:contentDescription="Message Worker"
-                                android:padding="10dp"
-                                android:scaleType="fitCenter"
-                                android:src="@drawable/message" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:layout_width="16dp"
-                                android:layout_height="16dp"
-                                android:src="@drawable/ic_star"
-                                app:tint="#EAB308" />
-
-                            <TextView
-                                android:id="@+id/tvWorkerDetailRating"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="4dp"
-                                android:text="4.5 (12 reviews)"
-                                android:textColor="#1E293B"
-                                android:textSize="13sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-
-                    </LinearLayout>
-
-                    <!-- INFO HINT CARD -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_info_card"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="14dp">
+                        </RelativeLayout>
 
                         <TextView
+                            android:id="@+id/tvProgressStatus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Searching..."
+                            android:textColor="#004A99"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:layout_marginTop="8dp"
+                            android:layout_gravity="start" />
+                    </LinearLayout>
+
+                    <!-- Simple Timeline (2 Steps) for HEADING status -->
+                    <LinearLayout
+                        android:id="@+id/layoutSimpleTimeline"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="32dp"
+                        android:visibility="gone"
+                        tools:visibility="visible">
+
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="24dp">
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="3dp"
+                                android:layout_centerVertical="true"
+                                android:background="#F1F5F9" />
+
+                            <View
+                                android:layout_width="100dp"
+                                android:layout_height="3dp"
+                                android:layout_centerVertical="true"
+                                android:background="#004A99" />
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_alignParentStart="true"
+                                android:background="@drawable/bg_step_circle_active"
+                                android:src="@drawable/ic_check"
+                                android:padding="6dp" />
+
+                            <ImageView
+                                android:id="@+id/ivWorkerPointer"
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_marginStart="88dp"
+                                android:background="@drawable/bg_step_circle_active"
+                                android:src="@drawable/ic_location"
+                                android:padding="4dp"
+                                app:tint="#FFFFFF" />
+                        </RelativeLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginTop="8dp"
+                            android:gravity="center"
+                            android:text="Worker's on\nthe way"
+                            android:textColor="#004A99"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:lineSpacingExtra="2dp" />
+                    </LinearLayout>
+
+                    <!-- WORKER SECTION -->
+                    <LinearLayout
+                        android:id="@+id/layoutWorker"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="32dp"
+                        android:visibility="gone"
+                        tools:visibility="visible">
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/ivWorkerProfile"
+                            android:layout_width="52dp"
+                            android:layout_height="52dp"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_user_placeholder"
+                            app:shapeAppearanceOverlay="@style/CircleImage" />
+
+                        <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:lineSpacingExtra="3dp"
-                            android:text="Once the worker marks the job as done, you'll be asked to confirm or return it."
-                            android:textColor="#004A99"
-                            android:textSize="12sp" />
+                            android:layout_marginStart="12dp"
+                            android:orientation="vertical">
+                            <TextView
+                                android:id="@+id/tvWorkerName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Worker Name"
+                                android:textColor="#1E293B"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical">
+                                <ImageView android:layout_width="12dp" android:layout_height="12dp" android:src="@drawable/ic_location" app:tint="#EF4444" />
+                                <TextView
+                                    android:id="@+id/tvWorkerDistance"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="10km away"
+                                    android:textColor="#64748B"
+                                    android:textSize="12sp"
+                                    android:layout_marginStart="4dp" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <!-- Buttons side-by-side -->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnViewProfile"
+                                style="@style/Widget.MaterialComponents.Button.TextButton"
+                                android:layout_width="72dp"
+                                android:layout_height="48dp"
+                                android:text="View Profile"
+                                android:textColor="#D97706"
+                                android:textSize="9sp"
+                                android:padding="0dp"
+                                app:backgroundTint="#FEF3C7"
+                                app:cornerRadius="8dp"
+                                app:icon="@drawable/ic_nav_account"
+                                app:iconSize="16dp"
+                                app:iconTint="#D97706"
+                                app:iconGravity="top"
+                                android:insetTop="0dp"
+                                android:insetBottom="0dp"/>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnMessageWorkerSmall"
+                                style="@style/Widget.MaterialComponents.Button.TextButton"
+                                android:layout_width="64dp"
+                                android:layout_height="48dp"
+                                android:layout_marginStart="8dp"
+                                android:text="Message"
+                                android:textColor="#64748B"
+                                android:textSize="9sp"
+                                android:padding="0dp"
+                                app:backgroundTint="#F1F5F9"
+                                app:cornerRadius="8dp"
+                                app:icon="@drawable/message"
+                                app:iconSize="16dp"
+                                app:iconTint="#64748B"
+                                app:iconGravity="top"
+                                android:insetTop="0dp"
+                                android:insetBottom="0dp"/>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- DETAILS LIST (Instead of Card, following screenshot) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Job Details"
+                            android:textColor="#1E293B"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="16dp" />
+
+                        <!-- Rows with dividers -->
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="16dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Service Type" android:textColor="#94A3B8" android:textSize="14sp" />
+                            <TextView android:id="@+id/tvDetailService" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Plumbing Repair" android:textColor="#004A99" android:textSize="15sp" android:textStyle="bold" android:gravity="end" />
+                        </LinearLayout>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="16dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Address" android:textColor="#94A3B8" android:textSize="14sp" />
+                            <TextView android:id="@+id/tvDetailAddress" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="123 Wazzup St. Quimpo Blvd" android:textColor="#004A99" android:textSize="15sp" android:textStyle="bold" android:gravity="end" />
+                        </LinearLayout>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="16dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Time" android:textColor="#94A3B8" android:textSize="14sp" />
+                            <TextView android:id="@+id/tvDetailTime" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="10:00 AM" android:textColor="#004A99" android:textSize="15sp" android:textStyle="bold" android:gravity="end" />
+                        </LinearLayout>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="16dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Scheduled Date" android:textColor="#94A3B8" android:textSize="14sp" />
+                            <TextView android:id="@+id/tvDetailDate" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="September 21, 2026" android:textColor="#004A99" android:textSize="15sp" android:textStyle="bold" android:gravity="end" />
+                        </LinearLayout>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="16dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Image" android:textColor="#94A3B8" android:textSize="14sp" />
+                            <TextView android:id="@+id/btnViewImages" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="View Image(s)" android:textColor="#004A99" android:textSize="15sp" android:textStyle="bold" android:gravity="end" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackground" />
+                        </LinearLayout>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="16dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Rate" android:textColor="#94A3B8" android:textSize="14sp" />
+                            <TextView android:id="@+id/tvDetailRate" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="P750/per day" android:textColor="#004A99" android:textSize="15sp" android:textStyle="bold" android:gravity="end" />
+                        </LinearLayout>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingVertical="16dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Description" android:textColor="#94A3B8" android:textSize="14sp" android:layout_marginBottom="8dp" />
+                            <TextView android:id="@+id/tvDetailDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Urgent pipe leak under kitchen sink, water pooling on floor" android:textColor="#004A99" android:textSize="15sp" android:textStyle="bold" android:gravity="end" />
+                        </LinearLayout>
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
 
                     </LinearLayout>
 
-                </LinearLayout>
-
-                <!-- ===== EMPTY STATE (sibling of layoutContent) ===== -->
-                <LinearLayout
-                    android:id="@+id/layoutEmptyState"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:paddingTop="80dp"
-                    android:paddingBottom="40dp"
-                    android:visibility="gone">
-
-                    <ImageView
-                        android:layout_width="72dp"
-                        android:layout_height="72dp"
-                        android:layout_marginBottom="20dp"
-                        android:alpha="0.3"
-                        android:src="@drawable/ic_inbox" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <!-- BUTTONS -->
+                    <LinearLayout
+                        android:id="@+id/layoutBottomButtons"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:text="No Active Jobs"
-                        android:textColor="#1E293B"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:lineSpacingExtra="4dp"
-                        android:text="You have no current requests.&#10;Check back later."
-                        android:textColor="#94A3B8"
-                        android:textSize="13sp" />
+                        android:orientation="horizontal"
+                        android:layout_marginTop="32dp"
+                        android:visibility="gone">
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnReject"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp"
+                            android:text="Reject / Return"
+                            android:textColor="#DC2626"
+                            android:textAllCaps="false"
+                            android:textStyle="bold"
+                            app:backgroundTint="#FEE2E2"
+                            app:cornerRadius="14dp"
+                            app:strokeColor="#DC2626"
+                            app:strokeWidth="1dp" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnConfirm"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_weight="1"
+                            android:text="Confirm Work"
+                            android:textAllCaps="false"
+                            android:textStyle="bold"
+                            app:backgroundTint="#16A34A"
+                            app:cornerRadius="14dp"/>
+                    </LinearLayout>
 
                 </LinearLayout>
 
             </LinearLayout>
-
-        </ScrollView>
-
-        <!-- ===== BOTTOM BUTTONS ===== -->
-        <LinearLayout
-            android:id="@+id/layoutBottomButtons"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFF"
-            android:elevation="16dp"
-            android:orientation="horizontal"
-            android:paddingStart="20dp"
-            android:paddingTop="14dp"
-            android:paddingEnd="20dp"
-            android:paddingBottom="20dp">
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnReject"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="Reject / Return"
-                android:textColor="#DC2626"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:visibility="gone"
-                app:backgroundTint="#FEE2E2"
-                app:cornerRadius="14dp"
-                app:strokeColor="#DC2626"
-                app:strokeWidth="1dp" />
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnConfirm"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:text="Confirm"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:visibility="gone"
-                app:backgroundTint="#16A34A"
-                app:cornerRadius="14dp"/>
-        </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
 
     </LinearLayout>
+
+    <!-- Floating P button (Optional, from screenshot) -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="24dp"
+        android:src="@drawable/ic_check"
+        app:tint="#FFFFFF"
+        app:backgroundTint="#E11D48"
+        android:visibility="gone" />
 
     <!-- Loading Overlay -->
     <FrameLayout
@@ -445,7 +499,6 @@
         android:visibility="gone"
         android:clickable="true"
         android:focusable="true">
-
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -454,21 +507,18 @@
             android:padding="24dp"
             android:background="@drawable/bg_card"
             android:layout_gravity="center">
-
             <ProgressBar
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:indeterminateTint="#004A99"
                 android:layout_marginBottom="16dp" />
-
             <TextView
                 android:id="@+id/tvLoadingMessage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Loading..."
+                android:text="Processing..."
                 android:textColor="#1E293B"
                 android:textStyle="bold" />
-
         </LinearLayout>
     </FrameLayout>
 

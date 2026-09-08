@@ -47,5 +47,8 @@ data class Job(
     val createdAt: Long = System.currentTimeMillis(),
     val expiresAt: Long = 0,
     val acceptedAt: Long? = null,
-    val completedAt: Long? = null
+    val completedAt: Long? = null,
+
+    // REJECTION
+    val rejectionDetails: Map<String, Any>? = null
 )

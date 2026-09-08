@@ -493,7 +493,7 @@ class CreateJobActivity : AppCompatActivity() {
             .whereEqualTo("clientId", currentUser.uid)
             .get(com.google.firebase.firestore.Source.SERVER)
             .addOnSuccessListener { snapshots ->
-                val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
+                val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION", "REJECTED_BY_CLIENT")
                 val hasActiveJob = snapshots.documents.any { 
                     val status = it.getString("status") ?: ""
                     status in activeStatuses 
@@ -638,7 +638,7 @@ class CreateJobActivity : AppCompatActivity() {
         val jobsRef = firestore.collection("jobs")
         
         jobsRef.whereEqualTo("clientId", uid).get().addOnSuccessListener { snapshots ->
-            val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
+            val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION", "REJECTED_BY_CLIENT")
             val hasActiveJob = snapshots.documents.any { it.getString("status") in activeStatuses }
 
             if (hasActiveJob) {

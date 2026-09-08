@@ -6,4 +6,5 @@
     <dimen name="preview_image_size">100dp</dimen>
     <dimen name="error_stroke_width">1.5dp</dimen>
     <dimen name="normal_stroke_width">1dp</dimen>
+    <dimen name="chip_stroke_width">1dp</dimen>
 </resources>

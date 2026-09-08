@@ -57,6 +57,7 @@ class WorkerAccountFragment : Fragment() {
     private lateinit var layoutNCButtons: LinearLayout
     private lateinit var menuReviews: LinearLayout
     private lateinit var swipeRefresh: SwipeRefreshLayout
+    private lateinit var menuEditProfile: LinearLayout
 
     private val pickCertificate =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -81,6 +82,7 @@ class WorkerAccountFragment : Fragment() {
         menuReviews = view.findViewById(R.id.menuReviews)
         layoutHeader = view.findViewById(R.id.layoutHeader)
         swipeRefresh = view.findViewById(R.id.swipeRefreshAccount)
+        menuEditProfile = view.findViewById(R.id.menuEditProfile)
 
         tvVerificationBadge = view.findViewById(R.id.tvVerificationBadge)
         tvVerificationLevel = view.findViewById(R.id.tvVerificationLevel)
@@ -114,6 +116,7 @@ class WorkerAccountFragment : Fragment() {
         setupLogout()
         setupCertificatesMenu()
         setupReviewsMenu()
+        setupEditProfileMenu()
 
         swipeRefresh.setOnRefreshListener {
             loadProfile()
@@ -266,6 +269,12 @@ class WorkerAccountFragment : Fragment() {
     // --------------------------------------------------
     // LOGOUT
     // --------------------------------------------------
+    private fun setupEditProfileMenu() {
+        menuEditProfile.setOnClickListener {
+            startActivity(Intent(requireContext(), WorkerEditProfileActivity::class.java))
+        }
+    }
+
     private fun setupReviewsMenu() {
         menuReviews.setOnClickListener {
             startActivity(Intent(requireContext(), WorkerReviewsActivity::class.java))

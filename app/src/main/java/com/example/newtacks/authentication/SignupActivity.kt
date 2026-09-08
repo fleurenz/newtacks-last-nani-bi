@@ -150,6 +150,8 @@ class SignupActivity : AppCompatActivity() {
                     val expText = findViewById<EditText>(R.id.etExperience).text.toString()
                     experience = if (expText.isNotEmpty()) expText.toInt() else 0
 
+                    aboutUs = findViewById<EditText>(R.id.etWorkerAbout).text.toString().takeIf { it.isNotBlank() }
+
                     if (findViewById<CheckBox>(R.id.cbPlumbing).isChecked)
                         categories.add("Plumbing")
 

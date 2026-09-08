@@ -1,0 +1,4 @@
+List of devices attached
+AB3S6R5325020805	device
+emulator-5554	offline
+
