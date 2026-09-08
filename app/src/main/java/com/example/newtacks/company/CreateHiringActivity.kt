@@ -9,6 +9,11 @@ import android.view.View
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import android.text.Editable
+import android.text.TextWatcher
+import android.content.res.ColorStateList
+import androidx.core.widget.NestedScrollView
 import coil.load
 import coil.transform.RoundedCornersTransformation
 import com.cloudinary.android.MediaManager
@@ -21,6 +26,7 @@ import com.example.newtacks.models.User
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -53,7 +59,8 @@ class CreateHiringActivity : AppCompatActivity() {
     private lateinit var etJobDescription: EditText
     private lateinit var etResponsibilities: EditText
     
-    private lateinit var btnSelectClosingDate: Button
+    private lateinit var hiringScrollView: NestedScrollView
+    private lateinit var btnSelectClosingDate: MaterialButton
     private lateinit var btnSubmit: Button
     private lateinit var btnDraft: Button
 
@@ -85,6 +92,7 @@ class CreateHiringActivity : AppCompatActivity() {
         initializeViews()
         loadCompanyInfo()
         setupListeners()
+        setupValidationListeners()
     }
 
     private fun setupToolbar() {
@@ -95,10 +103,7 @@ class CreateHiringActivity : AppCompatActivity() {
     }
 
     private fun initializeViews() {
-        // We removed etCompanyName from XML as per image (it shows "Job Title" as first field)
-        // But we still need the company name for the HiringPost model.
-        // We'll keep the variables but they might be null or hidden.
-        
+        hiringScrollView = findViewById(R.id.hiringScrollView)
         etCompanyAddress = findViewById(R.id.etCompanyAddress)
         etHiringTitle = findViewById(R.id.etHiringTitle)
         
@@ -178,6 +183,10 @@ class CreateHiringActivity : AppCompatActivity() {
                 
                 val dateStr = "${m + 1}/$d/$y"
                 btnSelectClosingDate.text = "Close: $dateStr"
+                
+                // Reset error state
+                btnSelectClosingDate.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.primary)))
+                btnSelectClosingDate.strokeWidth = resources.getDimensionPixelSize(R.dimen.normal_stroke_width)
             }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
         }
 
@@ -188,9 +197,6 @@ class CreateHiringActivity : AppCompatActivity() {
     private fun submitHiring(status: String) {
         val title = etHiringTitle.text.toString().trim()
         val rateText = etDailyRate.text.toString().trim()
-        val description = etJobDescription.text.toString().trim()
-        val responsibilities = etResponsibilities.text.toString().trim()
-        val vacanciesText = etVacancies.text.toString().trim()
         
         val services = mutableListOf<String>()
         if (cbCarpentry.isChecked) services.add("Carpentry")
@@ -210,13 +216,16 @@ class CreateHiringActivity : AppCompatActivity() {
             else -> ""
         }
 
-        if (title.isEmpty() || rateText.isEmpty() || services.isEmpty() || empType.isEmpty() || expiresAtTimestamp == 0L || description.isEmpty() || responsibilities.isEmpty() || vacanciesText.isEmpty()) {
+        if (!validateForm()) {
             Toast.makeText(this, "Please fill all required fields", Toast.LENGTH_SHORT).show()
             return
         }
 
         val rate = rateText.replace(Regex("[^0-9.]"), "").toDoubleOrNull() ?: 0.0
+        val vacanciesText = etVacancies.text.toString().trim()
         val vacancies = vacanciesText.toIntOrNull() ?: 1
+        val description = etJobDescription.text.toString().trim()
+        val responsibilities = etResponsibilities.text.toString().trim()
         val uid = auth.currentUser?.uid ?: return
         
         btnSubmit.isEnabled = false
@@ -227,7 +236,6 @@ class CreateHiringActivity : AppCompatActivity() {
             val hiringId = db.collection("hiring").document().id
             val now = System.currentTimeMillis()
             
-            // Get company name from user profile (since we removed the field from UI for cleaner look)
             db.collection("users").document(uid).get().addOnSuccessListener { userDoc ->
                 val companyName = userDoc.getString("companyName") ?: userDoc.getString("name") ?: "Company"
                 
@@ -266,6 +274,113 @@ class CreateHiringActivity : AppCompatActivity() {
                     }
             }
         }
+    }
+
+    private fun setupValidationListeners() {
+        val watcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val focusedView = currentFocus
+                if (focusedView is EditText) {
+                    focusedView.error = null
+                }
+            }
+        }
+
+        etHiringTitle.addTextChangedListener(watcher)
+        etCompanyAddress.addTextChangedListener(watcher)
+        etDailyRate.addTextChangedListener(watcher)
+        etVacancies.addTextChangedListener(watcher)
+        etJobDescription.addTextChangedListener(watcher)
+        etResponsibilities.addTextChangedListener(watcher)
+    }
+
+    private fun validateForm(): Boolean {
+        var isValid = true
+        var firstErrorView: View? = null
+
+        val title = etHiringTitle.text.toString().trim()
+        val address = etCompanyAddress.text.toString().trim()
+        val rate = etDailyRate.text.toString().trim()
+        val vacancies = etVacancies.text.toString().trim()
+        val description = etJobDescription.text.toString().trim()
+        val responsibilities = etResponsibilities.text.toString().trim()
+
+        val services = mutableListOf<String>()
+        if (cbCarpentry.isChecked) services.add("Carpentry")
+        if (cbPlumbing.isChecked) services.add("Plumbing")
+        if (cbMasonry.isChecked) services.add("Masonry")
+        if (cbWelding.isChecked) services.add("Welding")
+        if (cbPainting.isChecked) services.add("Painting")
+        if (cbOthers.isChecked) {
+            val other = etOtherService.text.toString().trim()
+            if (other.isNotEmpty()) services.add(other)
+        }
+
+        if (title.isEmpty()) {
+            etHiringTitle.error = "Job title is required"
+            if (firstErrorView == null) firstErrorView = etHiringTitle
+            isValid = false
+        }
+
+        if (toggleEmploymentType.checkedButtonId == View.NO_ID) {
+            if (firstErrorView == null) firstErrorView = toggleEmploymentType
+            isValid = false
+            Toast.makeText(this, "Please select employment type", Toast.LENGTH_SHORT).show()
+        }
+
+        if (address.isEmpty()) {
+            etCompanyAddress.error = "Location is required"
+            if (firstErrorView == null) firstErrorView = etCompanyAddress
+            isValid = false
+        }
+
+        if (rate.isEmpty()) {
+            etDailyRate.error = "Salary is required"
+            if (firstErrorView == null) firstErrorView = etDailyRate
+            isValid = false
+        }
+
+        if (vacancies.isEmpty()) {
+            etVacancies.error = "Number of vacancies is required"
+            if (firstErrorView == null) firstErrorView = etVacancies
+            isValid = false
+        }
+
+        if (description.isEmpty()) {
+            etJobDescription.error = "Description is required"
+            if (firstErrorView == null) firstErrorView = etJobDescription
+            isValid = false
+        }
+
+        if (responsibilities.isEmpty()) {
+            etResponsibilities.error = "Responsibilities are required"
+            if (firstErrorView == null) firstErrorView = etResponsibilities
+            isValid = false
+        }
+
+        if (services.isEmpty()) {
+            if (firstErrorView == null) firstErrorView = cbCarpentry
+            isValid = false
+            Toast.makeText(this, "Please select at least one service", Toast.LENGTH_SHORT).show()
+        }
+
+        if (expiresAtTimestamp == 0L) {
+            btnSelectClosingDate.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.error_red)))
+            btnSelectClosingDate.strokeWidth = resources.getDimensionPixelSize(R.dimen.error_stroke_width)
+            if (firstErrorView == null) firstErrorView = btnSelectClosingDate
+            isValid = false
+        }
+
+        firstErrorView?.let {
+            it.requestFocus()
+            val location = IntArray(2)
+            it.getLocationInWindow(location)
+            hiringScrollView.smoothScrollTo(0, location[1] - 200)
+        }
+
+        return isValid
     }
 
     private fun uploadImagesAndSubmit(uris: List<Uri>, onComplete: (List<String>) -> Unit) {

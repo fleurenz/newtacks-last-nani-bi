@@ -10,6 +10,10 @@ import android.view.View
 import android.widget.*
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import android.text.Editable
+import android.text.TextWatcher
+import android.content.res.ColorStateList
 import com.example.newtacks.models.Job
 import com.example.newtacks.models.User
 import com.google.firebase.auth.FirebaseAuth
@@ -40,11 +44,13 @@ class CreateJobActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private lateinit var spinnerServiceType: Spinner
-    private lateinit var btnSelectDate: Button
-    private lateinit var btnSelectTime: Button
+    private lateinit var btnSelectDate: com.google.android.material.button.MaterialButton
+    private lateinit var btnSelectTime: com.google.android.material.button.MaterialButton
     private lateinit var etDuration: EditText
     private lateinit var etOfferAmount: EditText
     private lateinit var etDescription: EditText
+
+    private lateinit var createJobScrollView: ScrollView
 
     private lateinit var btnCancel: Button
     private lateinit var btnSubmit: Button
@@ -98,6 +104,8 @@ class CreateJobActivity : AppCompatActivity() {
 
         btnCancel.setOnClickListener { handleBackPress() }
         btnSubmit.setOnClickListener { submitJob() }
+
+        setupValidationListeners()
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -160,6 +168,7 @@ class CreateJobActivity : AppCompatActivity() {
 
     private fun initializeViews() {
 
+        createJobScrollView = findViewById(R.id.createJobScrollView)
         etJobTitle = findViewById(R.id.etJobTitle)
         etClientName = findViewById(R.id.etClientName)
         etClientAddress = findViewById(R.id.etClientAddress)
@@ -305,6 +314,10 @@ class CreateJobActivity : AppCompatActivity() {
 
                     selectedDate = "${month + 1}/$day/$year"
                     btnSelectDate.text = selectedDate
+                    
+                    // Reset error state
+                    btnSelectDate.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.stroke_color)))
+                    btnSelectDate.strokeWidth = resources.getDimensionPixelSize(R.dimen.normal_stroke_width)
 
                 },
                 calendar.get(Calendar.YEAR),
@@ -328,6 +341,10 @@ class CreateJobActivity : AppCompatActivity() {
 
                     selectedTime = String.format(Locale.getDefault(), "%02d:%02d", hour, minute)
                     btnSelectTime.text = selectedTime
+                    
+                    // Reset error state
+                    btnSelectTime.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.stroke_color)))
+                    btnSelectTime.strokeWidth = resources.getDimensionPixelSize(R.dimen.normal_stroke_width)
 
                 },
                 calendar.get(Calendar.HOUR_OF_DAY),
@@ -434,17 +451,7 @@ class CreateJobActivity : AppCompatActivity() {
 
         // ---------------- VALIDATION ----------------
 
-        if (
-            jobTitle.isEmpty() ||
-            clientName.isEmpty() ||
-            clientAddress.isEmpty() ||
-            clientAddress == "Detecting location..." ||
-            selectedDate.isEmpty() ||
-            selectedTime.isEmpty() ||
-            durationInput.isEmpty() ||
-            offerInput.isEmpty() ||
-            description.isEmpty()
-        ) {
+        if (!validateForm()) {
             Toast.makeText(this, "Please complete all fields", Toast.LENGTH_SHORT).show()
             return
         }
@@ -489,6 +496,8 @@ class CreateJobActivity : AppCompatActivity() {
                         Toast.LENGTH_LONG
                     ).show()
                     btnSubmit.isEnabled = true
+                    isSubmitting = false
+                    btnSubmit.text = "Submit Request"
                     return@addOnSuccessListener
                 }
 
@@ -501,6 +510,90 @@ class CreateJobActivity : AppCompatActivity() {
                 btnSubmit.text = "Submit Request"
                 Toast.makeText(this, "Error checking active jobs", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    private fun setupValidationListeners() {
+        val watcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                // Clearing error on text change
+                val focusedView = currentFocus
+                if (focusedView is EditText) {
+                    focusedView.error = null
+                }
+            }
+        }
+
+        etJobTitle.addTextChangedListener(watcher)
+        etClientAddress.addTextChangedListener(watcher)
+        etDuration.addTextChangedListener(watcher)
+        etOfferAmount.addTextChangedListener(watcher)
+        etDescription.addTextChangedListener(watcher)
+    }
+
+    private fun validateForm(): Boolean {
+        var isValid = true
+        var firstErrorView: View? = null
+
+        val jobTitle = etJobTitle.text.toString().trim()
+        val clientAddress = etClientAddress.text.toString().trim()
+        val durationInput = etDuration.text.toString().trim()
+        val offerInput = etOfferAmount.text.toString().trim()
+        val description = etDescription.text.toString().trim()
+
+        if (jobTitle.isEmpty()) {
+            etJobTitle.error = "Job title is required"
+            if (firstErrorView == null) firstErrorView = etJobTitle
+            isValid = false
+        }
+
+        if (clientAddress.isEmpty() || clientAddress == "Detecting location...") {
+            etClientAddress.error = "Address is required"
+            if (firstErrorView == null) firstErrorView = etClientAddress
+            isValid = false
+        }
+
+        if (selectedDate.isEmpty()) {
+            btnSelectDate.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.error_red)))
+            btnSelectDate.strokeWidth = resources.getDimensionPixelSize(R.dimen.error_stroke_width)
+            if (firstErrorView == null) firstErrorView = btnSelectDate
+            isValid = false
+        }
+
+        if (selectedTime.isEmpty()) {
+            btnSelectTime.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.error_red)))
+            btnSelectTime.strokeWidth = resources.getDimensionPixelSize(R.dimen.error_stroke_width)
+            if (firstErrorView == null) firstErrorView = btnSelectTime
+            isValid = false
+        }
+
+        if (durationInput.isEmpty()) {
+            etDuration.error = "Estimated duration is required"
+            if (firstErrorView == null) firstErrorView = etDuration
+            isValid = false
+        }
+
+        if (offerInput.isEmpty()) {
+            etOfferAmount.error = "Offer amount is required"
+            if (firstErrorView == null) firstErrorView = etOfferAmount
+            isValid = false
+        }
+
+        if (description.isEmpty()) {
+            etDescription.error = "Description is required"
+            if (firstErrorView == null) firstErrorView = etDescription
+            isValid = false
+        }
+
+        firstErrorView?.let {
+            it.requestFocus()
+            val location = IntArray(2)
+            it.getLocationInWindow(location)
+            createJobScrollView.smoothScrollTo(0, location[1] - 200) // Scroll to view with offset
+        }
+
+        return isValid
     }
 
     private fun uploadImagesAndCreateJob(
