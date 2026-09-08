@@ -201,8 +201,10 @@ class WorkerHiringFragment : Fragment() {
         val query = etSearch.text.toString().trim().lowercase()
         
         if (currentTab == "AVAILABLE") {
-            val filtered = allHiringPosts.filter { 
-                it.jobTitle.lowercase().contains(query) || it.companyName.lowercase().contains(query)
+            val filtered = allHiringPosts.filter { post ->
+                post.jobTitle.lowercase().contains(query) || 
+                post.companyName.lowercase().contains(query) ||
+                post.serviceCategories.any { it.lowercase().contains(query) }
             }
             postsAdapter.updateData(filtered)
             updateEmptyState(filtered.isEmpty())
