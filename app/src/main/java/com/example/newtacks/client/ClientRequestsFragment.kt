@@ -24,6 +24,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
+import java.text.SimpleDateFormat
 import java.util.Locale
 
 class ClientRequestsFragment : Fragment() {
@@ -207,12 +208,15 @@ class ClientRequestsFragment : Fragment() {
         layoutEmptyState.visibility = View.GONE
         
         tvTitle.text = job.jobTitle
-        tvRequestDate.text = job.scheduledDate
+        
+        // Format date for display (e.g., September 21, 2026)
+        val displayDate = formatJobDate(job.scheduledDate)
+        tvRequestDate.text = displayDate
         
         tvDetailService.text = job.serviceCategory
         tvDetailAddress.text = job.clientAddress
         tvDetailTime.text = job.scheduledTime
-        tvDetailDate.text = job.scheduledDate
+        tvDetailDate.text = displayDate
         tvDetailRate.text = "₱${job.offeredAmount}"
         tvDetailDescription.text = job.description
 
@@ -494,6 +498,32 @@ class ClientRequestsFragment : Fragment() {
         // Ensure header is reset to standard title
         tvHeaderTitle.visibility = View.VISIBLE
         layoutDistanceHeader.visibility = View.GONE
+    }
+
+    /**
+     * Formats job date from "M/d/yyyy" or "MM/dd/yy" to "MMMM d, yyyy"
+     */
+    private fun formatJobDate(dateStr: String): String {
+        if (dateStr.isEmpty()) return ""
+        
+        val inputFormats = listOf(
+            SimpleDateFormat("M/d/yyyy", Locale.getDefault()),
+            SimpleDateFormat("MM/dd/yy", Locale.getDefault()),
+            SimpleDateFormat("dd/MM/yy", Locale.getDefault())
+        )
+        
+        val outputFormat = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
+        
+        for (format in inputFormats) {
+            try {
+                val date = format.parse(dateStr)
+                if (date != null) return outputFormat.format(date)
+            } catch (e: Exception) {
+                // Try next format
+            }
+        }
+        
+        return dateStr // Fallback to original if parsing fails
     }
 
     override fun onDestroyView() {
