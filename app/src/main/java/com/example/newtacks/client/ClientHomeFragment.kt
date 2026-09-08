@@ -46,7 +46,9 @@ class ClientHomeFragment : Fragment() {
         val layoutHeader = view.findViewById<View>(R.id.layoutHeader)
         ViewCompat.setOnApplyWindowInsetsListener(layoutHeader) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.updatePadding(top = systemBars.top + resources.getDimensionPixelSize(R.dimen.spacing_24))
+            val topInset = systemBars.top
+            val basePadding = (resources.displayMetrics.density * 36).toInt()
+            v.updatePadding(top = basePadding + topInset)
             insets
         }
 

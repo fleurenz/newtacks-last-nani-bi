@@ -48,6 +48,7 @@ class ClientRequestsFragment : Fragment() {
     private lateinit var tvDistanceBigUnit: TextView
 
     private lateinit var tvTitle: TextView
+    private lateinit var tvRequestDate: TextView
     private lateinit var tvProgressStatus: TextView
     private lateinit var layoutStandardProgress: LinearLayout
     private lateinit var progressTrackActive: View
@@ -56,9 +57,6 @@ class ClientRequestsFragment : Fragment() {
     private lateinit var step3: ImageView
     private lateinit var step4: ImageView
     private lateinit var step5: ImageView
-    
-    private lateinit var layoutSimpleTimeline: LinearLayout
-    private lateinit var ivWorkerPointer: ImageView
     
     private lateinit var layoutWorker: LinearLayout
     private lateinit var ivWorkerProfile: ImageView
@@ -105,6 +103,7 @@ class ClientRequestsFragment : Fragment() {
         tvDistanceBigUnit    = view.findViewById(R.id.tvDistanceBigUnit)
 
         tvTitle           = view.findViewById(R.id.tvRequestTitle)
+        tvRequestDate     = view.findViewById(R.id.tvRequestDate)
         tvProgressStatus = view.findViewById(R.id.tvProgressStatus)
         layoutStandardProgress = view.findViewById(R.id.layoutStandardProgress)
         progressTrackActive = view.findViewById(R.id.progressTrackActive)
@@ -113,9 +112,6 @@ class ClientRequestsFragment : Fragment() {
         step3 = view.findViewById(R.id.step3)
         step4 = view.findViewById(R.id.step4)
         step5 = view.findViewById(R.id.step5)
-
-        layoutSimpleTimeline = view.findViewById(R.id.layoutSimpleTimeline)
-        ivWorkerPointer      = view.findViewById(R.id.ivWorkerPointer)
 
         layoutWorker     = view.findViewById(R.id.layoutWorker)
         ivWorkerProfile  = view.findViewById(R.id.ivWorkerProfile)
@@ -144,10 +140,13 @@ class ClientRequestsFragment : Fragment() {
         loadingOverlay       = view.findViewById(R.id.loadingOverlay)
         tvLoadingMessage     = view.findViewById(R.id.tvLoadingMessage)
 
-        // Window Insets
-        ViewCompat.setOnApplyWindowInsetsListener(layoutHeader) { v, insets ->
+        // Use the spacer to physically push content down exactly by the status bar height
+        val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)
+        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.updatePadding(top = systemBars.top + (resources.displayMetrics.density * 8).toInt())
+            val params = statusBarSpacer.layoutParams
+            params.height = systemBars.top
+            statusBarSpacer.layoutParams = params
             insets
         }
 
@@ -208,6 +207,7 @@ class ClientRequestsFragment : Fragment() {
         layoutEmptyState.visibility = View.GONE
         
         tvTitle.text = job.jobTitle
+        tvRequestDate.text = job.scheduledDate
         
         tvDetailService.text = job.serviceCategory
         tvDetailAddress.text = job.clientAddress
@@ -242,14 +242,7 @@ class ClientRequestsFragment : Fragment() {
     }
 
     private fun updateProgressUI(status: String) {
-        if (status == "HEADING_TO_CLIENT") {
-            layoutStandardProgress.visibility = View.GONE
-            layoutSimpleTimeline.visibility = View.VISIBLE
-            return
-        }
-
         layoutStandardProgress.visibility = View.VISIBLE
-        layoutSimpleTimeline.visibility = View.GONE
 
         val steps = listOf(step1, step2, step3, step4, step5)
         steps.forEach { it.setBackgroundResource(R.drawable.bg_step_circle_inactive) }
@@ -258,6 +251,7 @@ class ClientRequestsFragment : Fragment() {
         when (status) {
             "AVAILABLE" -> { activeStepsCount = 1; tvProgressStatus.text = "Searching..." }
             "IN_PROGRESS" -> { activeStepsCount = 2; tvProgressStatus.text = "Waiting..." }
+            "HEADING_TO_CLIENT" -> { activeStepsCount = 3; tvProgressStatus.text = "Worker's on the way" }
             "ARRIVED" -> { activeStepsCount = 4; tvProgressStatus.text = "Worker is working" }
             "PENDING_VERIFICATION" -> { activeStepsCount = 5; tvProgressStatus.text = "Confirm & Review" }
             "REJECTED_BY_CLIENT" -> { activeStepsCount = 4; tvProgressStatus.text = "Waiting for worker to respond" }
@@ -486,6 +480,10 @@ class ClientRequestsFragment : Fragment() {
     private fun showEmptyState() {
         currentJob = null; currentJobId = null
         layoutContent.visibility = View.GONE; layoutEmptyState.visibility = View.VISIBLE; layoutBottomButtons.visibility = View.GONE
+        
+        // Ensure header is reset to standard title
+        tvHeaderTitle.visibility = View.VISIBLE
+        layoutDistanceHeader.visibility = View.GONE
     }
 
     override fun onDestroyView() {

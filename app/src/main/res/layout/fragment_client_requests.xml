@@ -12,14 +12,20 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
+        <!-- Status Bar Spacer -->
+        <View
+            android:id="@+id/statusBarSpacer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp" />
+
         <!-- HEADER -->
         <RelativeLayout
             android:id="@+id/layoutHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="24dp"
-            android:paddingTop="36dp"
-            android:paddingBottom="20dp">
+            android:paddingHorizontal="20dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp">
 
             <!-- Standard Title -->
             <TextView
@@ -29,7 +35,7 @@
                 android:layout_centerInParent="true"
                 android:text="REQUEST"
                 android:textColor="#FFFFFF"
-                android:textSize="22sp"
+                android:textSize="18sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.05" />
 
@@ -92,41 +98,42 @@
                 app:tint="#FFFFFF" />
         </RelativeLayout>
 
-        <androidx.core.widget.NestedScrollView
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fillViewport="true">
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/rounded_top_white">
 
+            <!-- EMPTY STATE -->
             <LinearLayout
+                android:id="@+id/layoutEmptyState"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
                 android:orientation="vertical"
-                android:background="@drawable/rounded_top_white">
+                android:visibility="gone">
+                <ImageView
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:src="@drawable/ic_inbox"
+                    android:alpha="0.2"
+                    android:layout_marginBottom="16dp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No active requests yet"
+                    android:textColor="#64748B"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
-                <!-- EMPTY STATE -->
-                <LinearLayout
-                    android:id="@+id/layoutEmptyState"
-                    android:layout_width="match_parent"
-                    android:layout_height="400dp"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:visibility="gone">
-                    <ImageView
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        android:src="@drawable/ic_inbox"
-                        android:alpha="0.2"
-                        android:layout_marginBottom="16dp" />
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="No active requests yet"
-                        android:textColor="#64748B"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+            <androidx.core.widget.NestedScrollView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:fillViewport="true">
 
-                <!-- CONTENT -->
                 <LinearLayout
                     android:id="@+id/layoutContent"
                     android:layout_width="match_parent"
@@ -135,31 +142,47 @@
                     android:padding="24dp">
 
                     <!-- Title Row -->
-                    <RelativeLayout
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center"
                         android:layout_marginBottom="24dp">
 
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+
+                            <TextView
+                                android:id="@+id/tvRequestTitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_centerInParent="true"
+                                android:text="Job Title"
+                                android:textColor="#004A99"
+                                android:textSize="22sp"
+                                android:textStyle="bold" />
+
+                            <ImageButton
+                                android:id="@+id/btnMoreOptions"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_alignParentEnd="true"
+                                android:layout_centerVertical="true"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:src="@drawable/ic_more_vert"
+                                app:tint="#004A99" />
+                        </RelativeLayout>
+
                         <TextView
-                            android:id="@+id/tvRequestTitle"
+                            android:id="@+id/tvRequestDate"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_centerInParent="true"
-                            android:text="Job Title"
-                            android:textColor="#004A99"
-                            android:textSize="28sp"
-                            android:textStyle="bold" />
-
-                        <ImageButton
-                            android:id="@+id/btnMoreOptions"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:layout_alignParentEnd="true"
-                            android:layout_centerVertical="true"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:src="@drawable/ic_more_vert"
-                            app:tint="#004A99" />
-                    </RelativeLayout>
+                            android:layout_marginTop="2dp"
+                            android:text="September 21, 2026"
+                            android:textColor="#64748B"
+                            android:textSize="12sp" />
+                    </LinearLayout>
 
                     <!-- Standard Progress Bar (5 Steps) -->
                     <LinearLayout
@@ -175,37 +198,37 @@
                             <!-- Track Background -->
                             <View
                                 android:layout_width="match_parent"
-                                android:layout_height="4dp"
+                                android:layout_height="3dp"
                                 android:layout_centerVertical="true"
                                 android:background="#F1F5F9"
-                                android:layout_marginHorizontal="20dp" />
+                                android:layout_marginHorizontal="18dp" />
                             <!-- Active Track -->
                             <View
                                 android:id="@+id/progressTrackActive"
                                 android:layout_width="0dp"
-                                android:layout_height="4dp"
+                                android:layout_height="3dp"
                                 android:layout_centerVertical="true"
                                 android:background="#004A99"
-                                android:layout_marginStart="20dp" />
+                                android:layout_marginStart="18dp" />
 
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal">
                                 <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
-                                    <ImageView android:id="@+id/step1" android:layout_width="32dp" android:layout_height="32dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_active" android:src="@drawable/ic_check" android:padding="8dp" />
+                                    <ImageView android:id="@+id/step1" android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_active" android:src="@drawable/ic_search" android:padding="6dp" />
                                 </FrameLayout>
                                 <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
-                                    <ImageView android:id="@+id/step2" android:layout_width="32dp" android:layout_height="32dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_inactive" android:src="@drawable/ic_check" android:padding="8dp" />
+                                    <ImageView android:id="@+id/step2" android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_inactive" android:src="@drawable/ic_check" android:padding="6dp" />
                                 </FrameLayout>
                                 <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
-                                    <ImageView android:id="@+id/step3" android:layout_width="32dp" android:layout_height="32dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_inactive" android:src="@drawable/ic_location" android:padding="8dp" />
+                                    <ImageView android:id="@+id/step3" android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_inactive" android:src="@drawable/ic_location" android:padding="6dp" />
                                 </FrameLayout>
                                 <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
-                                    <ImageView android:id="@+id/step4" android:layout_width="32dp" android:layout_height="32dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_inactive" android:src="@drawable/ic_hammer" android:padding="8dp" />
+                                    <ImageView android:id="@+id/step4" android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_inactive" android:src="@drawable/ic_hammer" android:padding="6dp" />
                                 </FrameLayout>
                                 <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
-                                    <ImageView android:id="@+id/step5" android:layout_width="32dp" android:layout_height="32dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_inactive" android:src="@drawable/ic_rate_review" android:padding="8dp" />
+                                    <ImageView android:id="@+id/step5" android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_inactive" android:src="@drawable/ic_bubble_alert" android:padding="6dp" />
                                 </FrameLayout>
                             </LinearLayout>
                         </RelativeLayout>
@@ -222,64 +245,6 @@
                             android:layout_gravity="start" />
                     </LinearLayout>
 
-                    <!-- Simple Timeline (2 Steps) for HEADING status -->
-                    <LinearLayout
-                        android:id="@+id/layoutSimpleTimeline"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginBottom="32dp"
-                        android:visibility="gone"
-                        tools:visibility="visible">
-
-                        <RelativeLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginHorizontal="24dp">
-
-                            <View
-                                android:layout_width="match_parent"
-                                android:layout_height="3dp"
-                                android:layout_centerVertical="true"
-                                android:background="#F1F5F9" />
-
-                            <View
-                                android:layout_width="100dp"
-                                android:layout_height="3dp"
-                                android:layout_centerVertical="true"
-                                android:background="#004A99" />
-
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:layout_alignParentStart="true"
-                                android:background="@drawable/bg_step_circle_active"
-                                android:src="@drawable/ic_check"
-                                android:padding="6dp" />
-
-                            <ImageView
-                                android:id="@+id/ivWorkerPointer"
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:layout_marginStart="88dp"
-                                android:background="@drawable/bg_step_circle_active"
-                                android:src="@drawable/ic_location"
-                                android:padding="4dp"
-                                app:tint="#FFFFFF" />
-                        </RelativeLayout>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_horizontal"
-                            android:layout_marginTop="8dp"
-                            android:gravity="center"
-                            android:text="Worker's on\nthe way"
-                            android:textColor="#004A99"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            android:lineSpacingExtra="2dp" />
-                    </LinearLayout>
 
                     <!-- WORKER SECTION -->
                     <LinearLayout
@@ -294,8 +259,8 @@
 
                         <com.google.android.material.imageview.ShapeableImageView
                             android:id="@+id/ivWorkerProfile"
-                            android:layout_width="52dp"
-                            android:layout_height="52dp"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
                             android:scaleType="centerCrop"
                             android:src="@drawable/ic_user_placeholder"
                             app:shapeAppearanceOverlay="@style/CircleImage" />
@@ -304,7 +269,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:layout_marginStart="12dp"
+                            android:layout_marginStart="10dp"
                             android:orientation="vertical">
                             <TextView
                                 android:id="@+id/tvWorkerName"
@@ -312,22 +277,22 @@
                                 android:layout_height="wrap_content"
                                 android:text="Worker Name"
                                 android:textColor="#1E293B"
-                                android:textSize="16sp"
+                                android:textSize="15sp"
                                 android:textStyle="bold" />
                             <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal"
                                 android:gravity="center_vertical">
-                                <ImageView android:layout_width="12dp" android:layout_height="12dp" android:src="@drawable/ic_location" app:tint="#EF4444" />
+                                <ImageView android:layout_width="10dp" android:layout_height="10dp" android:src="@drawable/ic_location" app:tint="#EF4444" />
                                 <TextView
                                     android:id="@+id/tvWorkerDistance"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="10km away"
                                     android:textColor="#64748B"
-                                    android:textSize="12sp"
-                                    android:layout_marginStart="4dp" />
+                                    android:textSize="11sp"
+                                    android:layout_marginStart="3dp" />
                             </LinearLayout>
                         </LinearLayout>
 
@@ -376,106 +341,121 @@
                         </LinearLayout>
                     </LinearLayout>
 
-                    <!-- DETAILS LIST (Instead of Card, following screenshot) -->
-                    <LinearLayout
+                    <!-- DETAILS LIST IN A CARD -->
+                    <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="4dp"
+                        app:strokeWidth="0dp"
+                        android:layout_marginBottom="16dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Job Details"
-                            android:textColor="#1E293B"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="16dp" />
+                            android:orientation="vertical"
+                            android:padding="16dp">
 
-                        <!-- Rows with dividers -->
-                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Job Details"
+                                android:textColor="#1E293B"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="12dp" />
 
-                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="16dp">
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Service Type" android:textColor="#94A3B8" android:textSize="14sp" />
-                            <TextView android:id="@+id/tvDetailService" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Plumbing Repair" android:textColor="#004A99" android:textSize="15sp" android:textStyle="bold" android:gravity="end" />
+                            <!-- Rows with dividers -->
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+
+                            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="10dp">
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Service Type" android:textColor="#94A3B8" android:textSize="11sp" />
+                                <TextView android:id="@+id/tvDetailService" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Plumbing Repair" android:textColor="#004A99" android:textSize="12sp" android:textStyle="bold" android:gravity="end" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+
+                            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="10dp">
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Address" android:textColor="#94A3B8" android:textSize="11sp" />
+                                <TextView android:id="@+id/tvDetailAddress" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="123 Wazzup St. Quimpo Blvd" android:textColor="#004A99" android:textSize="12sp" android:textStyle="bold" android:gravity="end" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+
+                            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="10dp">
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Time" android:textColor="#94A3B8" android:textSize="11sp" />
+                                <TextView android:id="@+id/tvDetailTime" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="10:00 AM" android:textColor="#004A99" android:textSize="12sp" android:textStyle="bold" android:gravity="end" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+
+                            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="10dp">
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Scheduled Date" android:textColor="#94A3B8" android:textSize="11sp" />
+                                <TextView android:id="@+id/tvDetailDate" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="September 21, 2026" android:textColor="#004A99" android:textSize="12sp" android:textStyle="bold" android:gravity="end" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+
+                            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="10dp">
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Image" android:textColor="#94A3B8" android:textSize="11sp" />
+                                <TextView android:id="@+id/btnViewImages" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="View Image(s)" android:textColor="#004A99" android:textSize="12sp" android:textStyle="bold" android:gravity="end" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackground" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+
+                            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="10dp">
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Rate" android:textColor="#94A3B8" android:textSize="11sp" />
+                                <TextView android:id="@+id/tvDetailRate" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="P750/per day" android:textColor="#004A99" android:textSize="12sp" android:textStyle="bold" android:gravity="end" />
+                            </LinearLayout>
+                            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+
+                            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingVertical="10dp">
+                                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Description" android:textColor="#94A3B8" android:textSize="11sp" android:layout_marginBottom="6dp" />
+                                <TextView android:id="@+id/tvDetailDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Urgent pipe leak under kitchen sink, water pooling on floor" android:textColor="#004A99" android:textSize="12sp" android:textStyle="bold" android:gravity="end" />
+                            </LinearLayout>
+
                         </LinearLayout>
-                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
-
-                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="16dp">
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Address" android:textColor="#94A3B8" android:textSize="14sp" />
-                            <TextView android:id="@+id/tvDetailAddress" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="123 Wazzup St. Quimpo Blvd" android:textColor="#004A99" android:textSize="15sp" android:textStyle="bold" android:gravity="end" />
-                        </LinearLayout>
-                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
-
-                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="16dp">
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Time" android:textColor="#94A3B8" android:textSize="14sp" />
-                            <TextView android:id="@+id/tvDetailTime" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="10:00 AM" android:textColor="#004A99" android:textSize="15sp" android:textStyle="bold" android:gravity="end" />
-                        </LinearLayout>
-                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
-
-                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="16dp">
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Scheduled Date" android:textColor="#94A3B8" android:textSize="14sp" />
-                            <TextView android:id="@+id/tvDetailDate" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="September 21, 2026" android:textColor="#004A99" android:textSize="15sp" android:textStyle="bold" android:gravity="end" />
-                        </LinearLayout>
-                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
-
-                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="16dp">
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Image" android:textColor="#94A3B8" android:textSize="14sp" />
-                            <TextView android:id="@+id/btnViewImages" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="View Image(s)" android:textColor="#004A99" android:textSize="15sp" android:textStyle="bold" android:gravity="end" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackground" />
-                        </LinearLayout>
-                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
-
-                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:paddingVertical="16dp">
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Rate" android:textColor="#94A3B8" android:textSize="14sp" />
-                            <TextView android:id="@+id/tvDetailRate" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="P750/per day" android:textColor="#004A99" android:textSize="15sp" android:textStyle="bold" android:gravity="end" />
-                        </LinearLayout>
-                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
-
-                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingVertical="16dp">
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Description" android:textColor="#94A3B8" android:textSize="14sp" android:layout_marginBottom="8dp" />
-                            <TextView android:id="@+id/tvDetailDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Urgent pipe leak under kitchen sink, water pooling on floor" android:textColor="#004A99" android:textSize="15sp" android:textStyle="bold" android:gravity="end" />
-                        </LinearLayout>
-                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
-
-                    </LinearLayout>
-
-                    <!-- BUTTONS -->
-                    <LinearLayout
-                        android:id="@+id/layoutBottomButtons"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="32dp"
-                        android:visibility="gone">
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnReject"
-                            android:layout_width="0dp"
-                            android:layout_height="56dp"
-                            android:layout_weight="1"
-                            android:layout_marginEnd="8dp"
-                            android:text="Reject / Return"
-                            android:textColor="#DC2626"
-                            android:textAllCaps="false"
-                            android:textStyle="bold"
-                            app:backgroundTint="#FEE2E2"
-                            app:cornerRadius="14dp"
-                            app:strokeColor="#DC2626"
-                            app:strokeWidth="1dp" />
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnConfirm"
-                            android:layout_width="0dp"
-                            android:layout_height="56dp"
-                            android:layout_weight="1"
-                            android:text="Confirm Work"
-                            android:textAllCaps="false"
-                            android:textStyle="bold"
-                            app:backgroundTint="#16A34A"
-                            app:cornerRadius="14dp"/>
-                    </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
 
                 </LinearLayout>
 
+            </androidx.core.widget.NestedScrollView>
+
+            <!-- STICKY BOTTOM BUTTONS -->
+            <LinearLayout
+                android:id="@+id/layoutBottomButtons"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingHorizontal="24dp"
+                android:paddingBottom="24dp"
+                android:paddingTop="8dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnReject"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="Reject / Return"
+                    android:textColor="#DC2626"
+                    android:textAllCaps="false"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="#FEE2E2"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="#DC2626"
+                    app:strokeWidth="1dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnConfirm"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Confirm Work"
+                    android:textAllCaps="false"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="#16A34A"
+                    app:cornerRadius="12dp"/>
             </LinearLayout>
-        </androidx.core.widget.NestedScrollView>
+
+        </LinearLayout>
 
     </LinearLayout>
 
