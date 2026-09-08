@@ -46,6 +46,8 @@ class WorkerJobFragment : Fragment() {
     private lateinit var layoutArrivedButtons: LinearLayout
     private lateinit var layoutDoneButtons: LinearLayout
     private lateinit var layoutHeader: RelativeLayout
+    private lateinit var loadingOverlay: View
+    private lateinit var tvLoadingMessage: TextView
     private lateinit var cardJobDetails: View
     private lateinit var cardClientInfo: View
     private lateinit var tvClientDetailName: TextView
@@ -82,6 +84,9 @@ class WorkerJobFragment : Fragment() {
         layoutArrivedButtons = view.findViewById(R.id.layoutArrivedButtons)
         layoutDoneButtons    = view.findViewById(R.id.layoutDoneButtons)
         layoutHeader        = view.findViewById(R.id.layoutHeader) as RelativeLayout
+
+        loadingOverlay      = view.findViewById(R.id.loadingOverlay)
+        tvLoadingMessage    = view.findViewById(R.id.tvLoadingMessage)
 
         cardJobDetails      = view.findViewById(R.id.cardJobDetails)
         cardClientInfo      = view.findViewById(R.id.cardClientInfo)
@@ -324,9 +329,14 @@ class WorkerJobFragment : Fragment() {
 
     private fun updateJobStatus(newStatus: String) {
         val jobId = currentJobId ?: return
+        
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = "Updating status..."
+
         firestore.collection("jobs").document(jobId)
             .update("status", newStatus)
             .addOnSuccessListener {
+                loadingOverlay.visibility = View.GONE
                 val title = when (newStatus) {
                     "HEADING_TO_CLIENT" -> "Worker Heading to Location"
                     "ARRIVED" -> "Worker Has Arrived"
@@ -343,6 +353,10 @@ class WorkerJobFragment : Fragment() {
                 }
 
                 Toast.makeText(requireContext(), "Status updated: $newStatus", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(requireContext(), "Status update failed", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -378,6 +392,9 @@ class WorkerJobFragment : Fragment() {
     private fun cancelJobByWorker() {
         val jobId = currentJobId ?: return
         
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = "Cancelling job..."
+
         // Set back to AVAILABLE and clear worker info
         val update = mapOf(
             "status" to "AVAILABLE",
@@ -389,11 +406,13 @@ class WorkerJobFragment : Fragment() {
         firestore.collection("jobs").document(jobId)
             .update(update)
             .addOnSuccessListener {
+                loadingOverlay.visibility = View.GONE
                 com.example.newtacks.utils.ChatUtils.deleteChatHistory(jobId) // Maintain privacy & save space
                 Toast.makeText(requireContext(), "Job cancelled and returned to feed", Toast.LENGTH_SHORT).show()
                 showEmptyState()
             }
             .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
                 Toast.makeText(requireContext(), "Failed to cancel: ${it.message}", Toast.LENGTH_SHORT).show()
             }
     }
@@ -507,6 +526,10 @@ class WorkerJobFragment : Fragment() {
     // --------------------------------------------------
     private fun requestDone() {
         val jobId = currentJobId ?: return
+        
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = "Sending request to client..."
+
         firestore.collection("jobs")
             .document(jobId)
             .update(
@@ -516,6 +539,7 @@ class WorkerJobFragment : Fragment() {
                 )
             )
             .addOnSuccessListener {
+                loadingOverlay.visibility = View.GONE
                 currentJob?.let { job ->
                     com.example.newtacks.utils.NotificationHelper.sendNotification(
                         job.clientId,
@@ -529,6 +553,14 @@ class WorkerJobFragment : Fragment() {
                     "Marked as done. Waiting for client verification.",
                     Toast.LENGTH_SHORT
                 ).show()
+            }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(requireContext(), "Failed to update status", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(requireContext(), "Failed to mark as done", Toast.LENGTH_SHORT).show()
             }
     }
 

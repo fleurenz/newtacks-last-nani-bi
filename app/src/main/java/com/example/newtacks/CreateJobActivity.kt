@@ -51,6 +51,8 @@ class CreateJobActivity : AppCompatActivity() {
     private lateinit var etDescription: EditText
 
     private lateinit var createJobScrollView: ScrollView
+    private lateinit var loadingOverlay: View
+    private lateinit var tvLoadingMessage: TextView
 
     private lateinit var btnCancel: Button
     private lateinit var btnSubmit: Button
@@ -169,6 +171,8 @@ class CreateJobActivity : AppCompatActivity() {
     private fun initializeViews() {
 
         createJobScrollView = findViewById(R.id.createJobScrollView)
+        loadingOverlay = findViewById(R.id.loadingOverlay)
+        tvLoadingMessage = findViewById(R.id.tvLoadingMessage)
         etJobTitle = findViewById(R.id.etJobTitle)
         etClientName = findViewById(R.id.etClientName)
         etClientAddress = findViewById(R.id.etClientAddress)
@@ -471,8 +475,8 @@ class CreateJobActivity : AppCompatActivity() {
 
         // ---------------- UI LOCK ----------------
         isSubmitting = true
-        btnSubmit.isEnabled = false
-        btnSubmit.text = "Submitting..."
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = "Checking for active jobs..."
 
         // ---------------- CHECK ACTIVE JOB FIRST ----------------
 
@@ -495,19 +499,18 @@ class CreateJobActivity : AppCompatActivity() {
                         "You already have an active request",
                         Toast.LENGTH_LONG
                     ).show()
-                    btnSubmit.isEnabled = true
                     isSubmitting = false
-                    btnSubmit.text = "Submit Request"
+                    loadingOverlay.visibility = View.GONE
                     return@addOnSuccessListener
                 }
 
                 // ---------------- UPLOAD IMAGES THEN CREATE JOB ----------------
+                tvLoadingMessage.text = "Uploading images..."
                 uploadImagesAndCreateJob(currentUser.uid, clientName, clientAddress, jobTitle, serviceCategory, estimatedDuration, offeredAmount, description)
             }
             .addOnFailureListener {
                 isSubmitting = false
-                btnSubmit.isEnabled = true
-                btnSubmit.text = "Submit Request"
+                loadingOverlay.visibility = View.GONE
                 Toast.makeText(this, "Error checking active jobs", Toast.LENGTH_SHORT).show()
             }
     }
@@ -650,6 +653,7 @@ class CreateJobActivity : AppCompatActivity() {
         description: String,
         jobImages: List<String>
     ) {
+        tvLoadingMessage.text = "Finalizing request..."
         val jobsRef = firestore.collection("jobs")
         
         // Final sanity check before writing: re-verify no active job exists
@@ -660,8 +664,7 @@ class CreateJobActivity : AppCompatActivity() {
             if (hasActiveJob) {
                 Toast.makeText(this, "You already have an active request", Toast.LENGTH_LONG).show()
                 isSubmitting = false
-                btnSubmit.isEnabled = true
-                btnSubmit.text = "Submit Request"
+                loadingOverlay.visibility = View.GONE
                 return@addOnSuccessListener
             }
 
@@ -699,10 +702,13 @@ class CreateJobActivity : AppCompatActivity() {
                 }
                 .addOnFailureListener {
                     isSubmitting = false
-                    btnSubmit.isEnabled = true
-                    btnSubmit.text = "Submit Request"
+                    loadingOverlay.visibility = View.GONE
                     Toast.makeText(this, "Failed to submit job", Toast.LENGTH_SHORT).show()
                 }
+        }.addOnFailureListener {
+            isSubmitting = false
+            loadingOverlay.visibility = View.GONE
+            Toast.makeText(this, "Verification failed", Toast.LENGTH_SHORT).show()
         }
     }
 }

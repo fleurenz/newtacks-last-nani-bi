@@ -518,6 +518,7 @@ class WorkerFeedFragment : Fragment() {
         val tvNoImages = view.findViewById<TextView>(R.id.tvNoImages)
         val btnAccept = view.findViewById<Button>(R.id.btnAccept)
         val btnClose  = view.findViewById<Button>(R.id.btnClose)
+        val progressAccept = view.findViewById<ProgressBar>(R.id.progressAccept)
 
         tvTitle.text = job.jobTitle
         tvDetails.text = """
@@ -558,8 +559,21 @@ class WorkerFeedFragment : Fragment() {
 
         btnClose.setOnClickListener { dialog.dismiss() }
         btnAccept.setOnClickListener {
-            dialog.dismiss()
-            acceptJob(job)
+            btnAccept.text = ""
+            btnAccept.isEnabled = false
+            btnClose.isEnabled = false
+            progressAccept.visibility = View.VISIBLE
+            
+            acceptJob(job) { success ->
+                if (!success) {
+                    btnAccept.text = "Accept Job"
+                    btnAccept.isEnabled = true
+                    btnClose.isEnabled = true
+                    progressAccept.visibility = View.GONE
+                } else {
+                    dialog.dismiss()
+                }
+            }
         }
 
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
@@ -572,25 +586,27 @@ class WorkerFeedFragment : Fragment() {
         startActivity(intent)
     }
 
-    private fun acceptJob(job: Job) {
+    private fun acceptJob(job: Job, onResult: (Boolean) -> Unit = {}) {
         if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) 
             != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             @Suppress("DEPRECATION")
             requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1002)
+            onResult(false)
             return
         }
 
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             if (location == null) {
                 Toast.makeText(requireContext(), "Please turn on your GPS to accept jobs", Toast.LENGTH_LONG).show()
+                onResult(false)
                 return@addOnSuccessListener
             }
 
-            processJobAcceptance(job, location)
+            processJobAcceptance(job, location, onResult)
         }
     }
 
-    private fun processJobAcceptance(job: Job, location: android.location.Location) {
+    private fun processJobAcceptance(job: Job, location: android.location.Location, onResult: (Boolean) -> Unit) {
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
         val workerId = currentUser.uid
 
@@ -611,6 +627,7 @@ class WorkerFeedFragment : Fragment() {
                         "Finish your current job first",
                         android.widget.Toast.LENGTH_LONG
                     ).show()
+                    onResult(false)
                     return@addOnSuccessListener
                 }
 
@@ -653,9 +670,17 @@ class WorkerFeedFragment : Fragment() {
                                 "A worker has accepted your ${job.jobTitle} request.",
                                 "REQUESTS"
                             )
+                            onResult(true)
                             (activity as? com.example.newtacks.WorkerDashboardActivity)?.switchTab(R.id.nav_job)
+                        }.addOnFailureListener { e ->
+                            Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                            onResult(false)
                         }
+                    }.addOnFailureListener {
+                        onResult(false)
                     }
+            }.addOnFailureListener {
+                onResult(false)
             }
     }
 

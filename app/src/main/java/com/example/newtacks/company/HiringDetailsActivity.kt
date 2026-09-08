@@ -70,6 +70,8 @@ class HiringDetailsActivity : AppCompatActivity() {
     private val applicationMap = mutableMapOf<String, Application>()
     private lateinit var applicantAdapter: ApplicantAdapter
     
+    private lateinit var loadingOverlay: View
+    private lateinit var tvLoadingMessage: TextView
     private lateinit var btnApply: Button
 
     private var currentImageIndex = 0
@@ -137,6 +139,9 @@ class HiringDetailsActivity : AppCompatActivity() {
 
         tvApplicantStats = findViewById(R.id.tvApplicantStats)
         rvApplicants = findViewById(R.id.rvApplicants)
+        
+        loadingOverlay = findViewById(R.id.loadingOverlay)
+        tvLoadingMessage = findViewById(R.id.tvLoadingMessage)
         
         btnApply = findViewById(R.id.btnApply)
     }
@@ -391,6 +396,9 @@ class HiringDetailsActivity : AppCompatActivity() {
         val app = applicationMap[worker.uid] ?: return
         val post = hiringPost ?: return
         
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = "Scheduling interview..."
+
         db.collection("applications").document(app.applicationId)
             .update(mapOf(
                 "status" to "INTERVIEW_SCHEDULED",
@@ -399,6 +407,7 @@ class HiringDetailsActivity : AppCompatActivity() {
                 "workerResponse" to null // Reset response for new date
             ))
             .addOnSuccessListener {
+                loadingOverlay.visibility = View.GONE
                 com.example.newtacks.utils.NotificationHelper.sendNotification(
                     worker.uid,
                     "Interview Scheduled",
@@ -407,14 +416,27 @@ class HiringDetailsActivity : AppCompatActivity() {
                 )
                 Toast.makeText(this, "Interview scheduled", Toast.LENGTH_SHORT).show()
             }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(this, "Failed to schedule", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun rejectApplicant(worker: User) {
         val app = applicationMap[worker.uid] ?: return
+        
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = "Rejecting applicant..."
+
         db.collection("applications").document(app.applicationId)
             .update("status", "REJECTED")
             .addOnSuccessListener {
+                loadingOverlay.visibility = View.GONE
                 Toast.makeText(this, "Applicant rejected", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(this, "Action failed", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -426,6 +448,9 @@ class HiringDetailsActivity : AppCompatActivity() {
             Toast.makeText(this, "Threshold reached.", Toast.LENGTH_LONG).show()
             return
         }
+
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = "Hiring worker..."
 
         db.runTransaction { transaction ->
             val ref = db.collection("hiring").document(post.hiringId)
@@ -448,6 +473,7 @@ class HiringDetailsActivity : AppCompatActivity() {
             transaction.update(appRef, mapOf("status" to "HIRED"))
             
         }.addOnSuccessListener {
+            loadingOverlay.visibility = View.GONE
             Toast.makeText(this, "Worker hired successfully!", Toast.LENGTH_SHORT).show()
             com.example.newtacks.utils.NotificationHelper.sendNotification(
                 worker.uid,
@@ -455,6 +481,9 @@ class HiringDetailsActivity : AppCompatActivity() {
                 "Congratulations! You have been officially hired for ${post.jobTitle}.",
                 "HIRING"
             )
+        }.addOnFailureListener {
+            loadingOverlay.visibility = View.GONE
+            Toast.makeText(this, "Hiring failed: ${it.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -481,6 +510,9 @@ class HiringDetailsActivity : AppCompatActivity() {
         val uid = auth.currentUser?.uid ?: return
         btnApply.isEnabled = false
         
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = "Sending application..."
+
         val appId = db.collection("applications").document().id
         val app = Application(
             applicationId = appId,
@@ -493,6 +525,7 @@ class HiringDetailsActivity : AppCompatActivity() {
 
         db.collection("applications").document(appId).set(app)
             .addOnSuccessListener {
+                loadingOverlay.visibility = View.GONE
                 com.example.newtacks.utils.NotificationHelper.sendNotification(
                     post.companyId,
                     "New Job Applicant",
@@ -501,6 +534,11 @@ class HiringDetailsActivity : AppCompatActivity() {
                 )
                 Toast.makeText(this, "Application sent!", Toast.LENGTH_SHORT).show()
                 finish()
+            }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                btnApply.isEnabled = true
+                Toast.makeText(this, "Application failed", Toast.LENGTH_SHORT).show()
             }
     }
 }

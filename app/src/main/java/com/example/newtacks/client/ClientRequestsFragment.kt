@@ -43,6 +43,8 @@ class ClientRequestsFragment : Fragment() {
     private lateinit var layoutProgressLabels: LinearLayout
     private lateinit var layoutBottomButtons: LinearLayout
     private lateinit var layoutHeader: RelativeLayout
+    private lateinit var loadingOverlay: View
+    private lateinit var tvLoadingMessage: TextView
     private lateinit var cardJobDetails: View
     private lateinit var cardWorkerInfo: View
     private lateinit var tvWorkerDetailName: TextView
@@ -74,6 +76,9 @@ class ClientRequestsFragment : Fragment() {
         layoutProgressLabels = view.findViewById(R.id.layoutProgressLabels)
         layoutBottomButtons  = view.findViewById(R.id.layoutBottomButtons)
         layoutHeader         = view.findViewById(R.id.layoutHeader) as RelativeLayout
+
+        loadingOverlay       = view.findViewById(R.id.loadingOverlay)
+        tvLoadingMessage     = view.findViewById(R.id.tvLoadingMessage)
 
         cardJobDetails       = view.findViewById(R.id.cardJobDetails)
         cardWorkerInfo       = view.findViewById(R.id.cardWorkerInfo)
@@ -485,15 +490,21 @@ class ClientRequestsFragment : Fragment() {
 
     private fun cancelJob() {
         val jobId = currentJobId ?: return
+        
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = "Cancelling request..."
+
         firestore.collection("jobs")
             .document(jobId)
             .delete()
             .addOnSuccessListener {
+                loadingOverlay.visibility = View.GONE
                 com.example.newtacks.utils.ChatUtils.deleteChatHistory(jobId) // Clear storage
                 Toast.makeText(requireContext(), "Job request cancelled and deleted", Toast.LENGTH_SHORT).show()
                 showEmptyState()
             }
             .addOnFailureListener { e ->
+                loadingOverlay.visibility = View.GONE
                 Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
@@ -503,6 +514,10 @@ class ClientRequestsFragment : Fragment() {
     // --------------------------------------------------
     private fun confirmJob() {
         val jobId = currentJobId ?: return
+        
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = "Confirming job..."
+
         firestore.collection("jobs")
             .document(jobId)
             .update(
@@ -512,9 +527,14 @@ class ClientRequestsFragment : Fragment() {
                 )
             )
             .addOnSuccessListener {
+                loadingOverlay.visibility = View.GONE
                 com.example.newtacks.utils.ChatUtils.deleteChatHistory(jobId) // Clear storage
                 Toast.makeText(requireContext(), "Job Completed", Toast.LENGTH_SHORT).show()
                 fetchJobAndGenerateReceipt(jobId)
+            }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(requireContext(), "Confirmation failed", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -577,11 +597,20 @@ class ClientRequestsFragment : Fragment() {
         }
         lastCancelTime = now
         val jobId = currentJobId ?: return
+        
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = "Returning to worker..."
+
         firestore.collection("jobs")
             .document(jobId)
             .update("status", "ARRIVED")
             .addOnSuccessListener {
+                loadingOverlay.visibility = View.GONE
                 Toast.makeText(requireContext(), "Returned to worker", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(requireContext(), "Action failed", Toast.LENGTH_SHORT).show()
             }
     }
 

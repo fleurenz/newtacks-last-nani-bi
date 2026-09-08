@@ -136,17 +136,30 @@
             android:layout_marginBottom="20dp" />
 
         <!-- Accept button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnAccept"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:text="Accept Job"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="10dp"
-            app:backgroundTint="#004A99"
-            app:cornerRadius="12dp" />
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAccept"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="Accept Job"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:backgroundTint="#004A99"
+                app:cornerRadius="12dp" />
+
+            <ProgressBar
+                android:id="@+id/progressAccept"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:indeterminateTint="#FFFFFF"
+                android:visibility="gone" />
+        </FrameLayout>
 
         <!-- Close button -->
         <com.google.android.material.button.MaterialButton

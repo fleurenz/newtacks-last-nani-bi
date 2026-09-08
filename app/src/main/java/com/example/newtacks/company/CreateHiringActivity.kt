@@ -60,6 +60,8 @@ class CreateHiringActivity : AppCompatActivity() {
     private lateinit var etResponsibilities: EditText
     
     private lateinit var hiringScrollView: NestedScrollView
+    private lateinit var loadingOverlay: View
+    private lateinit var tvLoadingMessage: TextView
     private lateinit var btnSelectClosingDate: MaterialButton
     private lateinit var btnSubmit: Button
     private lateinit var btnDraft: Button
@@ -104,6 +106,8 @@ class CreateHiringActivity : AppCompatActivity() {
 
     private fun initializeViews() {
         hiringScrollView = findViewById(R.id.hiringScrollView)
+        loadingOverlay = findViewById(R.id.loadingOverlay)
+        tvLoadingMessage = findViewById(R.id.tvLoadingMessage)
         etCompanyAddress = findViewById(R.id.etCompanyAddress)
         etHiringTitle = findViewById(R.id.etHiringTitle)
         
@@ -228,9 +232,8 @@ class CreateHiringActivity : AppCompatActivity() {
         val responsibilities = etResponsibilities.text.toString().trim()
         val uid = auth.currentUser?.uid ?: return
         
-        btnSubmit.isEnabled = false
-        btnDraft.isEnabled = false
-        Toast.makeText(this, if (status == "OPEN") "Publishing..." else "Saving draft...", Toast.LENGTH_SHORT).show()
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = if (status == "OPEN") "Publishing..." else "Saving draft..."
 
         uploadImagesAndSubmit(selectedImageUris) { imageUrls ->
             val hiringId = db.collection("hiring").document().id
@@ -268,10 +271,12 @@ class CreateHiringActivity : AppCompatActivity() {
                         finish()
                     }
                     .addOnFailureListener {
-                        btnSubmit.isEnabled = true
-                        btnDraft.isEnabled = true
+                        loadingOverlay.visibility = View.GONE
                         Toast.makeText(this, "Failed to post", Toast.LENGTH_SHORT).show()
                     }
+            }.addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(this, "Failed to fetch company info", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -388,6 +393,8 @@ class CreateHiringActivity : AppCompatActivity() {
             onComplete(emptyList())
             return
         }
+        
+        tvLoadingMessage.text = "Uploading images..."
 
         val uploadedUrls = Collections.synchronizedList(mutableListOf<String>())
         var uploadCount = 0
