@@ -3,10 +3,10 @@
     android:id="@+id/tvDateHeader"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#F5F5F5"
     android:paddingHorizontal="16dp"
-    android:paddingVertical="8dp"
-    android:textColor="#757575"
-    android:textSize="14sp"
+    android:paddingTop="20dp"
+    android:paddingBottom="8dp"
+    android:textColor="#64748B"
+    android:textSize="13sp"
     android:textStyle="bold"
-    android:text="01/12/16" />
+    android:text="September 1, 2026" />
