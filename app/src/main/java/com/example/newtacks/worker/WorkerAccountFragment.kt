@@ -43,8 +43,6 @@ class WorkerAccountFragment : Fragment() {
     private lateinit var tvAcceptedJobs: TextView
     private lateinit var tvCompletedJobs: TextView
     private lateinit var ivWorkerProfile: ImageView
-    private lateinit var layoutHeader: LinearLayout
-    private lateinit var tvVerificationBadge: TextView
     private lateinit var tvVerificationLevel: TextView
     private lateinit var btnUploadNC1: Button
     private lateinit var btnUploadNC2: Button
@@ -52,12 +50,12 @@ class WorkerAccountFragment : Fragment() {
     private var isShowingAllReviews = false
     private var currentRatingFilter: Int? = null
     private var pendingNCLevel: Int = 0
-    private lateinit var menuLogout: LinearLayout
-    private lateinit var menuCertificates: LinearLayout
+    private lateinit var menuLogout: View
+    private lateinit var menuCertificates: View
     private lateinit var layoutNCButtons: LinearLayout
-    private lateinit var menuReviews: LinearLayout
+    private lateinit var menuReviews: View
     private lateinit var swipeRefresh: SwipeRefreshLayout
-    private lateinit var menuEditProfile: LinearLayout
+    private lateinit var menuEditProfile: View
 
     private val pickCertificate =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -80,16 +78,23 @@ class WorkerAccountFragment : Fragment() {
         menuCertificates = view.findViewById(R.id.menuCertificates)
         layoutNCButtons = view.findViewById(R.id.layoutNCButtons)
         menuReviews = view.findViewById(R.id.menuReviews)
-        layoutHeader = view.findViewById(R.id.layoutHeader)
         swipeRefresh = view.findViewById(R.id.swipeRefreshAccount)
         menuEditProfile = view.findViewById(R.id.menuEditProfile)
 
-        tvVerificationBadge = view.findViewById(R.id.tvVerificationBadge)
         tvVerificationLevel = view.findViewById(R.id.tvVerificationLevel)
         btnUploadNC1 = view.findViewById(R.id.btnUploadNC1)
         btnUploadNC2 = view.findViewById(R.id.btnUploadNC2)
         btnUploadNC3 = view.findViewById(R.id.btnUploadNC3)
-        val appBarLayout = view.findViewById<AppBarLayout>(R.id.appBarLayout)
+
+        // Robust Inset Handling: Use spacer for status bar
+        val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)
+        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val params = statusBarSpacer.layoutParams
+            params.height = systemBars.top
+            statusBarSpacer.layoutParams = params
+            insets
+        }
 
         btnUploadNC1.setOnClickListener {
             pendingNCLevel = 1
@@ -102,12 +107,6 @@ class WorkerAccountFragment : Fragment() {
         btnUploadNC3.setOnClickListener {
             pendingNCLevel = 3
             pickCertificate.launch("image/*")
-        }
-
-        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            appBarLayout.updatePadding(top = systemBars.top)
-            insets
         }
 
         // ✅ First load when fragment is created
@@ -170,14 +169,6 @@ class WorkerAccountFragment : Fragment() {
     }
 
     private fun updateVerificationUI(status: Int) {
-        tvVerificationBadge.visibility = if (status > 0) View.VISIBLE else View.GONE
-        tvVerificationBadge.text = when (status) {
-            1 -> "NC1"
-            2 -> "NC2"
-            3 -> "NC3"
-            else -> ""
-        }
-
         tvVerificationLevel.text = when (status) {
             1 -> "Status: NC1 Verified"
             2 -> "Status: NC2 Verified"
