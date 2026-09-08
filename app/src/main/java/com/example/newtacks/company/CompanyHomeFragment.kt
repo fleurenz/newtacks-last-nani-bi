@@ -74,6 +74,10 @@ class CompanyHomeFragment : Fragment() {
             (activity as? com.example.newtacks.CompanyDashboardActivity)?.switchToApplicants("INTERVIEW")
         }
 
+        view.findViewById<View>(R.id.btnSeeAllPosts).setOnClickListener {
+            (activity as? com.example.newtacks.CompanyDashboardActivity)?.switchToPosts()
+        }
+
         swipeRefresh.setOnRefreshListener {
             loadProfile()
             listenForActivePosts()
@@ -118,7 +122,7 @@ class CompanyHomeFragment : Fragment() {
         postsListener = db.collection("hiring")
             .whereEqualTo("companyId", uid)
             .whereEqualTo("status", "OPEN")
-            .limit(3) // Only show top 3 on home
+            .limit(2) // Only show top 2 on home
             .addSnapshotListener { snapshots, _ ->
                 swipeRefresh.isRefreshing = false
                 activePosts.clear()

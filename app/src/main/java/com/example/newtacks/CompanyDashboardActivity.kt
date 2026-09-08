@@ -141,6 +141,11 @@ class CompanyDashboardActivity : AppCompatActivity() {
         fragmentApplicants?.selectTab(tabName)
     }
 
+    fun switchToPosts() {
+        val bottomNav = findViewById<BottomNavigationView>(R.id.companyBottomNav)
+        bottomNav.selectedItemId = R.id.nav_company_hiring
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         unreadMessagesListener?.remove()
