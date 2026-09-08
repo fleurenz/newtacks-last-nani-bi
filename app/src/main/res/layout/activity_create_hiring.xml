@@ -11,6 +11,13 @@
         android:orientation="vertical"
         android:background="#004A99">
 
+        <!-- Status Bar Spacer -->
+        <View
+            android:id="@+id/statusBarSpacer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:background="#004A99" />
+
         <!-- TOOLBAR -->
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"

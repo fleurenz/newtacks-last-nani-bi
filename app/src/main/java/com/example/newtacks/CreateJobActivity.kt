@@ -97,6 +97,16 @@ class CreateJobActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
 
+        // Robust Inset Handling: Use spacer for status bar
+        val statusBarSpacer = findViewById<View>(R.id.statusBarSpacer)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val params = statusBarSpacer.layoutParams
+            params.height = systemBars.top
+            statusBarSpacer.layoutParams = params
+            insets
+        }
+
         // ===== TOOLBAR =====
         val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)

@@ -10,6 +10,8 @@ import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import android.text.Editable
 import android.text.TextWatcher
 import android.content.res.ColorStateList
@@ -92,6 +94,17 @@ class CreateHiringActivity : AppCompatActivity() {
 
         setupToolbar()
         initializeViews()
+
+        // Robust Inset Handling: Use spacer for status bar
+        val statusBarSpacer = findViewById<View>(R.id.statusBarSpacer)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val params = statusBarSpacer.layoutParams
+            params.height = systemBars.top
+            statusBarSpacer.layoutParams = params
+            insets
+        }
+
         loadCompanyInfo()
         setupListeners()
         setupValidationListeners()

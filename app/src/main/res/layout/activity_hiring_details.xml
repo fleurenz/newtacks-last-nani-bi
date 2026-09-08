@@ -7,11 +7,19 @@
     android:layout_height="match_parent"
     android:background="#FFFFFF">
 
+    <!-- Status Bar Spacer (Navy Blue) -->
+    <View
+        android:id="@+id/statusBarSpacer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="#002D5E" />
+
     <!-- TOOLBAR -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
+        android:layout_below="@id/statusBarSpacer"
         android:background="#002D5E"
         android:elevation="4dp"
         app:navigationIcon="@drawable/ic_back"
@@ -356,7 +364,7 @@
                         <ImageView
                             android:layout_width="18dp"
                             android:layout_height="18dp"
-                            android:src="@drawable/ic_tey"
+                            android:src="@drawable/ic_phone"
                             app:tint="#64748B"
                             android:layout_marginEnd="12dp" />
                         <TextView
