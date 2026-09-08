@@ -25,7 +25,7 @@ class WorkerHistoryFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ReceiptAdapter
     private lateinit var swipeRefresh: SwipeRefreshLayout
-    private lateinit var layoutHeader: LinearLayout
+    private lateinit var layoutHeader: View
     private lateinit var layoutEmptyState: LinearLayout
 
     override fun onCreateView(
@@ -46,17 +46,13 @@ class WorkerHistoryFragment : Fragment() {
         }
         recyclerView.adapter = adapter
 
-        // --------------------------------------------------
-        // ✅ WINDOW INSETS
-        // --------------------------------------------------
+        // Robust Inset Handling: Use spacer for status bar
+        val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            layoutHeader.setPadding(
-                layoutHeader.paddingLeft,
-                systemBars.top + resources.getDimensionPixelSize(R.dimen.header_padding_top),
-                layoutHeader.paddingRight,
-                layoutHeader.paddingBottom
-            )
+            val params = statusBarSpacer.layoutParams
+            params.height = systemBars.top
+            statusBarSpacer.layoutParams = params
             insets
         }
 
