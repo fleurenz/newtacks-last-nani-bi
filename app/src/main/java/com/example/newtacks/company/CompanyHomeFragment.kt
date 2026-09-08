@@ -34,7 +34,9 @@ class CompanyHomeFragment : Fragment() {
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var tvInterviewCount: TextView
     
+    private var profileListener: ListenerRegistration? = null
     private var postsListener: ListenerRegistration? = null
+    private var agendaListener: ListenerRegistration? = null
     private val activePosts = mutableListOf<HiringPost>()
     private lateinit var adapter: CompanyPostAdapter
 
@@ -62,9 +64,9 @@ class CompanyHomeFragment : Fragment() {
         }
 
         setupRecyclerView()
-        loadProfile()
+        listenForProfile()
         listenForActivePosts()
-        updateAgendaCount()
+        listenForAgenda()
 
         view.findViewById<View>(R.id.btnCreateHiringMain).setOnClickListener {
             startActivity(Intent(requireContext(), CreateHiringActivity::class.java))
@@ -79,12 +81,24 @@ class CompanyHomeFragment : Fragment() {
         }
 
         swipeRefresh.setOnRefreshListener {
-            loadProfile()
-            listenForActivePosts()
-            updateAgendaCount()
+            refreshData()
         }
 
         return view
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden) {
+            refreshData()
+        }
+    }
+
+    private fun refreshData() {
+        listenForProfile()
+        listenForActivePosts()
+        listenForAgenda()
+        swipeRefresh.isRefreshing = false
     }
 
     private fun setupRecyclerView() {
@@ -101,15 +115,23 @@ class CompanyHomeFragment : Fragment() {
         rvActivePosts.adapter = adapter
     }
 
-    private fun loadProfile() {
+    private fun listenForProfile() {
         val uid = auth.currentUser?.uid ?: return
-        db.collection("users").document(uid).get().addOnSuccessListener { doc ->
-            val user = doc.toObject(User::class.java) ?: return@addOnSuccessListener
+        
+        // Show placeholder immediately while loading
+        ivCompanyProfile.setImageResource(R.drawable.ic_person_placeholder)
+        
+        profileListener?.remove()
+        profileListener = db.collection("users").document(uid).addSnapshotListener { snapshot, _ ->
+            val user = snapshot?.toObject(User::class.java) ?: return@addSnapshotListener
+            
             tvCompanyName.text = user.companyName ?: user.name
+            
             if (user.profileImage.isNotEmpty()) {
                 ivCompanyProfile.load(user.profileImage) {
                     crossfade(true)
                     placeholder(R.drawable.ic_person_placeholder)
+                    error(R.drawable.ic_person_placeholder)
                     transformations(CircleCropTransformation())
                 }
             }
@@ -135,7 +157,7 @@ class CompanyHomeFragment : Fragment() {
             }
     }
 
-    private fun updateAgendaCount() {
+    private fun listenForAgenda() {
         val uid = auth.currentUser?.uid ?: return
         
         // Calculate the time range for "Today"
@@ -150,20 +172,22 @@ class CompanyHomeFragment : Fragment() {
         calendar.set(java.util.Calendar.SECOND, 59)
         val endTime = calendar.timeInMillis
 
-        db.collection("applications")
+        agendaListener?.remove()
+        agendaListener = db.collection("applications")
             .whereEqualTo("companyId", uid)
             .whereEqualTo("status", "INTERVIEW_SCHEDULED")
             .whereGreaterThanOrEqualTo("interviewDate", startTime)
             .whereLessThanOrEqualTo("interviewDate", endTime)
-            .get()
-            .addOnSuccessListener { snapshots ->
-                val count = snapshots.size()
+            .addSnapshotListener { snapshots, _ ->
+                val count = snapshots?.size() ?: 0
                 tvInterviewCount.text = "Interviews Today ($count)"
             }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        profileListener?.remove()
         postsListener?.remove()
+        agendaListener?.remove()
     }
 }
