@@ -16,7 +16,6 @@ import com.example.newtacks.authentication.OnboardingActivity
 import com.example.newtacks.chatbot.data.remote.RetrofitClient
 import com.example.newtacks.chatbot.data.repository.ChatRepository
 import com.example.newtacks.models.User
-import com.example.newtacks.worker.account.WorkerReviewsActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -26,14 +25,12 @@ class CompanyAccountFragment : Fragment() {
     private val auth = FirebaseAuth.getInstance()
     
     private lateinit var tvCompanyName: TextView
-    private lateinit var tvCompanyRating: TextView
-    private lateinit var tvAboutUs: TextView
     private lateinit var ivCompanyProfile: ImageView
-    private lateinit var layoutHeader: LinearLayout
-    private lateinit var menuLogout: LinearLayout
-    private lateinit var menuReviews: LinearLayout
-    private lateinit var btnEditAbout: ImageView
+    private lateinit var menuLogout: View
+    private lateinit var menuEditProfile: View
     private lateinit var swipeRefresh: SwipeRefreshLayout
+    
+    private var currentAboutUs: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -42,31 +39,25 @@ class CompanyAccountFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_company_account, container, false)
 
-        tvCompanyName = view.findViewById(R.id.tvCompanyName)
-        tvCompanyRating = view.findViewById(R.id.tvCompanyRating)
-        tvAboutUs = view.findViewById(R.id.tvAboutUs)
+        tvCompanyName    = view.findViewById(R.id.tvCompanyName)
         ivCompanyProfile = view.findViewById(R.id.ivCompanyProfile)
-        layoutHeader = view.findViewById(R.id.layoutHeader)
-        menuLogout = view.findViewById(R.id.menuLogout)
-        menuReviews = view.findViewById(R.id.menuReviews)
-        btnEditAbout = view.findViewById(R.id.btnEditAbout)
-        swipeRefresh = view.findViewById(R.id.swipeRefreshAccount)
+        menuLogout       = view.findViewById(R.id.menuLogout)
+        menuEditProfile  = view.findViewById(R.id.menuEditProfile)
+        swipeRefresh     = view.findViewById(R.id.swipeRefreshAccount)
 
+        // Robust Inset Handling: Use spacer for status bar
+        val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            layoutHeader.setPadding(
-                layoutHeader.paddingLeft,
-                systemBars.top + resources.getDimensionPixelSize(R.dimen.header_padding_top),
-                layoutHeader.paddingRight,
-                layoutHeader.paddingBottom
-            )
+            val params = statusBarSpacer.layoutParams
+            params.height = systemBars.top
+            statusBarSpacer.layoutParams = params
             insets
         }
 
         loadProfile()
         setupLogout()
-        setupReviewsMenu()
-        setupEditAbout()
+        setupEditProfileMenu()
 
         swipeRefresh.setOnRefreshListener {
             loadProfile()
@@ -87,11 +78,7 @@ class CompanyAccountFragment : Fragment() {
             
             tvCompanyName.text = user.companyName ?: user.name
             
-            val avg = doc.getDouble("ratingAverage") ?: user.rating
-            val count = doc.getLong("ratingCount") ?: user.totalRatings.toLong()
-            tvCompanyRating.text = "%.1f (%d reviews)".format(avg, count)
-
-            tvAboutUs.text = user.aboutUs ?: "No information provided."
+            currentAboutUs = user.aboutUs ?: ""
 
             if (user.profileImage.isNotEmpty()) {
                 ivCompanyProfile.load(user.profileImage) {
@@ -107,8 +94,8 @@ class CompanyAccountFragment : Fragment() {
         }
     }
 
-    private fun setupEditAbout() {
-        btnEditAbout.setOnClickListener {
+    private fun setupEditProfileMenu() {
+        menuEditProfile.setOnClickListener {
             showEditAboutDialog()
         }
     }
@@ -128,7 +115,7 @@ class CompanyAccountFragment : Fragment() {
         val btnCancel = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnNegative)
         val icon = dialog.findViewById<ImageView>(R.id.dialogIcon)
 
-        icon.setImageResource(R.drawable.ic_plus)
+        icon.setImageResource(R.drawable.ic_person)
         title.text = "Edit About Us"
         message.visibility = View.GONE
 
@@ -142,7 +129,7 @@ class CompanyAccountFragment : Fragment() {
                 setMargins(24, 0, 24, 24)
             }
             hint = "Tell us about your company..."
-            setText(if (tvAboutUs.text == "No information provided.") "" else tvAboutUs.text)
+            setText(currentAboutUs)
             minLines = 3
             gravity = Gravity.TOP
             setBackgroundResource(R.drawable.bg_message_input)
@@ -168,17 +155,9 @@ class CompanyAccountFragment : Fragment() {
         firestore.collection("users").document(uid)
             .update("aboutUs", if (text.isEmpty()) null else text)
             .addOnSuccessListener {
-                tvAboutUs.text = if (text.isEmpty()) "No information provided." else text
+                currentAboutUs = text
                 Toast.makeText(requireContext(), "Profile updated", Toast.LENGTH_SHORT).show()
             }
-    }
-
-    private fun setupReviewsMenu() {
-        menuReviews.setOnClickListener {
-            val intent = Intent(requireContext(), WorkerReviewsActivity::class.java)
-            intent.putExtra("TARGET_UID", auth.currentUser?.uid)
-            startActivity(intent)
-        }
     }
 
     private fun setupLogout() {
