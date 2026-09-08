@@ -122,6 +122,40 @@
 
         </LinearLayout>
 
+        <!-- ACTIVE FILTER INDICATOR -->
+        <LinearLayout
+            android:id="@+id/layoutActiveFilter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_tab_selected"
+            android:backgroundTint="#EBF2FF"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginBottom="12dp"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvActiveFilterName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Full-time Carpenter"
+                android:textColor="#1C6EC6"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/btnClearFilter"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_close"
+                app:tint="#1C6EC6"
+                android:background="?attr/selectableItemBackgroundBorderless" />
+        </LinearLayout>
+
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
             android:id="@+id/swipeRefreshApplicants"
             android:layout_width="match_parent"

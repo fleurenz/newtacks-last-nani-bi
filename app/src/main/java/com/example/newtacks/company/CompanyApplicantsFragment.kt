@@ -22,6 +22,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.gson.Gson
+import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class CompanyApplicantsFragment : Fragment() {
 
@@ -34,12 +35,18 @@ class CompanyApplicantsFragment : Fragment() {
     private lateinit var tabNew: TextView
     private lateinit var tabInterview: TextView
     private lateinit var tabHired: TextView
+    
+    private lateinit var layoutActiveFilter: View
+    private lateinit var tvActiveFilterName: TextView
+    private lateinit var btnClearFilter: View
 
     private var appsListener: ListenerRegistration? = null
     private val allData = mutableListOf<Pair<User, Application>>()
+    private val allHiringPosts = mutableListOf<HiringPost>()
     private lateinit var adapter: CompanyApplicantFullAdapter
     
     private var currentTab = "ALL"
+    private var selectedJobFilterId: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -54,6 +61,10 @@ class CompanyApplicantsFragment : Fragment() {
         tabNew = view.findViewById(R.id.tabNew)
         tabInterview = view.findViewById(R.id.tabInterview)
         tabHired = view.findViewById(R.id.tabHired)
+        
+        layoutActiveFilter = view.findViewById(R.id.layoutActiveFilter)
+        tvActiveFilterName = view.findViewById(R.id.tvActiveFilterName)
+        btnClearFilter     = view.findViewById(R.id.btnClearFilter)
 
         // Robust Inset Handling: Use spacer for status bar
         val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)
@@ -72,7 +83,16 @@ class CompanyApplicantsFragment : Fragment() {
         setupRecyclerView()
         setupTabs()
 
+        view.findViewById<View>(R.id.btnFilter).setOnClickListener {
+            showFilterDialog()
+        }
+
+        btnClearFilter.setOnClickListener {
+            clearJobFilter()
+        }
+
         listenForApplications()
+        fetchHiringPosts()
 
         swipeRefresh.setOnRefreshListener {
             listenForApplications()
@@ -194,13 +214,109 @@ class CompanyApplicantsFragment : Fragment() {
     }
 
     private fun filterAndDisplay() {
-        val filtered = when (currentTab) {
+        var filtered = when (currentTab) {
             "NEW"       -> allData.filter { it.second.status == "APPLIED" }
             "INTERVIEW" -> allData.filter { it.second.status == "INTERVIEW_SCHEDULED" }
             "HIRED"     -> allData.filter { it.second.status == "HIRED" }
             else        -> allData
         }
+        
+        // Apply Job Posting Filter
+        selectedJobFilterId?.let { jobId ->
+            filtered = filtered.filter { it.second.hiringId == jobId }
+        }
+
         adapter.updateData(filtered)
+    }
+
+    private fun fetchHiringPosts() {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("hiring")
+            .whereEqualTo("companyId", uid)
+            .get()
+            .addOnSuccessListener { snapshots ->
+                allHiringPosts.clear()
+                snapshots.documents.forEach { doc ->
+                    doc.toObject(HiringPost::class.java)?.let { post ->
+                        allHiringPosts.add(post.copy(hiringId = doc.id))
+                    }
+                }
+            }
+    }
+
+    private fun showFilterDialog() {
+        val dialog = BottomSheetDialog(requireContext(), R.style.BottomSheetDialogTheme)
+        val dialogView = layoutInflater.inflate(R.layout.dialog_filter_job_postings, null, false)
+        dialog.setContentView(dialogView)
+
+        val rvFilter = dialogView.findViewById<RecyclerView>(R.id.rvFilterJobs)
+        val btnApply = dialogView.findViewById<View>(R.id.btnApplyFilter)
+
+        // Add "All posts" option
+        val options = mutableListOf<HiringPost?>()
+        options.add(null) // Represents "All posts"
+        options.addAll(allHiringPosts)
+
+        var tempSelectedId = selectedJobFilterId
+
+        rvFilter.layoutManager = LinearLayoutManager(requireContext())
+        rvFilter.adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+                val v = layoutInflater.inflate(R.layout.item_filter_job, parent, false)
+                return object : RecyclerView.ViewHolder(v) {}
+            }
+
+            override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+                val post = options[position]
+                val tv = holder.itemView.findViewById<TextView>(R.id.tvJobTitle)
+                
+                tv.text = post?.jobTitle ?: "All posts"
+                
+                // Highlight selection
+                val isSelected = if (post == null) tempSelectedId == null else post.hiringId == tempSelectedId
+                if (isSelected) {
+                    tv.setBackgroundResource(R.drawable.bg_tab_selected)
+                    tv.setTextColor(Color.parseColor("#1C6EC6"))
+                    tv.paint.isFakeBoldText = true
+                } else {
+                    tv.background = null
+                    tv.setTextColor(Color.parseColor("#1E293B"))
+                    tv.paint.isFakeBoldText = false
+                }
+
+                tv.setOnClickListener {
+                    tempSelectedId = post?.hiringId
+                    notifyDataSetChanged()
+                }
+            }
+
+            override fun getItemCount() = options.size
+        }
+
+        btnApply.setOnClickListener {
+            selectedJobFilterId = tempSelectedId
+            updateFilterUI()
+            filterAndDisplay()
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    private fun updateFilterUI() {
+        if (selectedJobFilterId == null) {
+            layoutActiveFilter.visibility = View.GONE
+        } else {
+            layoutActiveFilter.visibility = View.VISIBLE
+            val job = allHiringPosts.find { it.hiringId == selectedJobFilterId }
+            tvActiveFilterName.text = job?.jobTitle ?: "Filtered Post"
+        }
+    }
+
+    private fun clearJobFilter() {
+        selectedJobFilterId = null
+        updateFilterUI()
+        filterAndDisplay()
     }
 
     override fun onDestroyView() {
