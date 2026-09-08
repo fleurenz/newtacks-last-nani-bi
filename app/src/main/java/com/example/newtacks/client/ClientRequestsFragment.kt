@@ -262,6 +262,7 @@ class ClientRequestsFragment : Fragment() {
         }
 
         view?.post {
+            if (!isAdded) return@post
             val totalWidth = step5.left - step1.left
             val progressWidth = if (activeStepsCount > 1) {
                 (totalWidth / (steps.size - 1)) * (activeStepsCount - 1)
@@ -271,8 +272,17 @@ class ClientRequestsFragment : Fragment() {
             params.width = progressWidth
             progressTrackActive.layoutParams = params
             
+            // Calculate absolute center of the icon's container (the FrameLayout)
             val latestStep = steps[activeStepsCount - 1]
-            tvProgressStatus.translationX = latestStep.x + (latestStep.width / 2) - (tvProgressStatus.width / 2)
+            val container = latestStep.parent as View
+            val centerX = container.x + (container.width / 2)
+            
+            // Translate the status text to be centered under this centerX, 
+            // but clamped within the parent's width to avoid clipping at edges
+            val parent = tvProgressStatus.parent as View
+            val maxTranslation = parent.width - tvProgressStatus.width
+            val targetX = centerX - (tvProgressStatus.width / 2)
+            tvProgressStatus.translationX = targetX.coerceIn(0f, maxTranslation.toFloat())
         }
     }
 

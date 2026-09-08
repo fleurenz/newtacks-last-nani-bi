@@ -190,7 +190,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginBottom="32dp">
+                        android:layout_marginBottom="32dp"
+                        android:paddingHorizontal="20dp">
 
                         <RelativeLayout
                             android:layout_width="match_parent"
@@ -198,18 +199,18 @@
                             <!-- Track Background -->
                             <View
                                 android:layout_width="match_parent"
-                                android:layout_height="3dp"
+                                android:layout_height="4dp"
                                 android:layout_centerVertical="true"
-                                android:background="#F1F5F9"
-                                android:layout_marginHorizontal="18dp" />
+                                android:background="#E2E8F0"
+                                android:layout_marginHorizontal="16dp" />
                             <!-- Active Track -->
                             <View
                                 android:id="@+id/progressTrackActive"
                                 android:layout_width="0dp"
-                                android:layout_height="3dp"
+                                android:layout_height="4dp"
                                 android:layout_centerVertical="true"
                                 android:background="#004A99"
-                                android:layout_marginStart="18dp" />
+                                android:layout_marginStart="16dp" />
 
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -239,10 +240,13 @@
                             android:layout_height="wrap_content"
                             android:text="Searching..."
                             android:textColor="#004A99"
-                            android:textSize="12sp"
+                            android:textSize="11sp"
                             android:textStyle="bold"
                             android:layout_marginTop="8dp"
-                            android:layout_gravity="start" />
+                            android:gravity="center"
+                            android:textAlignment="center"
+                            android:maxWidth="80dp"
+                            android:lineSpacingExtra="1dp" />
                     </LinearLayout>
 
 
