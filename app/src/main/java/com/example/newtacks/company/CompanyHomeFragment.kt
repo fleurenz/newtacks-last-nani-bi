@@ -71,7 +71,7 @@ class CompanyHomeFragment : Fragment() {
         }
 
         view.findViewById<View>(R.id.btnViewInterviews).setOnClickListener {
-            // Placeholder for viewing interviews
+            (activity as? com.example.newtacks.CompanyDashboardActivity)?.switchToApplicants("INTERVIEW")
         }
 
         swipeRefresh.setOnRefreshListener {
@@ -133,9 +133,24 @@ class CompanyHomeFragment : Fragment() {
 
     private fun updateAgendaCount() {
         val uid = auth.currentUser?.uid ?: return
+        
+        // Calculate the time range for "Today"
+        val calendar = java.util.Calendar.getInstance()
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        calendar.set(java.util.Calendar.MINUTE, 0)
+        calendar.set(java.util.Calendar.SECOND, 0)
+        val startTime = calendar.timeInMillis
+        
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 23)
+        calendar.set(java.util.Calendar.MINUTE, 59)
+        calendar.set(java.util.Calendar.SECOND, 59)
+        val endTime = calendar.timeInMillis
+
         db.collection("applications")
             .whereEqualTo("companyId", uid)
             .whereEqualTo("status", "INTERVIEW_SCHEDULED")
+            .whereGreaterThanOrEqualTo("interviewDate", startTime)
+            .whereLessThanOrEqualTo("interviewDate", endTime)
             .get()
             .addOnSuccessListener { snapshots ->
                 val count = snapshots.size()

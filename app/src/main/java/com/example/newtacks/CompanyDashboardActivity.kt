@@ -135,6 +135,12 @@ class CompanyDashboardActivity : AppCompatActivity() {
             }
     }
 
+    fun switchToApplicants(tabName: String = "ALL") {
+        val bottomNav = findViewById<BottomNavigationView>(R.id.companyBottomNav)
+        bottomNav.selectedItemId = R.id.nav_company_history // This is the ID for applicants
+        fragmentApplicants?.selectTab(tabName)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         unreadMessagesListener?.remove()

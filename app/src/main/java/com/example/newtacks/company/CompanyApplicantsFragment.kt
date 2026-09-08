@@ -111,6 +111,10 @@ class CompanyApplicantsFragment : Fragment() {
         tabHired.setOnClickListener { switchTab("HIRED") }
     }
 
+    fun selectTab(tab: String) {
+        switchTab(tab)
+    }
+
     private fun switchTab(tab: String) {
         currentTab = tab
         
