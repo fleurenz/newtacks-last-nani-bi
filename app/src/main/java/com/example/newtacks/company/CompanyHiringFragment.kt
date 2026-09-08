@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.view.ViewCompat
@@ -31,6 +32,7 @@ class CompanyHiringFragment : Fragment() {
     private lateinit var tabActive: TextView
     private lateinit var tabDraft: TextView
     private lateinit var tabClosed: TextView
+    private lateinit var btnFilter: ImageView
     
     private var postsListener: ListenerRegistration? = null
     private val allPosts = mutableListOf<HiringPost>()
@@ -51,6 +53,7 @@ class CompanyHiringFragment : Fragment() {
         tabActive    = view.findViewById(R.id.tabActive)
         tabDraft     = view.findViewById(R.id.tabDraft)
         tabClosed    = view.findViewById(R.id.tabClosed)
+        btnFilter    = view.findViewById(R.id.btnFilter)
         
         // Robust Inset Handling: Use spacer for status bar
         val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)
@@ -65,7 +68,7 @@ class CompanyHiringFragment : Fragment() {
         setupRecyclerView()
         setupTabs()
         
-        view.findViewById<View>(R.id.btnFilter).setOnClickListener {
+        btnFilter.setOnClickListener {
             toggleSorting()
         }
         
@@ -158,6 +161,14 @@ class CompanyHiringFragment : Fragment() {
 
     private fun toggleSorting() {
         isNewestFirst = !isNewestFirst
+        
+        // Update Icon
+        if (isNewestFirst) {
+            btnFilter.setImageResource(R.drawable.ic_sort_latest)
+        } else {
+            btnFilter.setImageResource(R.drawable.ic_sort_oldest)
+        }
+
         val message = if (isNewestFirst) "Sorting: Latest First" else "Sorting: Oldest First"
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
         filterAndDisplayPosts()
