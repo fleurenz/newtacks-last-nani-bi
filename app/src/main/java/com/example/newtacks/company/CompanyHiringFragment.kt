@@ -37,6 +37,7 @@ class CompanyHiringFragment : Fragment() {
     private lateinit var adapter: CompanyPostAdapter
     
     private var currentTab = "ACTIVE"
+    private var isNewestFirst = true
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -63,6 +64,10 @@ class CompanyHiringFragment : Fragment() {
         
         setupRecyclerView()
         setupTabs()
+        
+        view.findViewById<View>(R.id.btnFilter).setOnClickListener {
+            toggleSorting()
+        }
         
         view.findViewById<View>(R.id.btnCreateJobPosting).setOnClickListener {
             startActivity(Intent(requireContext(), CreateHiringActivity::class.java))
@@ -151,13 +156,28 @@ class CompanyHiringFragment : Fragment() {
             }
     }
 
+    private fun toggleSorting() {
+        isNewestFirst = !isNewestFirst
+        val message = if (isNewestFirst) "Sorting: Latest First" else "Sorting: Oldest First"
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+        filterAndDisplayPosts()
+    }
+
     private fun filterAndDisplayPosts() {
-        val filtered = when (currentTab) {
+        var filtered = when (currentTab) {
             "ACTIVE" -> allPosts.filter { it.status == "OPEN" }
             "DRAFT"  -> allPosts.filter { it.status == "DRAFT" }
             "CLOSED" -> allPosts.filter { it.status == "CLOSED" || it.status == "EXPIRED" }
             else     -> allPosts
         }
+
+        // Apply Sorting
+        filtered = if (isNewestFirst) {
+            filtered.sortedByDescending { it.createdAt }
+        } else {
+            filtered.sortedBy { it.createdAt }
+        }
+
         adapter.updateData(filtered)
     }
 
