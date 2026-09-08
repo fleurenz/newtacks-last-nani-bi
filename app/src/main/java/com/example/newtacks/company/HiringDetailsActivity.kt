@@ -111,11 +111,12 @@ class HiringDetailsActivity : AppCompatActivity() {
         displayDetails()
         loadCompanyExtraInfo()
         
+        listenForPostUpdates() // Listen for post changes for everyone (vacancies, applicants, etc.)
+        
         if (auth.currentUser?.uid == hiringPost?.companyId) {
             setupApplicantsList()
             listenForApplications()
-            listenForPostUpdates()
-
+            
             // Handle automatic tab focus if requested
             val focusTab = intent.getIntExtra("FOCUS_TAB", -1)
             if (focusTab != -1) {
@@ -379,6 +380,7 @@ class HiringDetailsActivity : AppCompatActivity() {
             if (updatedPost != null) {
                 hiringPost = updatedPost
                 tvApplicantStats.text = "${updatedPost.acceptedWorkers.size} of ${updatedPost.vacancies} positions filled"
+                setupApplyButton(updatedPost)
             }
         }
     }
@@ -537,12 +539,15 @@ class HiringDetailsActivity : AppCompatActivity() {
             return
         }
 
-        val hasApplied = uid != null && applicationMap.containsKey(uid)
+        val hasApplied = uid != null && post.applicants.contains(uid)
         if (hasApplied) {
-            btnApply.text = "Already Applied"
+            btnApply.text = "Applied"
             btnApply.isEnabled = false
             btnApply.alpha = 0.6f
         } else {
+            btnApply.text = "Apply Now"
+            btnApply.isEnabled = true
+            btnApply.alpha = 1.0f
             btnApply.setOnClickListener { applyForHiring(post) }
         }
     }
@@ -566,6 +571,10 @@ class HiringDetailsActivity : AppCompatActivity() {
 
         db.collection("applications").document(appId).set(app)
             .addOnSuccessListener {
+                // Update the hiring post's applicants list in Firestore
+                db.collection("hiring").document(post.hiringId)
+                    .update("applicants", FieldValue.arrayUnion(uid))
+
                 loadingOverlay.visibility = View.GONE
                 com.example.newtacks.utils.NotificationHelper.sendNotification(
                     post.companyId,
