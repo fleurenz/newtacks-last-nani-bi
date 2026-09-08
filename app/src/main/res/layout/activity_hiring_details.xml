@@ -7,12 +7,12 @@
     android:layout_height="match_parent"
     android:background="#FFFFFF">
 
-    <!-- Status Bar Spacer (Navy Blue) -->
+    <!-- Status Bar Spacer (Dynamic Color) -->
     <View
         android:id="@+id/statusBarSpacer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="#002D5E" />
+        android:background="#0F325E" />
 
     <!-- TOOLBAR -->
     <androidx.appcompat.widget.Toolbar
@@ -20,7 +20,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:layout_below="@id/statusBarSpacer"
-        android:background="#002D5E"
+        android:background="#0F325E"
         android:elevation="4dp"
         app:navigationIcon="@drawable/ic_back"
         app:titleTextColor="#FFFFFF">
@@ -133,7 +133,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="center"
+                    android:gravity="center_vertical"
                     android:layout_marginTop="4dp">
                     <ImageView
                         android:layout_width="14dp"
@@ -164,7 +164,7 @@
                     android:layout_width="120dp"
                     android:layout_height="wrap_content"
                     android:background="@drawable/bg_badge_blue"
-                    android:backgroundTint="#002D5E"
+                    android:backgroundTint="#0F325E"
                     android:gravity="center"
                     android:paddingVertical="8dp"
                     android:text="Full-time"
@@ -178,7 +178,7 @@
                     android:layout_width="120dp"
                     android:layout_height="wrap_content"
                     android:background="@drawable/bg_badge_blue"
-                    android:backgroundTint="#002D5E"
+                    android:backgroundTint="#0F325E"
                     android:gravity="center"
                     android:paddingVertical="8dp"
                     android:text="₱000/day"
@@ -192,7 +192,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:layout_marginHorizontal="24dp"
-                android:background="@drawable/bg_tab_container"
                 android:orientation="horizontal">
 
                 <TextView
@@ -200,7 +199,7 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:background="@drawable/bg_tab_left_selected"
+                    android:background="@drawable/bg_tab_selected"
                     android:gravity="center"
                     android:text="Job Details"
                     android:textColor="#1E293B"
@@ -458,7 +457,7 @@
             android:textSize="16sp"
             android:textStyle="bold"
             app:cornerRadius="12dp"
-            app:backgroundTint="#002D5E" />
+            app:backgroundTint="#0F325E" />
     </LinearLayout>
 
     <!-- Loading Overlay -->

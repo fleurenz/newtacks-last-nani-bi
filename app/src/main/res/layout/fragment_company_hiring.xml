@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#1C6EC6">
+    android:background="#1C6EC6"
+    android:orientation="vertical">
 
     <!-- Status Bar Spacer -->
     <View
@@ -21,7 +20,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="24dp"
-        android:paddingTop="12dp"
+        android:paddingTop="20dp"
         android:paddingBottom="20dp">
 
         <TextView
@@ -29,11 +28,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
+            android:letterSpacing="0.05"
             android:text="Job Postings"
             android:textColor="#FFFFFF"
             android:textSize="18sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.05" />
+            android:textStyle="bold" />
 
         <ImageView
             android:id="@+id/btnNotifications"
@@ -41,26 +40,25 @@
             android:layout_height="28dp"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:src="@drawable/ic_notifications"
-            app:tint="#FBBF24" />
+            android:src="@drawable/ic_notifications" />
     </RelativeLayout>
 
     <!-- CONTENT CONTAINER -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:background="@drawable/rounded_top_white">
+        android:background="@drawable/rounded_top_white"
+        android:orientation="vertical">
 
         <!-- TAB SWITCHER & FILTER -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingHorizontal="20dp"
-            android:paddingTop="20dp"
-            android:layout_marginBottom="16dp">
+            android:paddingTop="20dp">
 
             <HorizontalScrollView
                 android:layout_width="0dp"
@@ -125,9 +123,9 @@
                 android:id="@+id/rvJobPosts"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:paddingTop="8dp"
-                android:paddingHorizontal="8dp"
                 android:clipToPadding="false"
+                android:paddingHorizontal="8dp"
+                android:paddingTop="8dp"
                 tools:listitem="@layout/item_company_post" />
 
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

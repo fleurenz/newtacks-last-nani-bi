@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.toColorInt
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.graphics.ColorUtils
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
@@ -75,6 +76,8 @@ class HiringDetailsActivity : AppCompatActivity() {
     private lateinit var loadingOverlay: View
     private lateinit var tvLoadingMessage: TextView
     private lateinit var btnApply: Button
+    
+    private var themeColor: Int = "#0F325E".toColorInt() // Default to Worker
 
     private var currentImageIndex = 0
 
@@ -91,6 +94,7 @@ class HiringDetailsActivity : AppCompatActivity() {
         }
 
         initializeViews()
+        determineThemeColor()
 
         // Robust Inset Handling: Use spacer for status bar
         val statusBarSpacer = findViewById<View>(R.id.statusBarSpacer)
@@ -118,6 +122,27 @@ class HiringDetailsActivity : AppCompatActivity() {
                 selectTab(focusTab)
             }
         }
+    }
+
+    private fun determineThemeColor() {
+        val uid = auth.currentUser?.uid ?: return
+        if (uid == hiringPost?.companyId) {
+            themeColor = "#1C6EC6".toColorInt() // Company Blue
+        } else {
+            themeColor = "#0F325E".toColorInt() // Worker Navy Blue
+        }
+        applyTheme()
+    }
+
+    private fun applyTheme() {
+        findViewById<View>(R.id.statusBarSpacer)?.setBackgroundColor(themeColor)
+        findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)?.setBackgroundColor(themeColor)
+        btnApply.backgroundTintList = ColorStateList.valueOf(themeColor)
+        tvBadgeType.backgroundTintList = ColorStateList.valueOf(themeColor)
+        tvBadgeRate.backgroundTintList = ColorStateList.valueOf(themeColor)
+        
+        // Initial tab state
+        selectTab(0)
     }
 
     private fun initializeViews() {
@@ -195,23 +220,26 @@ class HiringDetailsActivity : AppCompatActivity() {
         when (index) {
             0 -> {
                 tvToolbarTitle.text = getString(R.string.job_description_label)
-                tabJobDetails.setBackgroundResource(R.drawable.bg_tab_left_selected)
-                tabJobDetails.setTextColor("#1E293B".toColorInt())
+                tabJobDetails.setBackgroundResource(R.drawable.bg_tab_selected)
+                tabJobDetails.backgroundTintList = ColorStateList.valueOf(themeColor.withAlpha(40))
+                tabJobDetails.setTextColor(themeColor)
                 layoutJobDetailsContent.visibility = View.VISIBLE
                 ivMainJobImage.visibility = View.VISIBLE
                 layoutCarouselControls.visibility = if ((hiringPost?.images?.size ?: 0) > 1) View.VISIBLE else View.GONE
             }
             1 -> {
                 tvToolbarTitle.text = getString(R.string.about_label)
-                tabAboutCompany.setBackgroundColor("#D1E2FF".toColorInt())
-                tabAboutCompany.setTextColor("#1E293B".toColorInt())
+                tabAboutCompany.setBackgroundResource(R.drawable.bg_tab_selected)
+                tabAboutCompany.backgroundTintList = ColorStateList.valueOf(themeColor.withAlpha(40))
+                tabAboutCompany.setTextColor(themeColor)
                 layoutAboutCompanyContent.visibility = View.VISIBLE
                 ivCompanyProfileCircle.visibility = View.VISIBLE
             }
             2 -> {
                 tvToolbarTitle.text = "Applicants"
-                tabApplicants.setBackgroundResource(R.drawable.bg_tab_right_selected)
-                tabApplicants.setTextColor("#1E293B".toColorInt())
+                tabApplicants.setBackgroundResource(R.drawable.bg_tab_selected)
+                tabApplicants.backgroundTintList = ColorStateList.valueOf(themeColor.withAlpha(40))
+                tabApplicants.setTextColor(themeColor)
                 layoutApplicantsContent.visibility = View.VISIBLE
                 ivCompanyProfileCircle.visibility = View.VISIBLE
             }
@@ -553,5 +581,9 @@ class HiringDetailsActivity : AppCompatActivity() {
                 btnApply.isEnabled = true
                 Toast.makeText(this, "Application failed", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    private fun Int.withAlpha(alpha: Int): Int {
+        return ColorUtils.setAlphaComponent(this, alpha)
     }
 }

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -30,26 +29,27 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <ImageView
                     android:id="@+id/btnHelp"
                     android:layout_width="28dp"
                     android:layout_height="28dp"
-                    android:src="@drawable/ic_help_outline"
                     android:layout_marginEnd="16dp"
+                    android:src="@drawable/ic_help_outline"
                     app:tint="#FFFFFF" />
 
                 <FrameLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content">
+
                     <ImageView
                         android:id="@+id/btnNotifications"
                         android:layout_width="28dp"
                         android:layout_height="28dp"
-                        android:src="@drawable/ic_notifications"
-                        app:tint="#FFFFFF" />
+                        android:src="@drawable/ic_notifications" />
+
                     <View
                         android:layout_width="8dp"
                         android:layout_height="8dp"
@@ -64,11 +64,11 @@
             android:id="@+id/tvUserName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:text="User!"
             android:textColor="#FFFFFF"
             android:textSize="32sp"
-            android:textStyle="bold"
-            android:layout_marginTop="4dp" />
+            android:textStyle="bold" />
 
     </LinearLayout>
 
@@ -77,33 +77,33 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@id/layoutHeader"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layoutHeader">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:background="@drawable/rounded_top_white"
+            android:orientation="vertical"
             android:padding="24dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
                 android:text="What do you need help with?"
                 android:textColor="#64748B"
                 android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="16dp" />
+                android:textStyle="bold" />
 
             <!-- Service Grid -->
             <GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:columnCount="4"
+                android:layout_marginBottom="24dp"
                 android:alignmentMode="alignMargins"
-                android:columnOrderPreserved="false"
-                android:layout_marginBottom="24dp">
+                android:columnCount="4"
+                android:columnOrderPreserved="false">
 
                 <!-- Plumbing -->
                 <LinearLayout
@@ -111,26 +111,28 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_columnWeight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="8dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground">
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
                     <ImageView
                         android:layout_width="60dp"
                         android:layout_height="60dp"
-                        android:padding="16dp"
                         android:background="@drawable/bg_service_item"
+                        android:padding="16dp"
                         android:src="@drawable/ic_plumbing" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
                         android:text="Plumbing"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
                         android:textColor="#1E293B"
-                        android:layout_marginTop="8dp" />
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <!-- Carpentry -->
@@ -139,26 +141,28 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_columnWeight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="8dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground">
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
                     <ImageView
                         android:layout_width="60dp"
                         android:layout_height="60dp"
-                        android:padding="16dp"
                         android:background="@drawable/bg_service_item"
+                        android:padding="16dp"
                         android:src="@drawable/ic_carpentry" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
                         android:text="Carpentry"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
                         android:textColor="#1E293B"
-                        android:layout_marginTop="8dp" />
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <!-- Electrical -->
@@ -167,26 +171,28 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_columnWeight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="8dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground">
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
                     <ImageView
                         android:layout_width="60dp"
                         android:layout_height="60dp"
-                        android:padding="16dp"
                         android:background="@drawable/bg_service_item"
+                        android:padding="16dp"
                         android:src="@drawable/ic_electrical" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
                         android:text="Electrical"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
                         android:textColor="#1E293B"
-                        android:layout_marginTop="8dp" />
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <!-- Masonry -->
@@ -195,26 +201,28 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_columnWeight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="8dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground">
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
                     <ImageView
                         android:layout_width="60dp"
                         android:layout_height="60dp"
-                        android:padding="16dp"
                         android:background="@drawable/bg_service_item"
+                        android:padding="16dp"
                         android:src="@drawable/ic_masonry" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
                         android:text="Masonry"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
                         android:textColor="#1E293B"
-                        android:layout_marginTop="8dp" />
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <!-- Welding -->
@@ -223,26 +231,28 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_columnWeight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="8dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground">
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
                     <ImageView
                         android:layout_width="60dp"
                         android:layout_height="60dp"
-                        android:padding="16dp"
                         android:background="@drawable/bg_service_item"
+                        android:padding="16dp"
                         android:src="@drawable/ic_welding" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
                         android:text="Welding"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
                         android:textColor="#1E293B"
-                        android:layout_marginTop="8dp" />
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <!-- Painting -->
@@ -251,26 +261,28 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_columnWeight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="8dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground">
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
                     <ImageView
                         android:layout_width="60dp"
                         android:layout_height="60dp"
-                        android:padding="16dp"
                         android:background="@drawable/bg_service_item"
+                        android:padding="16dp"
                         android:src="@drawable/ic_painting" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
                         android:text="Painting"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
                         android:textColor="#1E293B"
-                        android:layout_marginTop="8dp" />
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <!-- Landscaping -->
@@ -279,26 +291,28 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_columnWeight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="8dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground">
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
                     <ImageView
                         android:layout_width="60dp"
                         android:layout_height="60dp"
-                        android:padding="16dp"
                         android:background="@drawable/bg_service_item"
+                        android:padding="16dp"
                         android:src="@drawable/ic_landscaping" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
                         android:text="Landscaping"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
                         android:textColor="#1E293B"
-                        android:layout_marginTop="8dp" />
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <!-- Others -->
@@ -307,26 +321,28 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_columnWeight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="8dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground">
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
                     <ImageView
                         android:layout_width="60dp"
                         android:layout_height="60dp"
-                        android:padding="16dp"
                         android:background="@drawable/bg_service_item"
+                        android:padding="16dp"
                         android:src="@drawable/ic_others" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
                         android:text="Others"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
                         android:textColor="#1E293B"
-                        android:layout_marginTop="8dp" />
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
             </GridLayout>
@@ -335,22 +351,22 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
                 android:text="Your active request"
                 android:textColor="#64748B"
                 android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
+                android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardActiveRequest"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:cardBackgroundColor="#EBF2FF"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackground">
+                android:foreground="?attr/selectableItemBackground"
+                app:cardBackgroundColor="#EBF2FF"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -371,10 +387,10 @@
                         android:id="@+id/tvActiveJobStatus"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
                         android:text="Tap to request a service above."
                         android:textColor="#64748B"
-                        android:textSize="14sp"
-                        android:layout_marginTop="8dp" />
+                        android:textSize="14sp" />
 
                 </LinearLayout>
 
