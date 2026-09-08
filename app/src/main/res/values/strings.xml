@@ -19,6 +19,7 @@
     <string name="submit_request">Submit Request</string>
     <string name="job_description_label">Job Description</string>
     <string name="about_label">About</string>
+    <string name="request_service_format">Request %1$s</string>
     <string name="rate_format">₱%.0f/day</string>
     <string name="website_placeholder">www.%1$s.com</string>
 

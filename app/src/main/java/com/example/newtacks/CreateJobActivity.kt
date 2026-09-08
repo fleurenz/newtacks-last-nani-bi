@@ -14,6 +14,10 @@ import androidx.core.content.ContextCompat
 import android.text.Editable
 import android.text.TextWatcher
 import android.content.res.ColorStateList
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
+import android.text.InputType
 import com.example.newtacks.models.Job
 import com.example.newtacks.models.User
 import com.google.firebase.auth.FirebaseAuth
@@ -44,20 +48,21 @@ class CreateJobActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private lateinit var spinnerServiceType: Spinner
+    private lateinit var spinnerRateType: Spinner
     private lateinit var btnSelectDate: com.google.android.material.button.MaterialButton
     private lateinit var btnSelectTime: com.google.android.material.button.MaterialButton
-    private lateinit var etDuration: EditText
     private lateinit var etOfferAmount: EditText
     private lateinit var etDescription: EditText
 
-    private lateinit var createJobScrollView: ScrollView
+    private lateinit var createJobScrollView: View
     private lateinit var loadingOverlay: View
     private lateinit var tvLoadingMessage: TextView
+    private lateinit var tvToolbarTitle: TextView
 
     private lateinit var btnCancel: Button
     private lateinit var btnSubmit: Button
 
-    private lateinit var btnAddPhoto: Button
+    private lateinit var btnAddPhotoCard: View
     private lateinit var layoutImages: LinearLayout
 
     private var selectedDate = ""
@@ -69,7 +74,6 @@ class CreateJobActivity : AppCompatActivity() {
     private var profileLat = 0.0
     private var profileLng = 0.0
 
-    private var isUserEditingTitle = false
     private var isSubmitting = false
     private var isDetectingLocation = false
 
@@ -96,11 +100,14 @@ class CreateJobActivity : AppCompatActivity() {
         // ===== TOOLBAR =====
         val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
         toolbar.setNavigationOnClickListener { finish() }
 
         initializeViews()
+        setupStatusBarPadding()
         loadClientInformation()
         setupServiceSpinner()
+        setupRateSpinner()
         setupDatePicker()
         setupTimePicker()
 
@@ -114,6 +121,16 @@ class CreateJobActivity : AppCompatActivity() {
                 handleBackPress()
             }
         })
+    }
+
+    private fun setupStatusBarPadding() {
+        val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
+        val rootView = findViewById<View>(android.R.id.content)
+        ViewCompat.setOnApplyWindowInsetsListener(toolbar) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.updatePadding(top = systemBars.top + (resources.displayMetrics.density * 8).toInt())
+            insets
+        }
     }
 
     private fun handleBackPress() {
@@ -164,15 +181,14 @@ class CreateJobActivity : AppCompatActivity() {
         dialog.show()
     }
 
-
-
     // ---------------- INIT ----------------
 
     private fun initializeViews() {
-
         createJobScrollView = findViewById(R.id.createJobScrollView)
         loadingOverlay = findViewById(R.id.loadingOverlay)
         tvLoadingMessage = findViewById(R.id.tvLoadingMessage)
+        tvToolbarTitle = findViewById(R.id.tvToolbarTitle)
+        
         etJobTitle = findViewById(R.id.etJobTitle)
         etClientName = findViewById(R.id.etClientName)
         etClientAddress = findViewById(R.id.etClientAddress)
@@ -188,21 +204,21 @@ class CreateJobActivity : AppCompatActivity() {
         }
 
         spinnerServiceType = findViewById(R.id.spinnerServiceType)
+        spinnerRateType = findViewById(R.id.spinnerRateType)
 
         btnSelectDate = findViewById(R.id.btnSelectDate)
         btnSelectTime = findViewById(R.id.btnSelectTime)
 
-        etDuration = findViewById(R.id.etDuration)
         etOfferAmount = findViewById(R.id.etOfferAmount)
         etDescription = findViewById(R.id.etDescription)
 
         btnCancel = findViewById(R.id.btnCancel)
         btnSubmit = findViewById(R.id.btnSubmit)
 
-        btnAddPhoto = findViewById(R.id.btnAddPhoto)
+        btnAddPhotoCard = findViewById(R.id.btnAddPhotoCard)
         layoutImages = findViewById(R.id.layoutImages)
 
-        btnAddPhoto.setOnClickListener {
+        btnAddPhotoCard.setOnClickListener {
             pickImage.launch("image/*")
         }
 
@@ -210,11 +226,6 @@ class CreateJobActivity : AppCompatActivity() {
             val intent = Intent(this, ChatActivity::class.java)
             intent.putExtra("USER_ROLE", "client")
             startActivity(intent)
-        }
-
-        // detect manual editing
-        etJobTitle.setOnFocusChangeListener { _, hasFocus ->
-            if (hasFocus) isUserEditingTitle = true
         }
 
         btnSubmit.setOnTouchListener { v, event ->
@@ -234,16 +245,12 @@ class CreateJobActivity : AppCompatActivity() {
     // ---------------- USER DATA ----------------
 
     private fun loadClientInformation() {
-
         val currentUser = auth.currentUser ?: return
-
         firestore.collection("users")
             .document(currentUser.uid)
             .get()
             .addOnSuccessListener { doc ->
-
                 val user = doc.toObject(User::class.java)
-
                 if (user != null) {
                     etClientName.setText(user.name)
                     etClientAddress.setText(user.address)
@@ -256,7 +263,6 @@ class CreateJobActivity : AppCompatActivity() {
                     selectedLng = profileLng
 
                     etClientName.isEnabled = false
-                    etClientAddress.isEnabled = false
                 }
             }
             .addOnFailureListener {
@@ -267,62 +273,82 @@ class CreateJobActivity : AppCompatActivity() {
     // ---------------- SERVICE TYPE + TITLE ----------------
 
     private fun setupServiceSpinner() {
-
         val services = arrayOf(
-            "Plumbing",
-            "Electrical",
-            "Carpentry"
+            "Plumbing", "Electrical", "Carpentry", "Masonry", "Welding", "Painting", "Landscaping", "Others"
         )
 
-        val adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
-            services
-        )
-
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, services)
         spinnerServiceType.adapter = adapter
 
-        spinnerServiceType.onItemSelectedListener =
-            object : AdapterView.OnItemSelectedListener {
-
-                override fun onItemSelected(
-                    parent: AdapterView<*>?,
-                    view: View?,
-                    position: Int,
-                    id: Long
-                ) {
-
-                    val selectedService = services[position]
-                    val generatedTitle = "$selectedService Request"
-
-                    if (!isUserEditingTitle) {
-                        etJobTitle.setText(generatedTitle)
-                    }
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>?) {}
+        // Pre-select service if passed from intent
+        val preselected = intent.getStringExtra("SELECTED_SERVICE")
+        if (preselected != null) {
+            val index = services.indexOf(preselected)
+            if (index != -1) {
+                spinnerServiceType.setSelection(index)
+                updateJobTitleField(preselected) // Force immediate update
             }
+        } else {
+            updateJobTitleField(services[0])
+        }
+
+        spinnerServiceType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                updateJobTitleField(services[position])
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+    }
+
+    private fun updateJobTitleField(selectedService: String) {
+        val isOthers = selectedService == "Others"
+        tvToolbarTitle.text = getString(R.string.request_service_format, selectedService)
+
+        if (isOthers) {
+            etJobTitle.isEnabled = true
+            etJobTitle.isFocusable = true
+            etJobTitle.isFocusableInTouchMode = true
+            etJobTitle.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            
+            // Clear if it has the default "Request" suffix
+            val currentText = etJobTitle.text.toString()
+            if (currentText.contains(" Request")) {
+                etJobTitle.setText("")
+            }
+            
+            etJobTitle.hint = "e.g. Broken Faucet Repair"
+            etJobTitle.requestFocus()
+        } else {
+            val generatedTitle = "$selectedService Request"
+            etJobTitle.setText(generatedTitle)
+            
+            // Strictly lock the field
+            etJobTitle.inputType = InputType.TYPE_NULL
+            etJobTitle.isFocusable = false
+            etJobTitle.isFocusableInTouchMode = false
+            etJobTitle.isEnabled = true // Keep it "bright" but uneditable
+            etJobTitle.error = null
+        }
+    }
+
+    private fun setupRateSpinner() {
+        val rates = arrayOf("One-time", "Per Hour", "Per Day")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, rates)
+        spinnerRateType.adapter = adapter
     }
 
     // ---------------- DATE PICKER ----------------
 
     private fun setupDatePicker() {
-
         btnSelectDate.setOnClickListener {
-
             val calendar = Calendar.getInstance()
-
             DatePickerDialog(
                 this,
                 { _, year, month, day ->
-
                     selectedDate = "${month + 1}/$day/$year"
                     btnSelectDate.text = selectedDate
-                    
-                    // Reset error state
                     btnSelectDate.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.stroke_color)))
                     btnSelectDate.strokeWidth = resources.getDimensionPixelSize(R.dimen.normal_stroke_width)
-
                 },
                 calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH),
@@ -334,22 +360,15 @@ class CreateJobActivity : AppCompatActivity() {
     // ---------------- TIME PICKER ----------------
 
     private fun setupTimePicker() {
-
         btnSelectTime.setOnClickListener {
-
             val calendar = Calendar.getInstance()
-
             TimePickerDialog(
                 this,
                 { _, hour, minute ->
-
                     selectedTime = String.format(Locale.getDefault(), "%02d:%02d", hour, minute)
                     btnSelectTime.text = selectedTime
-                    
-                    // Reset error state
                     btnSelectTime.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.stroke_color)))
                     btnSelectTime.strokeWidth = resources.getDimensionPixelSize(R.dimen.normal_stroke_width)
-
                 },
                 calendar.get(Calendar.HOUR_OF_DAY),
                 calendar.get(Calendar.MINUTE),
@@ -445,15 +464,10 @@ class CreateJobActivity : AppCompatActivity() {
         val jobTitle = etJobTitle.text.toString().trim()
         val clientName = etClientName.text.toString().trim()
         val clientAddress = etClientAddress.text.toString().trim()
-
         val serviceCategory = spinnerServiceType.selectedItem.toString()
-
-        val durationInput = etDuration.text.toString().trim()
         val offerInput = etOfferAmount.text.toString().trim()
-
         val description = etDescription.text.toString().trim()
-
-        // ---------------- VALIDATION ----------------
+        val rateType = spinnerRateType.selectedItem.toString()
 
         if (!validateForm()) {
             Toast.makeText(this, "Please complete all fields", Toast.LENGTH_SHORT).show()
@@ -461,52 +475,39 @@ class CreateJobActivity : AppCompatActivity() {
         }
 
         if (selectedLat == 0.0 || selectedLng == 0.0) {
-            Toast.makeText(this, "Location coordinates not found. Please ensure your location is set correctly.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Location coordinates not found.", Toast.LENGTH_LONG).show()
             return
         }
 
-        val estimatedDuration = durationInput.toDoubleOrNull()
         val offeredAmount = offerInput.toDoubleOrNull()
-
-        if (estimatedDuration == null || offeredAmount == null) {
+        if (offeredAmount == null) {
             Toast.makeText(this, "Invalid number input", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // ---------------- UI LOCK ----------------
         isSubmitting = true
         loadingOverlay.visibility = View.VISIBLE
         tvLoadingMessage.text = "Checking for active jobs..."
 
-        // ---------------- CHECK ACTIVE JOB FIRST ----------------
-
         firestore.collection("jobs")
             .whereEqualTo("clientId", currentUser.uid)
-            .get(com.google.firebase.firestore.Source.SERVER) // Force latest data
+            .get(com.google.firebase.firestore.Source.SERVER)
             .addOnSuccessListener { snapshots ->
-
-                // Filter active statuses locally to avoid index issues
                 val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
                 val hasActiveJob = snapshots.documents.any { 
                     val status = it.getString("status") ?: ""
                     status in activeStatuses 
                 }
 
-                // CLIENT ALREADY HAS ACTIVE JOB
                 if (hasActiveJob) {
-                    Toast.makeText(
-                        this,
-                        "You already have an active request",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    Toast.makeText(this, "You already have an active request", Toast.LENGTH_LONG).show()
                     isSubmitting = false
                     loadingOverlay.visibility = View.GONE
                     return@addOnSuccessListener
                 }
 
-                // ---------------- UPLOAD IMAGES THEN CREATE JOB ----------------
                 tvLoadingMessage.text = "Uploading images..."
-                uploadImagesAndCreateJob(currentUser.uid, clientName, clientAddress, jobTitle, serviceCategory, estimatedDuration, offeredAmount, description)
+                uploadImagesAndCreateJob(currentUser.uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType)
             }
             .addOnFailureListener {
                 isSubmitting = false
@@ -520,17 +521,14 @@ class CreateJobActivity : AppCompatActivity() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                // Clearing error on text change
                 val focusedView = currentFocus
                 if (focusedView is EditText) {
                     focusedView.error = null
                 }
             }
         }
-
         etJobTitle.addTextChangedListener(watcher)
         etClientAddress.addTextChangedListener(watcher)
-        etDuration.addTextChangedListener(watcher)
         etOfferAmount.addTextChangedListener(watcher)
         etDescription.addTextChangedListener(watcher)
     }
@@ -539,51 +537,34 @@ class CreateJobActivity : AppCompatActivity() {
         var isValid = true
         var firstErrorView: View? = null
 
-        val jobTitle = etJobTitle.text.toString().trim()
-        val clientAddress = etClientAddress.text.toString().trim()
-        val durationInput = etDuration.text.toString().trim()
-        val offerInput = etOfferAmount.text.toString().trim()
-        val description = etDescription.text.toString().trim()
-
-        if (jobTitle.isEmpty()) {
+        if (etJobTitle.text.toString().trim().isEmpty()) {
             etJobTitle.error = "Job title is required"
             if (firstErrorView == null) firstErrorView = etJobTitle
             isValid = false
         }
-
-        if (clientAddress.isEmpty() || clientAddress == "Detecting location...") {
+        if (etClientAddress.text.toString().trim().isEmpty() || etClientAddress.text.toString() == "Detecting location...") {
             etClientAddress.error = "Address is required"
             if (firstErrorView == null) firstErrorView = etClientAddress
             isValid = false
         }
-
         if (selectedDate.isEmpty()) {
             btnSelectDate.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.error_red)))
             btnSelectDate.strokeWidth = resources.getDimensionPixelSize(R.dimen.error_stroke_width)
             if (firstErrorView == null) firstErrorView = btnSelectDate
             isValid = false
         }
-
         if (selectedTime.isEmpty()) {
             btnSelectTime.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.error_red)))
             btnSelectTime.strokeWidth = resources.getDimensionPixelSize(R.dimen.error_stroke_width)
             if (firstErrorView == null) firstErrorView = btnSelectTime
             isValid = false
         }
-
-        if (durationInput.isEmpty()) {
-            etDuration.error = "Estimated duration is required"
-            if (firstErrorView == null) firstErrorView = etDuration
-            isValid = false
-        }
-
-        if (offerInput.isEmpty()) {
+        if (etOfferAmount.text.toString().trim().isEmpty()) {
             etOfferAmount.error = "Offer amount is required"
             if (firstErrorView == null) firstErrorView = etOfferAmount
             isValid = false
         }
-
-        if (description.isEmpty()) {
+        if (etDescription.text.toString().trim().isEmpty()) {
             etDescription.error = "Description is required"
             if (firstErrorView == null) firstErrorView = etDescription
             isValid = false
@@ -593,9 +574,9 @@ class CreateJobActivity : AppCompatActivity() {
             it.requestFocus()
             val location = IntArray(2)
             it.getLocationInWindow(location)
-            createJobScrollView.smoothScrollTo(0, location[1] - 200) // Scroll to view with offset
+            (createJobScrollView as? ScrollView)?.smoothScrollTo(0, location[1] - 200)
+            (createJobScrollView as? androidx.core.widget.NestedScrollView)?.smoothScrollTo(0, location[1] - 200)
         }
-
         return isValid
     }
 
@@ -605,12 +586,12 @@ class CreateJobActivity : AppCompatActivity() {
         clientAddress: String,
         jobTitle: String,
         serviceCategory: String,
-        estimatedDuration: Double,
         offeredAmount: Double,
-        description: String
+        description: String,
+        rateType: String
     ) {
         if (selectedImages.isEmpty()) {
-            finalizeJobCreation(uid, clientName, clientAddress, jobTitle, serviceCategory, estimatedDuration, offeredAmount, description, emptyList())
+            finalizeJobCreation(uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType, emptyList())
             return
         }
 
@@ -628,13 +609,13 @@ class CreateJobActivity : AppCompatActivity() {
                         uploadedUrls.add(imageUrl)
                         uploadCount++
                         if (uploadCount == selectedImages.size) {
-                            finalizeJobCreation(uid, clientName, clientAddress, jobTitle, serviceCategory, estimatedDuration, offeredAmount, description, uploadedUrls)
+                            finalizeJobCreation(uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType, uploadedUrls)
                         }
                     }
                     override fun onError(requestId: String?, error: ErrorInfo?) {
                         uploadCount++
                         if (uploadCount == selectedImages.size) {
-                            finalizeJobCreation(uid, clientName, clientAddress, jobTitle, serviceCategory, estimatedDuration, offeredAmount, description, uploadedUrls)
+                            finalizeJobCreation(uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType, uploadedUrls)
                         }
                     }
                     override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
@@ -648,15 +629,14 @@ class CreateJobActivity : AppCompatActivity() {
         clientAddress: String,
         jobTitle: String,
         serviceCategory: String,
-        estimatedDuration: Double,
         offeredAmount: Double,
         description: String,
+        rateType: String,
         jobImages: List<String>
     ) {
         tvLoadingMessage.text = "Finalizing request..."
         val jobsRef = firestore.collection("jobs")
         
-        // Final sanity check before writing: re-verify no active job exists
         jobsRef.whereEqualTo("clientId", uid).get().addOnSuccessListener { snapshots ->
             val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION")
             val hasActiveJob = snapshots.documents.any { it.getString("status") in activeStatuses }
@@ -668,9 +648,7 @@ class CreateJobActivity : AppCompatActivity() {
                 return@addOnSuccessListener
             }
 
-            // proceed with creation
             val jobId = jobsRef.document().id
-            val now = System.currentTimeMillis()
             val job = Job(
                 jobId = jobId,
                 clientId = uid,
@@ -680,15 +658,14 @@ class CreateJobActivity : AppCompatActivity() {
                 serviceCategory = serviceCategory,
                 scheduledDate = selectedDate,
                 scheduledTime = selectedTime,
-                estimatedDurationHours = estimatedDuration,
                 offeredAmount = offeredAmount,
+                rateType = rateType,
                 description = description,
                 status = "AVAILABLE",
                 jobImages = jobImages,
                 latitude = selectedLat,
                 longitude = selectedLng,
-                createdAt = now,
-                expiresAt = 0 // No expiration for client jobs
+                createdAt = System.currentTimeMillis()
             )
 
             jobsRef.document(jobId).set(job)

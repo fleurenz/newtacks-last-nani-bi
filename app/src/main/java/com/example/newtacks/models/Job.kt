@@ -30,6 +30,7 @@ data class Job(
     // PAYMENT
 
     val offeredAmount: Double = 0.0,
+    val rateType: String = "One-time",
 
     // LIFECYCLE
 
