@@ -8,6 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -52,6 +54,16 @@ class CompanyApplicantsFragment : Fragment() {
         tabNew = view.findViewById(R.id.tabNew)
         tabInterview = view.findViewById(R.id.tabInterview)
         tabHired = view.findViewById(R.id.tabHired)
+
+        // Robust Inset Handling: Use spacer for status bar
+        val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)
+        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val params = statusBarSpacer.layoutParams
+            params.height = systemBars.top
+            statusBarSpacer.layoutParams = params
+            insets
+        }
 
         view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
             Toast.makeText(requireContext(), "No new notifications", Toast.LENGTH_SHORT).show()
@@ -112,22 +124,22 @@ class CompanyApplicantsFragment : Fragment() {
 
         when (tab) {
             "ALL" -> {
-                tabAll.setBackgroundResource(R.drawable.bg_tab_left_selected)
+                tabAll.setBackgroundResource(R.drawable.bg_tab_selected)
                 tabAll.setTextColor(Color.parseColor("#1E293B"))
                 tabAll.paint.isFakeBoldText = true
             }
             "NEW" -> {
-                tabNew.setBackgroundColor(Color.parseColor("#D1E2FF"))
+                tabNew.setBackgroundResource(R.drawable.bg_tab_selected)
                 tabNew.setTextColor(Color.parseColor("#1E293B"))
                 tabNew.paint.isFakeBoldText = true
             }
             "INTERVIEW" -> {
-                tabInterview.setBackgroundColor(Color.parseColor("#D1E2FF"))
+                tabInterview.setBackgroundResource(R.drawable.bg_tab_selected)
                 tabInterview.setTextColor(Color.parseColor("#1E293B"))
                 tabInterview.paint.isFakeBoldText = true
             }
             "HIRED" -> {
-                tabHired.setBackgroundResource(R.drawable.bg_tab_right_selected)
+                tabHired.setBackgroundResource(R.drawable.bg_tab_selected)
                 tabHired.setTextColor(Color.parseColor("#1E293B"))
                 tabHired.paint.isFakeBoldText = true
             }
