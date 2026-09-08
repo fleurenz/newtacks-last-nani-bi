@@ -8,6 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -48,6 +50,16 @@ class CompanyHiringFragment : Fragment() {
         tabActive    = view.findViewById(R.id.tabActive)
         tabDraft     = view.findViewById(R.id.tabDraft)
         tabClosed    = view.findViewById(R.id.tabClosed)
+        
+        // Robust Inset Handling: Use spacer for status bar
+        val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)
+        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val params = statusBarSpacer.layoutParams
+            params.height = systemBars.top
+            statusBarSpacer.layoutParams = params
+            insets
+        }
         
         setupRecyclerView()
         setupTabs()
@@ -90,30 +102,27 @@ class CompanyHiringFragment : Fragment() {
     private fun switchTab(tab: String) {
         currentTab = tab
         
-        // Update UI
-        tabActive.background = null
-        tabDraft.background = null
-        tabClosed.background = null
-        tabActive.setTextColor(Color.parseColor("#64748B"))
-        tabDraft.setTextColor(Color.parseColor("#64748B"))
-        tabClosed.setTextColor(Color.parseColor("#64748B"))
-        tabActive.paint.isFakeBoldText = false
-        tabDraft.paint.isFakeBoldText = false
-        tabClosed.paint.isFakeBoldText = false
+        // Update UI (Pill Style)
+        val tabs = listOf(tabActive, tabDraft, tabClosed)
+        tabs.forEach { 
+            it.background = null
+            it.setTextColor(Color.parseColor("#64748B"))
+            it.paint.isFakeBoldText = false
+        }
 
         when (tab) {
             "ACTIVE" -> {
-                tabActive.setBackgroundResource(R.drawable.bg_tab_left_selected)
+                tabActive.setBackgroundResource(R.drawable.bg_tab_selected)
                 tabActive.setTextColor(Color.parseColor("#1E293B"))
                 tabActive.paint.isFakeBoldText = true
             }
             "DRAFT" -> {
-                tabDraft.setBackgroundColor(Color.parseColor("#D1E2FF"))
+                tabDraft.setBackgroundResource(R.drawable.bg_tab_selected)
                 tabDraft.setTextColor(Color.parseColor("#1E293B"))
                 tabDraft.paint.isFakeBoldText = true
             }
             "CLOSED" -> {
-                tabClosed.setBackgroundResource(R.drawable.bg_tab_right_selected)
+                tabClosed.setBackgroundResource(R.drawable.bg_tab_selected)
                 tabClosed.setTextColor(Color.parseColor("#1E293B"))
                 tabClosed.paint.isFakeBoldText = true
             }

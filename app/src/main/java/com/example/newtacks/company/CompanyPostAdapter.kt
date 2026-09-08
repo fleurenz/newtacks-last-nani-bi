@@ -35,12 +35,12 @@ class CompanyPostAdapter(
         val post = posts[position]
         
         holder.tvTitle.text = post.jobTitle
-        holder.tvApplicants.text = "${post.acceptedWorkers.size}/${post.vacancies} Positions Filled • ${post.applicants.size} Applicants"
-        
+        holder.tvApplicants.text = "${post.acceptedWorkers.size}/${post.vacancies} Applicants"
+
         val sdf = SimpleDateFormat("MMMM dd", Locale.getDefault())
         val dateStr = sdf.format(Date(post.createdAt))
         holder.tvDateAndRate.text = "Posted $dateStr  •  ₱${post.dailyRate.toInt()}/day"
-        
+
         holder.tvLocation.text = post.companyAddress.split(",").firstOrNull()?.trim() ?: post.companyAddress
 
         holder.btnEdit.setOnClickListener { onEditClick(post) }

@@ -1,107 +1,116 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8FAFC">
+    android:orientation="vertical"
+    android:background="#1C6EC6">
+
+    <!-- Status Bar Spacer -->
+    <View
+        android:id="@+id/statusBarSpacer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="#1C6EC6" />
 
     <!-- HEADER -->
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/layoutHeader"
         android:layout_width="match_parent"
-        android:layout_height="140dp"
-        android:background="#004A99"
-        android:orientation="horizontal"
+        android:layout_height="wrap_content"
         android:paddingHorizontal="24dp"
-        android:paddingTop="48dp">
+        android:paddingTop="12dp"
+        android:paddingBottom="20dp">
 
         <TextView
-            android:layout_width="0dp"
+            android:id="@+id/tvHeaderTitle"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_centerInParent="true"
             android:text="Job Postings"
             android:textColor="#FFFFFF"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
 
         <ImageView
             android:id="@+id/btnNotifications"
             android:layout_width="28dp"
             android:layout_height="28dp"
-            android:src="@drawable/ic_clock"
-            app:tint="#FBBF24"
-            android:contentDescription="Notifications" />
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_notifications"
+            app:tint="#FBBF24" />
+    </RelativeLayout>
 
-    </LinearLayout>
-
-    <!-- CONTENT CARD -->
+    <!-- CONTENT CONTAINER -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/layoutHeader"
-        android:layout_marginTop="-30dp"
-        android:background="@drawable/rounded_top_white"
         android:orientation="vertical"
-        android:paddingHorizontal="20dp"
-        android:paddingTop="24dp">
+        android:background="@drawable/rounded_top_white">
 
-        <!-- TAB SWITCHER -->
+        <!-- TAB SWITCHER & FILTER -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:layout_marginBottom="20dp">
+            android:paddingHorizontal="20dp"
+            android:paddingTop="20dp"
+            android:layout_marginBottom="16dp">
 
-            <LinearLayout
+            <HorizontalScrollView
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="@drawable/bg_tab_container"
-                android:orientation="horizontal">
+                android:scrollbars="none">
 
-                <TextView
-                    android:id="@+id/tabActive"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_tab_left_selected"
-                    android:gravity="center"
-                    android:text="Active"
-                    android:textColor="#1E293B"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tabDraft"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Draft"
-                    android:textColor="#64748B"
-                    android:textSize="13sp" />
+                    <TextView
+                        android:id="@+id/tabActive"
+                        android:layout_width="60dp"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_tab_selected"
+                        android:gravity="center"
+                        android:text="Active"
+                        android:textColor="#1E293B"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tabClosed"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Closed"
-                    android:textColor="#64748B"
-                    android:textSize="13sp" />
+                    <TextView
+                        android:id="@+id/tabDraft"
+                        android:layout_width="60dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="Draft"
+                        android:textColor="#64748B"
+                        android:textSize="12sp" />
 
-            </LinearLayout>
+                    <TextView
+                        android:id="@+id/tabClosed"
+                        android:layout_width="60dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="Closed"
+                        android:textColor="#64748B"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+            </HorizontalScrollView>
 
             <ImageView
                 android:id="@+id/btnFilter"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:layout_marginStart="16dp"
-                android:src="@drawable/ic_filter"
+                android:src="@drawable/ic_sort_filter"
                 app:tint="#1E293B" />
 
         </LinearLayout>
@@ -116,33 +125,34 @@
                 android:id="@+id/rvJobPosts"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:paddingTop="8dp"
+                android:paddingHorizontal="8dp"
                 android:clipToPadding="false"
-                android:paddingBottom="80dp"
                 tools:listitem="@layout/item_company_post" />
 
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
+        <!-- CREATE BUTTON (Sticky Bottom) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCreateJobPosting"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginVertical="16dp"
+            android:text="Create Job Posting"
+            android:textAllCaps="false"
+            android:textColor="#1C6EC6"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:backgroundTint="#EBF2FF"
+            app:cornerRadius="24dp"
+            app:icon="@drawable/ic_plus"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconTint="#1C6EC6"
+            app:strokeColor="#1C6EC6"
+            app:strokeWidth="1dp" />
+
     </LinearLayout>
 
-    <!-- CREATE BUTTON -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnCreateJobPosting"
-        android:layout_width="wrap_content"
-        android:layout_height="52dp"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="24dp"
-        android:text="Create Job Posting"
-        android:textAllCaps="false"
-        android:textColor="#004A99"
-        android:textStyle="bold"
-        app:backgroundTint="#EBF2FF"
-        app:cornerRadius="26dp"
-        app:icon="@drawable/ic_plus"
-        app:iconGravity="textStart"
-        app:iconPadding="8dp"
-        app:iconTint="#004A99"
-        app:strokeColor="#004A99"
-        app:strokeWidth="1dp" />
-
-</RelativeLayout>
+</LinearLayout>
