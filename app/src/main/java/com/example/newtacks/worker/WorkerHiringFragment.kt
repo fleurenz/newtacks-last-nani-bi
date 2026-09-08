@@ -1,6 +1,10 @@
 package com.example.newtacks.worker
 
+import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.*
 import android.widget.*
 import androidx.core.view.ViewCompat
@@ -12,36 +16,40 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.newtacks.R
 import com.example.newtacks.models.Application
 import com.example.newtacks.models.HiringPost
-import com.google.android.material.tabs.TabLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.gson.Gson
 
 class WorkerHiringFragment : Fragment() {
 
     private lateinit var rvHiring: RecyclerView
-    private lateinit var tabLayout: TabLayout
     private lateinit var swipeRefresh: SwipeRefreshLayout
-    private lateinit var layoutHeader: LinearLayout
+    private lateinit var layoutHeader: View
     private lateinit var layoutEmptyState: LinearLayout
     private lateinit var tvEmptyTitle: TextView
     private lateinit var tvEmptyDesc: TextView
+    
+    private lateinit var tabAvailable: TextView
+    private lateinit var tabMyApplications: TextView
+    private lateinit var etSearch: EditText
+    
+    private lateinit var layoutSearch: View
+    private lateinit var layoutFilterStatus: View
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     
     private var hiringListener: ListenerRegistration? = null
-    private var interviewListener: ListenerRegistration? = null
-    private var hiredListener: ListenerRegistration? = null
+    private var applicationsListener: ListenerRegistration? = null
     
-    private val fullHiringList = mutableListOf<HiringPost>()
-    private val interviewList = mutableListOf<Application>()
-    private val hiredList = mutableListOf<Application>()
-    private val displayPosts = mutableListOf<HiringPost>()
+    private val allHiringPosts = mutableListOf<HiringPost>()
+    private val myApplications = mutableListOf<Application>()
     
     private lateinit var postsAdapter: HiringAdapter
-    private lateinit var interviewAdapter: InterviewRequestAdapter
-    private lateinit var hiredAdapter: HiredHistoryAdapter
+    private lateinit var applicationsAdapter: WorkerApplicationAdapter
+    
+    private var currentTab = "AVAILABLE" // AVAILABLE, MY_APPS
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,173 +58,196 @@ class WorkerHiringFragment : Fragment() {
     ): View {
         val view = inflater.inflate(R.layout.fragment_worker_hiring, container, false)
 
-        rvHiring         = view.findViewById(R.id.rvHiring)
-        tabLayout        = view.findViewById(R.id.tabLayoutHiring)
-        swipeRefresh     = view.findViewById(R.id.swipeRefreshHiring)
-        layoutHeader     = view.findViewById(R.id.layoutHeader)
-        layoutEmptyState = view.findViewById(R.id.layoutEmptyState)
-        tvEmptyTitle     = view.findViewById(R.id.tvEmptyTitle)
-        tvEmptyDesc      = view.findViewById(R.id.tvEmptyDesc)
+        rvHiring           = view.findViewById(R.id.rvHiring)
+        swipeRefresh       = view.findViewById(R.id.swipeRefreshHiring)
+        layoutHeader       = view.findViewById(R.id.layoutHeader)
+        layoutEmptyState   = view.findViewById(R.id.layoutEmptyState)
+        tvEmptyTitle       = view.findViewById(R.id.tvEmptyTitle)
+        tvEmptyDesc        = view.findViewById(R.id.tvEmptyDesc)
+        
+        tabAvailable       = view.findViewById(R.id.tabAvailable)
+        tabMyApplications  = view.findViewById(R.id.tabMyApplications)
+        etSearch           = view.findViewById(R.id.etSearchKeywords)
+        
+        layoutSearch       = view.findViewById(R.id.layoutSearch)
+        layoutFilterStatus = view.findViewById(R.id.layoutFilterStatus)
 
         setupAdapters()
+        setupTabs()
+        setupSearch()
 
-        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab?) {
-                filterList()
-            }
-            override fun onTabUnselected(tab: TabLayout.Tab?) {}
-            override fun onTabReselected(tab: TabLayout.Tab?) {}
-        })
-
+        // Robust Inset Handling: Use spacer for status bar
+        val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            layoutHeader.setPadding(
-                layoutHeader.paddingLeft,
-                systemBars.top + resources.getDimensionPixelSize(R.dimen.header_padding_top),
-                layoutHeader.paddingRight,
-                layoutHeader.paddingBottom
-            )
+            val params = statusBarSpacer.layoutParams
+            params.height = systemBars.top
+            statusBarSpacer.layoutParams = params
             insets
+        }
+
+        view.findViewById<View>(R.id.btnFilterStatus).setOnClickListener {
+            Toast.makeText(requireContext(), "Filter logic coming soon!", Toast.LENGTH_SHORT).show()
         }
 
         listenForData()
 
         swipeRefresh.setOnRefreshListener {
-            listenForData()
+            view.findViewById<View>(R.id.btnFilterStatus).setOnClickListener {
+            Toast.makeText(requireContext(), "Filter logic coming soon!", Toast.LENGTH_SHORT).show()
+        }
+
+        listenForData()
         }
 
         return view
     }
 
     private fun setupAdapters() {
-        postsAdapter = HiringAdapter(displayPosts, auth.currentUser?.uid) { post ->
+        postsAdapter = HiringAdapter(mutableListOf(), auth.currentUser?.uid) { post ->
             showHiringPreview(post)
         }
         
-        interviewAdapter = InterviewRequestAdapter(interviewList) { app, action ->
-            handleInterviewAction(app, action)
+        applicationsAdapter = WorkerApplicationAdapter(mutableListOf()) { app ->
+            fetchPostAndOpen(app.hiringId)
         }
-
-        hiredAdapter = HiredHistoryAdapter(hiredList)
         
         rvHiring.layoutManager = LinearLayoutManager(requireContext())
+        rvHiring.adapter = postsAdapter
+    }
+
+    private fun setupTabs() {
+        tabAvailable.setOnClickListener { switchTab("AVAILABLE") }
+        tabMyApplications.setOnClickListener { switchTab("MY_APPS") }
+    }
+
+    private fun switchTab(tab: String) {
+        currentTab = tab
+        
+        // Reset Styles
+        tabAvailable.background = null
+        tabAvailable.setTextColor(Color.parseColor("#64748B"))
+        tabAvailable.paint.isFakeBoldText = false
+        
+        tabMyApplications.background = null
+        tabMyApplications.setTextColor(Color.parseColor("#64748B"))
+        tabMyApplications.paint.isFakeBoldText = false
+
+        when (tab) {
+            "AVAILABLE" -> {
+                tabAvailable.setBackgroundResource(R.drawable.bg_tab_selected)
+                tabAvailable.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#EBF2FF"))
+                tabAvailable.setTextColor(Color.parseColor("#0F325E"))
+                tabAvailable.paint.isFakeBoldText = true
+                rvHiring.adapter = postsAdapter
+                layoutSearch.visibility = View.VISIBLE
+                layoutFilterStatus.visibility = View.GONE
+            }
+            "MY_APPS" -> {
+                tabMyApplications.setBackgroundResource(R.drawable.bg_tab_selected)
+                tabMyApplications.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#EBF2FF"))
+                tabMyApplications.setTextColor(Color.parseColor("#0F325E"))
+                tabMyApplications.paint.isFakeBoldText = true
+                rvHiring.adapter = applicationsAdapter
+                layoutSearch.visibility = View.GONE
+                layoutFilterStatus.visibility = View.VISIBLE
+            }
+        }
+        
+        filterAndDisplay()
+    }
+
+    private fun setupSearch() {
+        etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                filterAndDisplay()
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
     }
 
     private fun listenForData() {
         val uid = auth.currentUser?.uid ?: ""
         
-        // Listen for Hiring Posts
+        // 1. Listen for Hiring Posts
         hiringListener?.remove()
         hiringListener = db.collection("hiring")
             .whereEqualTo("status", "OPEN")
             .addSnapshotListener { snapshots, _ ->
-                fullHiringList.clear()
+                allHiringPosts.clear()
                 snapshots?.forEach { doc ->
                     val post = doc.toObject(HiringPost::class.java).copy(hiringId = doc.id)
-                    if (post.expiresAt == 0L || post.expiresAt > System.currentTimeMillis()) {
-                        fullHiringList.add(post)
-                    }
+                    allHiringPosts.add(post)
                 }
                 swipeRefresh.isRefreshing = false
-                filterList()
+                filterAndDisplay()
             }
             
-        // Listen for Interviews
-        interviewListener?.remove()
-        interviewListener = db.collection("applications")
+        // 2. Listen for All My Applications
+        applicationsListener?.remove()
+        applicationsListener = db.collection("applications")
             .whereEqualTo("workerId", uid)
-            .whereEqualTo("status", "INTERVIEW_SCHEDULED")
             .addSnapshotListener { snapshots, _ ->
-                interviewList.clear()
+                myApplications.clear()
                 snapshots?.toObjects(Application::class.java)?.let {
-                    interviewList.addAll(it)
+                    myApplications.addAll(it)
                 }
-                filterList()
-            }
-
-        // Listen for Hired History
-        hiredListener?.remove()
-        hiredListener = db.collection("applications")
-            .whereEqualTo("workerId", uid)
-            .whereEqualTo("status", "HIRED")
-            .addSnapshotListener { snapshots, _ ->
-                hiredList.clear()
-                snapshots?.toObjects(Application::class.java)?.let {
-                    hiredList.addAll(it)
-                }
-                filterList()
+                filterAndDisplay()
             }
     }
 
-    private fun filterList() {
-        val uid = auth.currentUser?.uid ?: ""
-        displayPosts.clear()
+    private fun filterAndDisplay() {
+        val query = etSearch.text.toString().trim().lowercase()
         
-        when (tabLayout.selectedTabPosition) {
-            0 -> { // Available
-                rvHiring.adapter = postsAdapter
-                displayPosts.addAll(fullHiringList)
-                tvEmptyTitle.text = "No Available Hiring"
-                tvEmptyDesc.text = "Check back later for new opportunities."
+        if (currentTab == "AVAILABLE") {
+            val filtered = allHiringPosts.filter { 
+                it.jobTitle.lowercase().contains(query) || it.companyName.lowercase().contains(query)
             }
-            1 -> { // Applied
-                rvHiring.adapter = postsAdapter
-                displayPosts.addAll(fullHiringList.filter { it.applicants.contains(uid) })
-                tvEmptyTitle.text = "No Applications Sent"
-                tvEmptyDesc.text = "Apply to jobs from the Available tab."
+            postsAdapter.updateData(filtered)
+            updateEmptyState(filtered.isEmpty())
+        } else {
+            val filtered = myApplications.filter {
+                it.jobTitle.lowercase().contains(query)
             }
-            2 -> { // Interviews
-                rvHiring.adapter = interviewAdapter
-                tvEmptyTitle.text = "No Interviews"
-                tvEmptyDesc.text = "You'll see scheduled interviews here."
-            }
-            3 -> { // Hired
-                rvHiring.adapter = hiredAdapter
-                tvEmptyTitle.text = "No Hiring History"
-                tvEmptyDesc.text = "Successfully hired jobs will appear here."
-            }
+            applicationsAdapter.updateData(filtered)
+            updateEmptyState(filtered.isEmpty())
         }
-        
-        postsAdapter.notifyDataSetChanged()
-        interviewAdapter.notifyDataSetChanged()
-        hiredAdapter.notifyDataSetChanged()
-        
-        val isEmpty = when (tabLayout.selectedTabPosition) {
-            2 -> interviewList.isEmpty()
-            3 -> hiredList.isEmpty()
-            else -> displayPosts.isEmpty()
-        }
-        
+    }
+
+    private fun updateEmptyState(isEmpty: Boolean) {
         layoutEmptyState.visibility = if (isEmpty) View.VISIBLE else View.GONE
         rvHiring.visibility = if (isEmpty) View.GONE else View.VISIBLE
-    }
-
-    private fun handleInterviewAction(app: Application, action: String) {
-        db.collection("applications").document(app.applicationId)
-            .update("workerResponse", action)
-            .addOnSuccessListener {
-                val msg = if (action == "ACCEPTED") "Interview date accepted!" else "Reschedule request sent."
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-                
-                com.example.newtacks.utils.NotificationHelper.sendNotification(
-                    app.companyId,
-                    "Interview Response",
-                    "A worker has $action the interview schedule for ${app.jobTitle}.",
-                    "APPLICANTS"
-                )
+        
+        if (isEmpty) {
+            if (currentTab == "AVAILABLE") {
+                tvEmptyTitle.text = "No Available Hiring"
+                tvEmptyDesc.text = "Check back later for new opportunities."
+            } else {
+                tvEmptyTitle.text = "No Applications"
+                tvEmptyDesc.text = "You haven't applied to any jobs yet."
             }
+        }
     }
 
     private fun showHiringPreview(post: HiringPost) {
-        val intent = android.content.Intent(requireContext(), com.example.newtacks.company.HiringDetailsActivity::class.java)
-        intent.putExtra("HIRING_POST_JSON", com.google.gson.Gson().toJson(post))
+        val intent = Intent(requireContext(), com.example.newtacks.company.HiringDetailsActivity::class.java)
+        intent.putExtra("HIRING_POST_JSON", Gson().toJson(post))
         startActivity(intent)
+    }
+
+    private fun fetchPostAndOpen(hiringId: String) {
+        db.collection("hiring").document(hiringId).get().addOnSuccessListener { doc ->
+            val post = doc.toObject(HiringPost::class.java)?.copy(hiringId = doc.id)
+            if (post != null) {
+                showHiringPreview(post)
+            }
+        }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         hiringListener?.remove()
-        interviewListener?.remove()
-        hiredListener?.remove()
+        applicationsListener?.remove()
     }
 }

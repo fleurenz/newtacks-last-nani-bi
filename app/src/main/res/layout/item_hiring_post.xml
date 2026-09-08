@@ -2,24 +2,21 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="16dp"
-    android:layout_marginEnd="16dp"
-    android:layout_marginTop="8dp"
-    android:layout_marginBottom="8dp"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginBottom="12dp"
     app:cardCornerRadius="16dp"
-    app:cardElevation="0dp"
-    app:strokeWidth="0dp"
-    android:clickable="true"
-    android:focusable="true">
+    app:cardElevation="6dp"
+    app:cardBackgroundColor="#FFFFFF"
+    app:strokeWidth="0dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@drawable/bg_hiring_card"
-        android:padding="16dp">
+        android:padding="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -47,19 +44,19 @@
                     android:id="@+id/jobTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Project Title • ₱0/day"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:textColor="#1E293B"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    tools:text="Project for Ecoland • ₱670/day" />
 
                 <TextView
                     android:id="@+id/tvCompanyName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Company / Location"
-                    android:textColor="#CBD5E1"
-                    android:textSize="13sp" />
+                    android:textColor="#64748B"
+                    android:textSize="13sp"
+                    tools:text="Smiling Dog / Davao City" />
 
             </LinearLayout>
 
@@ -69,7 +66,7 @@
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:scrollbars="none">
 
             <LinearLayout
@@ -78,35 +75,23 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-                <!-- Chips will be added dynamically or dummy for now -->
+                <!-- Tag Example -->
                 <TextView
-                    android:id="@+id/tvServices"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_hiring_chip"
+                    android:background="@drawable/bg_tab_selected"
+                    android:backgroundTint="#FFF1E2"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="4dp"
                     android:text="Masonry"
-                    android:textColor="#FFFFFF"
+                    android:textColor="#F59E0B"
                     android:textSize="11sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:layout_marginEnd="6dp" />
 
             </LinearLayout>
 
         </HorizontalScrollView>
-
-        <!-- Hidden but kept for adapter compatibility if needed -->
-        <TextView
-            android:id="@+id/jobAmount"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnAccept"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
 
     </LinearLayout>
 

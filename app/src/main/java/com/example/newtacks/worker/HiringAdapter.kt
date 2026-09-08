@@ -12,20 +12,21 @@ import com.example.newtacks.R
 import com.example.newtacks.models.HiringPost
 
 class HiringAdapter(
-    private val posts: List<HiringPost>,
+    private var posts: List<HiringPost>,
     private val currentUserId: String?,
     private val onItemClick: (HiringPost) -> Unit
 ) : RecyclerView.Adapter<HiringAdapter.ViewHolder>() {
+    
+    fun updateData(newPosts: List<HiringPost>) {
+        this.posts = newPosts
+        notifyDataSetChanged()
+    }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val ivImage: ImageView = view.findViewById(R.id.ivHiringImage)
         val tvTitle: TextView = view.findViewById(R.id.jobTitle)
         val tvCompany: TextView = view.findViewById(R.id.tvCompanyName)
         val layoutTags: LinearLayout = view.findViewById(R.id.layoutHiringTags)
-        
-        // Kept for compatibility if they exist in XML as hidden
-        val tvAmount: TextView? = view.findViewById(R.id.jobAmount)
-        val tvServices: TextView? = view.findViewById(R.id.tvServices)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
