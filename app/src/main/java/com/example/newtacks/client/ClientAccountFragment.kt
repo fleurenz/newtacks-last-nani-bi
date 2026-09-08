@@ -4,9 +4,7 @@ import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.*
-import android.widget.Button
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.view.ViewCompat
@@ -28,13 +26,8 @@ class ClientAccountFragment : Fragment() {
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private lateinit var tvName: TextView
-    private lateinit var tvEmail: TextView
-    private lateinit var tvAddress: TextView
-    private lateinit var tvTotalRequests: TextView
-    private lateinit var tvCompletedRequests: TextView
     private lateinit var ivProfile: ImageView
-    private lateinit var btnLogout: Button
-    private lateinit var layoutHeader: LinearLayout
+    private lateinit var cardLogout: View
     private lateinit var swipeRefresh: SwipeRefreshLayout
 
     override fun onCreateView(
@@ -45,33 +38,15 @@ class ClientAccountFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_client_account, container, false)
 
         tvName              = view.findViewById(R.id.tvName)
-        tvEmail             = view.findViewById(R.id.tvEmail)
-        tvAddress           = view.findViewById(R.id.tvAddress)
-        tvTotalRequests     = view.findViewById(R.id.tvTotalRequests)
-        tvCompletedRequests = view.findViewById(R.id.tvCompletedRequests)
         ivProfile           = view.findViewById(R.id.ivProfile)
-        btnLogout           = view.findViewById(R.id.btnLogout)
-        layoutHeader        = view.findViewById(R.id.layoutHeader)
+        cardLogout          = view.findViewById(R.id.cardLogout)
         swipeRefresh        = view.findViewById(R.id.swipeRefreshAccount)
 
-        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            layoutHeader.setPadding(
-                layoutHeader.paddingLeft,
-                systemBars.top + resources.getDimensionPixelSize(R.dimen.header_padding_top),
-                layoutHeader.paddingRight,
-                layoutHeader.paddingBottom
-            )
-            insets
-        }
-
         loadProfile()
-        loadStats()
         setupLogout()
 
         swipeRefresh.setOnRefreshListener {
             loadProfile()
-            loadStats()
         }
 
         return view
@@ -88,8 +63,6 @@ class ClientAccountFragment : Fragment() {
             .addOnSuccessListener { doc ->
                 val user = doc.toObject(User::class.java) ?: return@addOnSuccessListener
                 tvName.text    = user.name
-                tvEmail.text   = user.email
-                tvAddress.text = user.address
 
                 if (user.profileImage.isNotEmpty()) {
                     ivProfile.load(user.profileImage) {
@@ -107,30 +80,10 @@ class ClientAccountFragment : Fragment() {
     }
 
     // --------------------------------------------------
-    // STATS
-    // --------------------------------------------------
-    private fun loadStats() {
-        val uid = auth.currentUser?.uid ?: return
-        firestore.collection("jobs")
-            .whereEqualTo("clientId", uid)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                tvTotalRequests.text = "${snapshot.size()}"
-            }
-        firestore.collection("jobs")
-            .whereEqualTo("clientId", uid)
-            .whereEqualTo("status", "COMPLETED")
-            .get()
-            .addOnSuccessListener { snapshot ->
-                tvCompletedRequests.text = "${snapshot.size()}"
-            }
-    }
-
-    // --------------------------------------------------
     // LOGOUT
     // --------------------------------------------------
     private fun setupLogout() {
-        btnLogout.setOnClickListener {
+        cardLogout.setOnClickListener {
             showLogoutConfirmDialog()
         }
     }
