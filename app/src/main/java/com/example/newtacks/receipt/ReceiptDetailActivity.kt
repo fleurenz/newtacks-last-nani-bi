@@ -40,6 +40,16 @@ class ReceiptDetailActivity : AppCompatActivity() {
                 findViewById<TextView>(R.id.tvAmount).text = "₱${receipt.amount}"
                 findViewById<TextView>(R.id.tvService).text = receipt.serviceCategory
 
+                val ref = if (receipt.referenceNumber.isNotEmpty()) {
+                    receipt.referenceNumber
+                } else {
+                    // Fallback for old receipts
+                    receipt.receiptId.filter { it.isDigit() }.take(8).let {
+                        if (it.length == 8) it else "24921023" // Example fallback
+                    }
+                }
+                findViewById<TextView>(R.id.tvReferenceNumber).text = "Ref: #TX-$ref"
+
                 val sdf = SimpleDateFormat("dd/MM/yy hh:mm a", Locale.getDefault())
                 findViewById<TextView>(R.id.tvRequestedDate).text = sdf.format(Date(receipt.createdAt))
                 findViewById<TextView>(R.id.tvCompletedDate).text = sdf.format(Date(receipt.completedAt))

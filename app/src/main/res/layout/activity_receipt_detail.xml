@@ -36,15 +36,29 @@
 
             <!-- Header -->
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="6dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_receipt_header_highlight"
                 android:gravity="center"
                 android:letterSpacing="0.1"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="4dp"
                 android:text="OFFICIAL RECEIPT"
-                android:textColor="#94A3B8"
-                android:textSize="11sp"
+                android:textColor="#F59E0B"
+                android:textSize="12sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvReferenceNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:gravity="center"
+                android:text="Ref: #TX-00000000"
+                android:textColor="#64748B"
+                android:textSize="13sp" />
 
             <TextView
                 android:id="@+id/tvReceiptTitle"

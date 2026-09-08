@@ -16,6 +16,8 @@ data class Receipt(
 
     val amount: Double = 0.0,
 
+    val referenceNumber: String = "",
+
     val createdAt: Long = System.currentTimeMillis(),
     val completedAt: Long = System.currentTimeMillis()
 )

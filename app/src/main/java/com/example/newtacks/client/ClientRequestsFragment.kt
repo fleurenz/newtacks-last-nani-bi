@@ -415,7 +415,21 @@ class ClientRequestsFragment : Fragment() {
     private fun generateReceipt(job: Job) {
         val workerId = job.workerId ?: return
         val receiptId = firestore.collection("receipts").document().id
-        val receipt = Receipt(receiptId = receiptId, jobId = job.jobId, clientId = job.clientId, workerId = workerId, clientName = job.clientName, workerName = job.workerName ?: "", jobTitle = job.jobTitle, serviceCategory = job.serviceCategory, amount = job.offeredAmount, createdAt = job.createdAt, completedAt = job.completedAt ?: System.currentTimeMillis())
+        val refNum = (10000000..99999999).random().toString()
+        val receipt = Receipt(
+            receiptId = receiptId,
+            jobId = job.jobId,
+            clientId = job.clientId,
+            workerId = workerId,
+            clientName = job.clientName,
+            workerName = job.workerName ?: "",
+            jobTitle = job.jobTitle,
+            serviceCategory = job.serviceCategory,
+            amount = job.offeredAmount,
+            referenceNumber = refNum,
+            createdAt = job.createdAt,
+            completedAt = job.completedAt ?: System.currentTimeMillis()
+        )
         firestore.collection("receipts").document(receiptId).set(receipt)
             .addOnSuccessListener {
                 com.example.newtacks.utils.NotificationHelper.sendNotification(workerId, "Job Confirmed", "Client has confirmed work.", "JOB")
