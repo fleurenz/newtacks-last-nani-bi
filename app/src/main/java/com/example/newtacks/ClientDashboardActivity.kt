@@ -8,6 +8,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import com.example.newtacks.client.*
 import com.example.newtacks.utils.ChatbotUtils
@@ -40,21 +42,9 @@ class ClientDashboardActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_client_dashboard)
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.clientBottomNav)
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.clientRootLayout)) { _, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            bottomNav.setPadding(
-                bottomNav.paddingLeft,
-                bottomNav.paddingTop,
-                bottomNav.paddingRight,
-                systemBars.bottom
-            )
-            insets
-        }
 
         val fragmentToOpen = intent.getStringExtra(OPEN_FRAGMENT)
         
@@ -99,6 +89,12 @@ class ClientDashboardActivity : AppCompatActivity() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         listenForJobHandshake()
         listenForUnreadMessages()
+
+        ViewCompat.setOnApplyWindowInsetsListener(bottomNav) { v, insets ->
+            val navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            v.updatePadding(bottom = navBars.bottom)
+            insets
+        }
 
         // Start background service for vital notifications
         val serviceIntent = Intent(this, com.example.newtacks.utils.NotificationService::class.java)

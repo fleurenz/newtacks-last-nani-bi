@@ -13,14 +13,17 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import coil.load
+import coil.transform.CircleCropTransformation
 import com.example.newtacks.R
 import com.example.newtacks.models.Job
+import com.example.newtacks.models.User
 import com.example.newtacks.utils.ImageUtils
 import com.example.newtacks.utils.RouteApiService
 import com.example.newtacks.utils.RouteUtils
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -58,6 +61,9 @@ class WorkerFeedFragment : Fragment() {
     private var mapLibreMap: MapLibreMap? = null
     private lateinit var tabLayoutFeed: TabLayout
     private lateinit var tvWorkerNameHeader: TextView
+
+    private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
+    private lateinit var bsView: View
 
     private lateinit var fabZoomIn: ImageButton
     private lateinit var fabZoomOut: ImageButton
@@ -130,6 +136,23 @@ class WorkerFeedFragment : Fragment() {
         tabLayoutFeed       = view.findViewById(R.id.tabLayoutFeed)
         tvWorkerNameHeader  = view.findViewById(R.id.tvWorkerNameHeader)
 
+        bsView = view.findViewById(R.id.jobDetailsBottomSheet)
+        bottomSheetBehavior = BottomSheetBehavior.from(bsView)
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        
+        // Set height to half of the screen
+        val displayMetrics = resources.displayMetrics
+        bsView.layoutParams.height = displayMetrics.heightPixels / 2
+        
+        bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+            override fun onStateChanged(bottomSheet: View, newState: Int) {
+                if (newState == BottomSheetBehavior.STATE_HIDDEN) {
+                    mapLibreMap?.setPadding(0, 0, 0, 0)
+                }
+            }
+            override fun onSlide(bottomSheet: View, slideOffset: Float) {}
+        })
+
         fabZoomIn           = view.findViewById(R.id.fabZoomIn)
         fabZoomOut          = view.findViewById(R.id.fabZoomOut)
 
@@ -149,31 +172,27 @@ class WorkerFeedFragment : Fragment() {
         adapter = WorkerJobAdapter(combinedOpportunities) { opportunity -> 
             cardListOverlay.visibility = View.GONE
             
-            val lat: Double
-            val lng: Double
-            
             when (opportunity) {
                 is FeedOpportunity.ClientJob -> {
-                    lat = opportunity.job.latitude
-                    lng = opportunity.job.longitude
+                    showJobDetailsBottomSheet(opportunity.job, opportunity.distanceStr)
                 }
                 is FeedOpportunity.CompanyHiring -> {
-                    lat = opportunity.post.latitude
-                    lng = opportunity.post.longitude
+                    // hiring can still use the old preview or I can make one for it too?
+                    // The request asked for "job requests" specifically
+                    zoomToLocation(opportunity.latitude, opportunity.longitude)
+                    showHiringPreview(opportunity.post)
                 }
                 is FeedOpportunity.ActiveJob -> {
-                    lat = opportunity.job.latitude
-                    lng = opportunity.job.longitude
+                    showJobDetailsBottomSheet(opportunity.job, opportunity.distanceStr)
                 }
-            }
-            
-            if (lat != 0.0 && lng != 0.0) {
-                mapLibreMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 15.0))
             }
         }
         recyclerView.adapter = adapter
 
         fabToggleList.setOnClickListener {
+            if (bottomSheetBehavior.state != BottomSheetBehavior.STATE_HIDDEN) {
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+            }
             cardListOverlay.visibility = if (cardListOverlay.visibility == View.VISIBLE) View.GONE else View.VISIBLE
         }
 
@@ -236,7 +255,77 @@ class WorkerFeedFragment : Fragment() {
         }
     }
 
+    private fun showJobDetailsBottomSheet(job: Job, distanceStr: String) {
+        val ivProfile   = bsView.findViewById<ImageView>(R.id.ivClientProfileBS)
+        val tvName      = bsView.findViewById<TextView>(R.id.tvClientNameBS)
+        val tvDistance  = bsView.findViewById<TextView>(R.id.tvDistanceBS)
+        val tvService   = bsView.findViewById<TextView>(R.id.tvServiceTypeBS)
+        val tvAddress   = bsView.findViewById<TextView>(R.id.tvAddressBS)
+        val tvTime      = bsView.findViewById<TextView>(R.id.tvTimeBS)
+        val tvDate      = bsView.findViewById<TextView>(R.id.tvDateBS)
+        val btnImages   = bsView.findViewById<TextView>(R.id.btnViewImagesBS)
+        val tvRate      = bsView.findViewById<TextView>(R.id.tvRateBS)
+        val tvDesc      = bsView.findViewById<TextView>(R.id.tvDescriptionBS)
+        val btnDecline  = bsView.findViewById<Button>(R.id.btnDeclineBS)
+        val btnAccept   = bsView.findViewById<Button>(R.id.btnAcceptBS)
+
+        tvName.text = job.clientName
+        tvDistance.text = distanceStr
+        tvService.text = job.serviceCategory
+        tvAddress.text = job.clientAddress
+        tvTime.text = job.scheduledTime
+        tvDate.text = job.scheduledDate
+        tvRate.text = "₱${job.offeredAmount}/${job.rateType}"
+        tvDesc.text = job.description
+
+        // Load client profile pic
+        db.collection("users").document(job.clientId).get().addOnSuccessListener { doc ->
+            val user = doc.toObject(User::class.java)
+            user?.profileImage?.let { url ->
+                ivProfile.load(url) {
+                    crossfade(true)
+                    placeholder(R.drawable.ic_person_placeholder)
+                    transformations(CircleCropTransformation())
+                }
+            }
+        }
+
+        btnImages.setOnClickListener {
+            if (job.jobImages.isNotEmpty()) {
+                ImageUtils.showFullscreenImage(requireContext(), job.jobImages[0])
+            } else {
+                Toast.makeText(requireContext(), "No images provided", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        btnDecline.setOnClickListener {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        }
+
+        btnAccept.setOnClickListener {
+            btnAccept.isEnabled = false
+            acceptJob(job) { success ->
+                if (success) {
+                    bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+                } else {
+                    btnAccept.isEnabled = true
+                }
+            }
+        }
+
+        // Show bottom sheet
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+        
+        // Pan map with offset
+        val latLng = LatLng(job.latitude, job.longitude)
+        // Adjust padding for half-screen sheet (roughly 45% of height to be safe)
+        val offset = (resources.displayMetrics.heightPixels * 0.45).toInt()
+        mapLibreMap?.setPadding(0, 0, 0, offset) 
+        mapLibreMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16.0))
+    }
+
     fun zoomToLocation(lat: Double, lng: Double) {
+        mapLibreMap?.setPadding(0, 0, 0, 0)
         mapLibreMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 15.0))
     }
 
@@ -415,7 +504,13 @@ class WorkerFeedFragment : Fragment() {
                 // Use default MapLibre compass as requested
                 map.uiSettings.isCompassEnabled = true
                 map.uiSettings.setCompassGravity(Gravity.BOTTOM or Gravity.START)
-                map.uiSettings.setCompassMargins(48, 0, 0, 48)
+                // Offset compass from bottom nav area (64dp + 16dp margin)
+                val density = resources.displayMetrics.density
+                val offset = (80 * density).toInt()
+                map.uiSettings.setCompassMargins(48, 0, 0, offset)
+                
+                // Set initial map padding for bottom nav
+                map.setPadding(0, 0, 0, (64 * density).toInt())
                 
                 enableUserLocation(map, moveCamera = true)
                 updateMapMarkers()
@@ -434,7 +529,13 @@ class WorkerFeedFragment : Fragment() {
                         ?: myActiveHandshakeJobs.find { it.jobId == entityId }
                     
                     if (job != null) {
-                        showJobPreview(job)
+                        // Find distance string for this job
+                        val opp = combinedOpportunities.find { 
+                            (it is FeedOpportunity.ClientJob && it.job.jobId == job.jobId) ||
+                            (it is FeedOpportunity.ActiveJob && it.job.jobId == job.jobId)
+                        }
+                        val dist = opp?.distanceStr ?: "-- km away"
+                        showJobDetailsBottomSheet(job, dist)
                     } else {
                         val hiringPost = hiringList.find { it.hiringId == entityId }
                         if (hiringPost != null) {
@@ -564,77 +665,6 @@ class WorkerFeedFragment : Fragment() {
                 t.printStackTrace()
             }
         })
-    }
-
-    private fun showJobPreview(job: Job) {
-        val view = layoutInflater.inflate(R.layout.dialog_job_preview, null)
-        val tvTitle   = view.findViewById<TextView>(R.id.tvTitle)
-        val tvDetails = view.findViewById<TextView>(R.id.tvDetails)
-        val tvDuration = view.findViewById<TextView>(R.id.tvDuration)
-        val layoutImages = view.findViewById<LinearLayout>(R.id.layoutImages)
-        val tvNoImages = view.findViewById<TextView>(R.id.tvNoImages)
-        val btnAccept = view.findViewById<Button>(R.id.btnAccept)
-        val btnClose  = view.findViewById<Button>(R.id.btnClose)
-        val progressAccept = view.findViewById<ProgressBar>(R.id.progressAccept)
-
-        tvTitle.text = job.jobTitle
-        tvDetails.text = """
-            Category: ${job.serviceCategory}
-            Client: ${job.clientName}
-            Address: ${job.clientAddress}
-            Price: ₱${job.offeredAmount}
-            Description: ${job.description}
-        """.trimIndent()
-
-        tvDuration.text = "Estimated Duration: ${job.estimatedDurationHours} hours"
-
-        if (job.jobImages.isEmpty()) {
-            tvNoImages.visibility = View.VISIBLE
-        } else {
-            tvNoImages.visibility = View.GONE
-            job.jobImages.forEach { url ->
-                val imageView = ImageView(requireContext())
-                val size = resources.getDimensionPixelSize(R.dimen.preview_image_size)
-                val params = LinearLayout.LayoutParams(size, size)
-                params.setMargins(0, 0, 12, 0)
-                imageView.layoutParams = params
-                imageView.scaleType = ImageView.ScaleType.CENTER_CROP
-                imageView.load(url) {
-                    crossfade(true)
-                    placeholder(R.drawable.bg_image_placeholder)
-                }
-                imageView.setOnClickListener {
-                    ImageUtils.showFullscreenImage(requireContext(), url)
-                }
-                layoutImages.addView(imageView)
-            }
-        }
-
-        val dialog = android.app.AlertDialog.Builder(requireContext())
-            .setView(view)
-            .create()
-
-        btnClose.setOnClickListener { dialog.dismiss() }
-        btnAccept.setOnClickListener {
-            btnAccept.text = ""
-            btnAccept.isEnabled = false
-            btnClose.isEnabled = false
-            progressAccept.visibility = View.VISIBLE
-            
-            acceptJob(job) { success ->
-                if (!success) {
-                    btnAccept.text = "Accept Job"
-                    btnAccept.isEnabled = true
-                    btnClose.isEnabled = true
-                    progressAccept.visibility = View.GONE
-                } else {
-                    dialog.dismiss()
-                }
-            }
-        }
-
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        dialog.show()
     }
 
     private fun showHiringPreview(post: HiringPost) {
