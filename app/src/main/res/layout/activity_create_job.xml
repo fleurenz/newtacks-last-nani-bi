@@ -262,15 +262,24 @@
                             android:hint="Rate" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <Spinner
-                        android:id="@+id/spinnerRateType"
+                    <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="0dp"
-                        android:layout_height="56dp"
+                        android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:layout_marginStart="12dp"
-                        android:background="@drawable/bg_spinner_improved"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="12dp" />
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp">
+                        <AutoCompleteTextView
+                            android:id="@+id/spinnerRateType"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:hint="Type"
+                            android:textColor="#1E293B" />
+                    </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
 
                 <!-- Date & Time Section -->

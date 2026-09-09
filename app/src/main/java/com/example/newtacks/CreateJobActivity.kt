@@ -48,7 +48,7 @@ class CreateJobActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private lateinit var spinnerServiceType: Spinner
-    private lateinit var spinnerRateType: Spinner
+    private lateinit var spinnerRateType: AutoCompleteTextView
     private lateinit var btnSelectDate: com.google.android.material.button.MaterialButton
     private lateinit var btnSelectTime: com.google.android.material.button.MaterialButton
     private lateinit var etOfferAmount: EditText
@@ -319,8 +319,9 @@ class CreateJobActivity : AppCompatActivity() {
                 
                 // Pre-select rate
                 val rates = arrayOf("One-time", "Per Hour", "Per Day")
-                val rateIndex = rates.indexOf(job.rateType)
-                if (rateIndex != -1) spinnerRateType.setSelection(rateIndex)
+                if (rates.contains(job.rateType)) {
+                    spinnerRateType.setText(job.rateType, false)
+                }
                 
                 // Note: handling existing images for editing would require more logic (showing them as URLs)
                 // For now, we'll just keep it simple. If they add new images, they replace or add to the list?
@@ -395,8 +396,10 @@ class CreateJobActivity : AppCompatActivity() {
 
     private fun setupRateSpinner() {
         val rates = arrayOf("One-time", "Per Hour", "Per Day")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, rates)
-        spinnerRateType.adapter = adapter
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, rates)
+        spinnerRateType.setAdapter(adapter)
+        // Default value
+        spinnerRateType.setText(rates[0], false)
     }
 
     // ---------------- DATE PICKER ----------------
@@ -556,7 +559,7 @@ class CreateJobActivity : AppCompatActivity() {
         val serviceCategory = spinnerServiceType.selectedItem.toString()
         val offerInput = etOfferAmount.text.toString().trim()
         val description = etDescription.text.toString().trim()
-        val rateType = spinnerRateType.selectedItem.toString()
+        val rateType = spinnerRateType.text.toString()
 
         if (!validateForm()) {
             Toast.makeText(this, "Please complete all fields", Toast.LENGTH_SHORT).show()
