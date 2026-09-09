@@ -1,14 +1,22 @@
 package com.example.newtacks.client
 
-import android.content.Intent
+import android.graphics.Color
 import android.location.Geocoder
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
+import coil.load
+import coil.transform.CircleCropTransformation
+import com.cloudinary.android.MediaManager
+import com.cloudinary.android.callback.ErrorInfo
+import com.cloudinary.android.callback.UploadCallback
 import com.example.newtacks.R
 import com.example.newtacks.models.User
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -17,6 +25,7 @@ import com.google.android.gms.location.Priority
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.yalantis.ucrop.UCrop
 import java.util.Locale
 
 class ClientEditProfileActivity : AppCompatActivity() {
@@ -25,6 +34,8 @@ class ClientEditProfileActivity : AppCompatActivity() {
     private val auth = FirebaseAuth.getInstance()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
+    private lateinit var ivProfileImage: ImageView
+    private lateinit var layoutProfileImage: View
     private lateinit var etName: EditText
     private lateinit var etPhone: EditText
     private lateinit var etAddress: EditText
@@ -34,6 +45,42 @@ class ClientEditProfileActivity : AppCompatActivity() {
     private var selectedLat: Double = 0.0
     private var selectedLng: Double = 0.0
     private var profileAddress = ""
+    private var selectedImageUri: Uri? = null
+    private var currentProfileImageUrl: String = ""
+
+    private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { startCrop(it) }
+    }
+
+    private val cropImage = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val resultUri = UCrop.getOutput(result.data!!)
+            if (resultUri != null) {
+                selectedImageUri = resultUri
+                ivProfileImage.load(resultUri) {
+                    transformations(CircleCropTransformation())
+                }
+            }
+        } else if (result.resultCode == UCrop.RESULT_ERROR) {
+            val cropError = UCrop.getError(result.data!!)
+            Toast.makeText(this, "Crop error: ${cropError?.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun startCrop(uri: Uri) {
+        val destinationUri = Uri.fromFile(java.io.File(cacheDir, "profile_crop_${System.currentTimeMillis()}.jpg"))
+        val uCrop = UCrop.of(uri, destinationUri)
+            .withAspectRatio(1f, 1f)
+            .withMaxResultSize(500, 500)
+        
+        val options = UCrop.Options()
+        options.setToolbarColor(ContextCompat.getColor(this, R.color.primary))
+        options.setToolbarWidgetColor(Color.WHITE)
+        options.setActiveControlsWidgetColor(ContextCompat.getColor(this, R.color.primary))
+        
+        uCrop.withOptions(options)
+        cropImage.launch(uCrop.getIntent(this))
+    }
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -51,11 +98,17 @@ class ClientEditProfileActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         toolbar.setNavigationOnClickListener { finish() }
 
+        ivProfileImage = findViewById(R.id.ivProfileImage)
+        layoutProfileImage = findViewById(R.id.layoutProfileImage)
         etName = findViewById(R.id.etName)
         etPhone = findViewById(R.id.etPhone)
         etAddress = findViewById(R.id.etAddress)
         switchRealTimeLocation = findViewById(R.id.switchRealTimeLocation)
         loadingOverlay = findViewById(R.id.loadingOverlay)
+
+        layoutProfileImage.setOnClickListener {
+            pickImage.launch("image/*")
+        }
 
         switchRealTimeLocation.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -68,7 +121,7 @@ class ClientEditProfileActivity : AppCompatActivity() {
         loadCurrentData()
 
         findViewById<View>(R.id.btnSave).setOnClickListener {
-            saveData()
+            checkAndSave()
         }
     }
 
@@ -87,6 +140,15 @@ class ClientEditProfileActivity : AppCompatActivity() {
                 profileAddress = user.address
                 selectedLat = user.latitude ?: 0.0
                 selectedLng = user.longitude ?: 0.0
+                currentProfileImageUrl = user.profileImage
+
+                if (user.profileImage.isNotEmpty()) {
+                    ivProfileImage.load(user.profileImage) {
+                        crossfade(true)
+                        placeholder(R.drawable.ic_person_placeholder)
+                        transformations(CircleCropTransformation())
+                    }
+                }
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
@@ -138,9 +200,7 @@ class ClientEditProfileActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveData() {
-        val uid = auth.currentUser?.uid ?: return
-        
+    private fun checkAndSave() {
         val name = etName.text.toString().trim()
         val phone = etPhone.text.toString().trim()
         val address = etAddress.text.toString().trim()
@@ -150,14 +210,49 @@ class ClientEditProfileActivity : AppCompatActivity() {
             return
         }
 
+        if (selectedImageUri != null) {
+            uploadImageAndSave(selectedImageUri!!)
+        } else {
+            saveData(currentProfileImageUrl)
+        }
+    }
+
+    private fun uploadImageAndSave(uri: Uri) {
+        loadingOverlay.visibility = View.VISIBLE
+        Toast.makeText(this, "Uploading image...", Toast.LENGTH_SHORT).show()
+
+        MediaManager.get().upload(uri)
+            .option("folder", "profile_images")
+            .callback(object : UploadCallback {
+                override fun onStart(requestId: String?) {}
+                override fun onProgress(requestId: String?, bytes: Long, totalBytes: Long) {}
+                override fun onSuccess(requestId: String?, resultData: MutableMap<Any?, Any?>?) {
+                    val imageUrl = resultData?.get("secure_url").toString()
+                    saveData(imageUrl)
+                }
+                override fun onError(requestId: String?, error: ErrorInfo?) {
+                    loadingOverlay.visibility = View.GONE
+                    Toast.makeText(this@ClientEditProfileActivity, "Upload failed: ${error?.description}", Toast.LENGTH_SHORT).show()
+                }
+                override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
+            }).dispatch()
+    }
+
+    private fun saveData(imageUrl: String) {
+        val uid = auth.currentUser?.uid ?: return
         loadingOverlay.visibility = View.VISIBLE
         
+        val name = etName.text.toString().trim()
+        val phone = etPhone.text.toString().trim()
+        val address = etAddress.text.toString().trim()
+
         val updates = mapOf(
             "name" to name,
             "phone" to phone,
             "address" to address,
             "latitude" to selectedLat,
-            "longitude" to selectedLng
+            "longitude" to selectedLng,
+            "profileImage" to imageUrl
         )
 
         firestore.collection("users").document(uid).update(updates)
