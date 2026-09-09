@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.example.newtacks.utils.NotificationHelper
 import com.example.newtacks.R
 import com.example.newtacks.models.HiringPost
 import com.google.firebase.auth.FirebaseAuth
@@ -67,6 +68,10 @@ class CompanyHiringFragment : Fragment() {
         
         setupRecyclerView()
         setupTabs()
+        
+        view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
+            NotificationHelper.showNotificationDialog(requireContext())
+        }
         
         btnFilter.setOnClickListener {
             toggleSorting()

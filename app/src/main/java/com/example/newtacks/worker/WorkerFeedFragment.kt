@@ -142,8 +142,7 @@ class WorkerFeedFragment : Fragment() {
         }
         
         view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
-            // Already handled by Dashboard activity badges, but can link to a list here
-            Toast.makeText(requireContext(), "No new notifications", Toast.LENGTH_SHORT).show()
+            com.example.newtacks.utils.NotificationHelper.showNotificationDialog(requireContext())
         }
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())

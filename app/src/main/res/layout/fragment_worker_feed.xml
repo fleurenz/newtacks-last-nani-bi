@@ -54,11 +54,10 @@
             android:id="@+id/btnNotifications"
             android:layout_width="28dp"
             android:layout_height="28dp"
-            android:src="@drawable/ic_notifications"
-            app:tint="#F59E0B"
-            android:background="@drawable/bg_circle"
-            android:backgroundTint="#FFFFFF"
-            android:padding="4dp" />
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_notifications" />
+
 
     </LinearLayout>
 

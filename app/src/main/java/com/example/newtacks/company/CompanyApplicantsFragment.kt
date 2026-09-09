@@ -18,6 +18,7 @@ import com.example.newtacks.R
 import com.example.newtacks.models.Application
 import com.example.newtacks.models.HiringPost
 import com.example.newtacks.models.User
+import com.example.newtacks.utils.NotificationHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -77,7 +78,7 @@ class CompanyApplicantsFragment : Fragment() {
         }
 
         view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
-            Toast.makeText(requireContext(), "No new notifications", Toast.LENGTH_SHORT).show()
+            NotificationHelper.showNotificationDialog(requireContext())
         }
 
         setupRecyclerView()

@@ -11,6 +11,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
+import com.example.newtacks.utils.NotificationHelper
 import com.example.newtacks.ClientDashboardActivity
 import com.example.newtacks.CreateJobActivity
 import com.example.newtacks.R
@@ -53,6 +54,11 @@ class ClientHomeFragment : Fragment() {
         }
 
         setupServiceClickListeners(view)
+        
+        view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
+            NotificationHelper.showNotificationDialog(requireContext())
+        }
+
         loadUserInfo()
         listenForActiveJob()
 

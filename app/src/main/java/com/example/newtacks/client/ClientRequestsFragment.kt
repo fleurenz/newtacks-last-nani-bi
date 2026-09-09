@@ -12,6 +12,7 @@ import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import coil.load
 import coil.transform.CircleCropTransformation
+import com.example.newtacks.utils.NotificationHelper
 import com.example.newtacks.R
 import com.example.newtacks.models.Job
 import com.example.newtacks.models.Receipt
@@ -140,6 +141,10 @@ class ClientRequestsFragment : Fragment() {
 
         loadingOverlay       = view.findViewById(R.id.loadingOverlay)
         tvLoadingMessage     = view.findViewById(R.id.tvLoadingMessage)
+
+        view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
+            NotificationHelper.showNotificationDialog(requireContext())
+        }
 
         // Use the spacer to physically push content down exactly by the status bar height
         val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)

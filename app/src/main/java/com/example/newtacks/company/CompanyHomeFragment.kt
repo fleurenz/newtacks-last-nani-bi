@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import coil.load
 import coil.transform.CircleCropTransformation
+import com.example.newtacks.utils.NotificationHelper
 import com.example.newtacks.R
 import com.example.newtacks.models.HiringPost
 import com.example.newtacks.models.User
@@ -52,6 +53,10 @@ class CompanyHomeFragment : Fragment() {
         rvActivePosts = view.findViewById(R.id.rvActivePostsHome)
         swipeRefresh = view.findViewById(R.id.swipeRefreshHome)
         tvInterviewCount = view.findViewById(R.id.tvInterviewCount)
+
+        view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
+            NotificationHelper.showNotificationDialog(requireContext())
+        }
 
         // Robust Inset Handling: Use spacer for status bar
         val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)

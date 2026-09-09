@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.example.newtacks.utils.NotificationHelper
 import com.example.newtacks.R
 import com.example.newtacks.models.Application
 import com.example.newtacks.models.HiringPost
@@ -75,6 +76,10 @@ class WorkerHiringFragment : Fragment() {
         setupAdapters()
         setupTabs()
         setupSearch()
+
+        view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
+            NotificationHelper.showNotificationDialog(requireContext())
+        }
 
         // Robust Inset Handling: Use spacer for status bar
         val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)
