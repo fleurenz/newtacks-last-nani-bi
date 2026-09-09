@@ -467,10 +467,14 @@ class HiringDetailsActivity : AppCompatActivity() {
         val ivProfile = dialogView.findViewById<ImageView>(R.id.ivWorkerProfile)
         val tvName = dialogView.findViewById<TextView>(R.id.tvWorkerName)
         val tvRating = dialogView.findViewById<TextView>(R.id.tvWorkerRating)
-        val tvStatus = dialogView.findViewById<TextView>(R.id.tvWorkerBadge)
+        val tvBadge = dialogView.findViewById<TextView>(R.id.tvWorkerBadge)
         val tvPhone = dialogView.findViewById<TextView>(R.id.tvWorkerPhone)
         val tvExp = dialogView.findViewById<TextView>(R.id.tvWorkerExperience)
         val tvCat = dialogView.findViewById<TextView>(R.id.tvWorkerCategories)
+        
+        val tvDetailedStatus = dialogView.findViewById<TextView>(R.id.tvDetailedStatus)
+        val btnPrimary = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnProcessPrimary)
+        val btnSecondary = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnProcessSecondary)
         
         tvName.text = worker.name
         tvRating.text = "⭐ %.1f (%d reviews)".format(worker.rating, worker.totalRatings)
@@ -479,19 +483,93 @@ class HiringDetailsActivity : AppCompatActivity() {
         tvCat.text = worker.serviceCategories?.joinToString(", ") ?: "General Services"
 
         val app = applicationMap[worker.uid]
-        tvStatus.visibility = View.VISIBLE
-        tvStatus.text = app?.status ?: "APPLIED"
-
-        // Credentials/Badges
+        
+        // Setup Status Badge (NC Level)
         if (worker.verificationStatus > 0) {
-            tvStatus.text = "NC${worker.verificationStatus}"
-            tvStatus.setBackgroundResource(R.drawable.bg_badge_green1)
+            tvBadge.visibility = View.VISIBLE
+            tvBadge.text = "NC${worker.verificationStatus}"
+            tvBadge.setBackgroundResource(R.drawable.bg_badge_green1)
+        } else {
+            tvBadge.visibility = View.GONE
         }
 
         ivProfile.load(worker.profileImage) {
             crossfade(true)
             placeholder(R.drawable.ic_user_placeholder)
             transformations(CircleCropTransformation())
+        }
+
+        // Detailed Status String
+        val statusText = when (app?.status) {
+            "APPLIED" -> "Approved"
+            "INTERVIEW_SCHEDULED" -> {
+                val sdf = java.text.SimpleDateFormat("MMM dd, yyyy 'at' h:mm a", Locale.getDefault())
+                val dateStr = if (app.interviewDate != null) sdf.format(java.util.Date(app.interviewDate)) else "TBD"
+                val response = when(app.workerResponse) {
+                    "ACCEPTED" -> " (Confirmed)"
+                    "REJECTED" -> " (Rejected)"
+                    else -> " (Pending Confirmation)"
+                }
+                "Interview Scheduled at: $dateStr$response"
+            }
+            "HIRED" -> "Hired"
+            "CANCELLED" -> "Cancelled"
+            "REJECTED" -> "Rejected"
+            else -> "Awaiting Review"
+        }
+        tvDetailedStatus.text = statusText
+
+        // Process Buttons Logic
+        btnPrimary.visibility = View.GONE
+        btnSecondary.visibility = View.GONE
+
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        dialogView.findViewById<View>(R.id.btnCloseDialog).setOnClickListener {
+            dialog.dismiss()
+        }
+
+        when (app?.status) {
+            "APPLIED" -> {
+                btnPrimary.visibility = View.VISIBLE
+                btnPrimary.text = "Schedule Interview"
+                btnPrimary.setOnClickListener { dialog.dismiss(); showScheduleInterviewDialog(worker) }
+                
+                btnSecondary.visibility = View.VISIBLE
+                btnSecondary.text = "Reject Applicant"
+                btnSecondary.setOnClickListener { 
+                    android.app.AlertDialog.Builder(this)
+                        .setTitle("Reject Applicant")
+                        .setMessage("Are you sure you want to reject this applicant?")
+                        .setPositiveButton("Reject") { _, _ -> dialog.dismiss(); rejectApplicant(worker) }
+                        .setNegativeButton("Cancel", null)
+                        .show()
+                }
+            }
+            "INTERVIEW_SCHEDULED" -> {
+                if (app.workerResponse == "ACCEPTED") {
+                    btnPrimary.visibility = View.VISIBLE
+                    btnPrimary.text = "Hire Worker"
+                    btnPrimary.setOnClickListener { dialog.dismiss(); confirmHiring(worker) }
+                } else {
+                    btnPrimary.visibility = View.VISIBLE
+                    btnPrimary.text = "Reschedule Interview"
+                    btnPrimary.setOnClickListener { dialog.dismiss(); showScheduleInterviewDialog(worker) }
+                }
+                
+                btnSecondary.visibility = View.VISIBLE
+                btnSecondary.text = "Reject Applicant"
+                btnSecondary.setOnClickListener { 
+                    android.app.AlertDialog.Builder(this)
+                        .setTitle("Reject Applicant")
+                        .setMessage("Are you sure you want to reject this applicant?")
+                        .setPositiveButton("Reject") { _, _ -> dialog.dismiss(); rejectApplicant(worker) }
+                        .setNegativeButton("Cancel", null)
+                        .show()
+                }
+            }
         }
 
         // Certificates buttons
@@ -514,35 +592,12 @@ class HiringDetailsActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        val builder = android.app.AlertDialog.Builder(this)
-            .setView(dialogView)
-            .setNegativeButton("Close", null)
-
-        if (app?.status != "CANCELLED" && app?.status != "HIRED" && app?.status != "REJECTED") {
-            builder.setNeutralButton("Reject", { _, _ -> 
-                android.app.AlertDialog.Builder(this)
-                    .setTitle("Reject Applicant")
-                    .setMessage("Are you sure you want to reject this applicant? This action cannot be undone.")
-                    .setPositiveButton("Reject") { _, _ -> rejectApplicant(worker) }
-                    .setNegativeButton("Cancel", null)
-                    .show()
-            })
-        }
-
-        when (app?.status) {
-            "APPLIED" -> {
-                builder.setPositiveButton("Schedule Interview", { _, _ -> showScheduleInterviewDialog(worker) })
-            }
-            "INTERVIEW_SCHEDULED" -> {
-                if (app.workerResponse == "ACCEPTED") {
-                    builder.setPositiveButton("Hire", { _, _ -> confirmHiring(worker) })
-                } else if (app.workerResponse == "RESCHEDULE") {
-                    builder.setPositiveButton("Reschedule", { _, _ -> showScheduleInterviewDialog(worker) })
-                }
-            }
-        }
-        
-        builder.show()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.95).toInt(),
+            (resources.displayMetrics.heightPixels * 0.85).toInt()
+        )
+        dialog.show()
     }
 
     private fun showScheduleInterviewDialog(worker: User) {

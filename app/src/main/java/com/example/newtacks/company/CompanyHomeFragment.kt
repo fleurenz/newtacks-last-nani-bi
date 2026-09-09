@@ -19,6 +19,7 @@ import com.example.newtacks.utils.NotificationHelper
 import com.example.newtacks.R
 import com.example.newtacks.models.HiringPost
 import com.example.newtacks.models.User
+import com.example.newtacks.models.Application
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -32,14 +33,18 @@ class CompanyHomeFragment : Fragment() {
     private lateinit var tvCompanyName: TextView
     private lateinit var ivCompanyProfile: ImageView
     private lateinit var rvActivePosts: RecyclerView
+    private lateinit var rvTodayAgenda: RecyclerView
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var tvInterviewCount: TextView
+    private lateinit var tvNoAgenda: TextView
     
     private var profileListener: ListenerRegistration? = null
     private var postsListener: ListenerRegistration? = null
     private var agendaListener: ListenerRegistration? = null
     private val activePosts = mutableListOf<HiringPost>()
+    private val agendaItems = mutableListOf<Pair<com.example.newtacks.models.Application, User?>>()
     private lateinit var adapter: CompanyPostAdapter
+    private lateinit var agendaAdapter: CompanyAgendaAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -51,8 +56,10 @@ class CompanyHomeFragment : Fragment() {
         tvCompanyName = view.findViewById(R.id.tvCompanyName)
         ivCompanyProfile = view.findViewById(R.id.ivCompanyProfile)
         rvActivePosts = view.findViewById(R.id.rvActivePostsHome)
+        rvTodayAgenda = view.findViewById(R.id.rvTodayAgenda)
         swipeRefresh = view.findViewById(R.id.swipeRefreshHome)
         tvInterviewCount = view.findViewById(R.id.tvInterviewCount)
+        tvNoAgenda = view.findViewById(R.id.tvNoAgenda)
 
         view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
             NotificationHelper.showNotificationDialog(requireContext())
@@ -118,6 +125,24 @@ class CompanyHomeFragment : Fragment() {
         })
         rvActivePosts.layoutManager = LinearLayoutManager(requireContext())
         rvActivePosts.adapter = adapter
+
+        agendaAdapter = CompanyAgendaAdapter(emptyList()) { app ->
+            fetchPostAndOpen(app.hiringId)
+        }
+        rvTodayAgenda.layoutManager = LinearLayoutManager(requireContext())
+        rvTodayAgenda.adapter = agendaAdapter
+    }
+
+    private fun fetchPostAndOpen(hiringId: String) {
+        db.collection("hiring").document(hiringId).get().addOnSuccessListener { doc ->
+            val post = doc.toObject(HiringPost::class.java)?.copy(hiringId = doc.id)
+            if (post != null) {
+                val intent = Intent(requireContext(), HiringDetailsActivity::class.java)
+                intent.putExtra("HIRING_POST_JSON", Gson().toJson(post))
+                intent.putExtra("FOCUS_TAB", 2) // Tell it to open Applicants tab
+                startActivity(intent)
+            }
+        }
     }
 
     private fun listenForProfile() {
@@ -183,9 +208,41 @@ class CompanyHomeFragment : Fragment() {
             .whereEqualTo("status", "INTERVIEW_SCHEDULED")
             .whereGreaterThanOrEqualTo("interviewDate", startTime)
             .whereLessThanOrEqualTo("interviewDate", endTime)
-            .addSnapshotListener { snapshots, _ ->
-                val count = snapshots?.size() ?: 0
-                tvInterviewCount.text = "Interviews Today ($count)"
+            .addSnapshotListener { snapshots, error ->
+                if (error != null || snapshots == null) return@addSnapshotListener
+                
+                val apps = snapshots.toObjects(Application::class.java)
+                tvInterviewCount.text = "Interviews Today (${apps.size})"
+                
+                if (apps.isEmpty()) {
+                    agendaItems.clear()
+                    agendaAdapter.updateData(emptyList())
+                    tvNoAgenda.visibility = View.VISIBLE
+                    rvTodayAgenda.visibility = View.GONE
+                    return@addSnapshotListener
+                }
+
+                tvNoAgenda.visibility = View.GONE
+                rvTodayAgenda.visibility = View.VISIBLE
+
+                // Fetch worker profiles for these applications
+                val workerIds = apps.map { it.workerId }.distinct()
+                db.collection("users")
+                    .whereIn(com.google.firebase.firestore.FieldPath.documentId(), workerIds.take(10))
+                    .get()
+                    .addOnSuccessListener { userSnapshots ->
+                        val userMap = userSnapshots.documents.associate { 
+                            it.id to it.toObject(User::class.java)!!
+                        }
+                        
+                        agendaItems.clear()
+                        apps.forEach { app ->
+                            agendaItems.add(app to userMap[app.workerId])
+                        }
+                        // Sort by interview time
+                        agendaItems.sortBy { it.first.interviewDate }
+                        agendaAdapter.updateData(agendaItems)
+                    }
             }
     }
 

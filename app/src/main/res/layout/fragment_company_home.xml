@@ -137,30 +137,57 @@
                     app:cardElevation="6dp"
                     app:strokeWidth="0dp">
 
-                    <RelativeLayout
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:orientation="vertical"
                         android:padding="20dp">
 
-                        <TextView
-                            android:id="@+id/tvInterviewCount"
-                            android:layout_width="wrap_content"
+                        <RelativeLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Interviews Today (0)"
-                            android:textColor="#1E293B"
-                            android:textSize="14sp" />
+                            android:layout_marginBottom="8dp">
+
+                            <TextView
+                                android:id="@+id/tvInterviewCount"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Interviews Today (0)"
+                                android:textColor="#1E293B"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/btnViewInterviews"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:text="View All"
+                                android:textColor="#1C6EC6"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                        </RelativeLayout>
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvTodayAgenda"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false"
+                            tools:listitem="@layout/item_company_agenda" />
 
                         <TextView
-                            android:id="@+id/btnViewInterviews"
-                            android:layout_width="wrap_content"
+                            android:id="@+id/tvNoAgenda"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:text="View"
-                            android:textColor="#1C6EC6"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-                    </RelativeLayout>
+                            android:text="No interviews scheduled for today"
+                            android:textColor="#94A3B8"
+                            android:textSize="13sp"
+                            android:gravity="center"
+                            android:paddingVertical="12dp"
+                            android:visibility="gone" />
+
+                    </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- Section: Latest job postings -->

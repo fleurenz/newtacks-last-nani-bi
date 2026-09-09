@@ -56,6 +56,7 @@ class WorkerAccountFragment : Fragment() {
     private lateinit var menuReviews: View
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var menuEditProfile: View
+    private lateinit var menuViewProfile: View
 
     private val pickCertificate =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -80,6 +81,7 @@ class WorkerAccountFragment : Fragment() {
         menuReviews = view.findViewById(R.id.menuReviews)
         swipeRefresh = view.findViewById(R.id.swipeRefreshAccount)
         menuEditProfile = view.findViewById(R.id.menuEditProfile)
+        menuViewProfile = view.findViewById(R.id.menuViewProfile)
 
         tvVerificationLevel = view.findViewById(R.id.tvVerificationLevel)
         btnUploadNC1 = view.findViewById(R.id.btnUploadNC1)
@@ -116,6 +118,7 @@ class WorkerAccountFragment : Fragment() {
         setupCertificatesMenu()
         setupReviewsMenu()
         setupEditProfileMenu()
+        setupViewProfileMenu()
 
         swipeRefresh.setOnRefreshListener {
             loadProfile()
@@ -263,6 +266,15 @@ class WorkerAccountFragment : Fragment() {
     private fun setupEditProfileMenu() {
         menuEditProfile.setOnClickListener {
             startActivity(Intent(requireContext(), WorkerEditProfileActivity::class.java))
+        }
+    }
+
+    private fun setupViewProfileMenu() {
+        menuViewProfile.setOnClickListener {
+            val uid = auth.currentUser?.uid ?: return@setOnClickListener
+            val intent = Intent(requireContext(), WorkerProfileActivity::class.java)
+            intent.putExtra("WORKER_ID", uid)
+            startActivity(intent)
         }
     }
 

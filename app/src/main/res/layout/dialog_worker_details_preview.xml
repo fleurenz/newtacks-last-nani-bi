@@ -1,181 +1,268 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="24dp">
-
-    <ImageView
-        android:id="@+id/ivWorkerProfile"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_gravity="center"
-        android:layout_marginBottom="16dp"
-        android:src="@drawable/ic_user_placeholder" />
+    android:background="@drawable/bg_card"
+    android:backgroundTint="#FFFFFF"
+    android:padding="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/tvWorkerName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="#1E293B" />
-
-        <TextView
-            android:id="@+id/tvWorkerBadge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:background="@drawable/bg_badge_green1"
-            android:paddingHorizontal="6dp"
-            android:paddingVertical="2dp"
-            android:text="NC3"
-            android:textColor="#FFFFFF"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:visibility="gone" />
-
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/tvWorkerPhone"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:textSize="14sp"
-        android:textColor="#64748B"
-        android:layout_marginBottom="12dp" />
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
+        android:orientation="vertical"
+        android:padding="24dp">
 
         <ImageView
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:src="@drawable/ic_star"
-            app:tint="#EAB308" />
+            android:id="@+id/ivWorkerProfile"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="16dp"
+            android:src="@drawable/ic_user_placeholder" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvWorkerName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#1E293B"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                tools:text="Hatsune Miku" />
+
+            <TextView
+                android:id="@+id/tvWorkerBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_badge_green1"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                android:text="NC3"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/tvWorkerRating"
-            android:layout_width="wrap_content"
+            android:id="@+id/tvWorkerPhone"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
+            android:layout_marginBottom="12dp"
+            android:gravity="center"
+            android:textColor="#64748B"
             android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="#1E293B" />
-    </LinearLayout>
+            tools:text="09123456789" />
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#E2E8F0"
-        android:layout_marginBottom="16dp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Experience"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        android:textColor="#94A3B8" />
-
-    <TextView
-        android:id="@+id/tvWorkerExperience"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="14sp"
-        android:textColor="#1E293B"
-        android:layout_marginBottom="12dp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Specialties"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        android:textColor="#94A3B8" />
-
-    <TextView
-        android:id="@+id/tvWorkerCategories"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="14sp"
-        android:textColor="#1E293B"
-        android:layout_marginBottom="12dp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Credentials"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        android:textColor="#94A3B8" />
-
-    <LinearLayout
-        android:id="@+id/layoutCertificates"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="4dp"
-        android:layout_marginBottom="24dp">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnViewNC1"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="NC1"
-            android:textSize="12sp"
-            android:visibility="gone" />
+            android:layout_gravity="center"
+            android:layout_marginBottom="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnViewNC2"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="NC2"
-            android:textSize="12sp"
-            android:visibility="gone" />
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_star"
+                app:tint="#EAB308" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnViewNC3"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="NC3"
-            android:textSize="12sp"
-            android:visibility="gone" />
+            <TextView
+                android:id="@+id/tvWorkerRating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:textColor="#1E293B"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:text="⭐ 5.0" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="16dp"
+            android:background="#E2E8F0" />
 
         <TextView
-            android:id="@+id/tvNoCertificates"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No certificates uploaded"
-            android:textSize="14sp"
+            android:text="Experience"
             android:textColor="#94A3B8"
-            android:visibility="gone" />
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvWorkerExperience"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:textColor="#1E293B"
+            android:textSize="14sp"
+            tools:text="5 years of experience" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Specialties"
+            android:textColor="#94A3B8"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvWorkerCategories"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:textColor="#1E293B"
+            android:textSize="14sp"
+            tools:text="Plumbing, Carpentry" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Credentials"
+            android:textColor="#94A3B8"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/layoutCertificates"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="24dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewNC1"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NC1"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewNC2"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NC2"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewNC3"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NC3"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvNoCertificates"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No certificates uploaded"
+                android:textColor="#94A3B8"
+                android:textSize="14sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnViewFullProfile"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="16dp"
+            android:text="View Full Profile"
+            android:textAllCaps="false"
+            android:textColor="#0F325E"
+            android:textStyle="bold"
+            app:backgroundTint="#F1F5F9"
+            app:cornerRadius="12dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="16dp"
+            android:background="#E2E8F0" />
+
+        <!-- Application Status Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Application Status"
+            android:textColor="#94A3B8"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvDetailedStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="24dp"
+            android:text="Approved"
+            android:textColor="#1E293B"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <!-- Process Buttons -->
+        <LinearLayout
+            android:id="@+id/layoutProcessButtons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnProcessPrimary"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginBottom="12dp"
+                android:text="Schedule Interview"
+                android:textAllCaps="false"
+                android:textStyle="bold"
+                app:backgroundTint="#0F325E"
+                app:cornerRadius="12dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnProcessSecondary"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Reject Applicant"
+                android:textAllCaps="false"
+                android:textColor="#DC2626"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                app:strokeColor="#DC2626" />
+
+        </LinearLayout>
+
+        <!-- Close Button for Dialog -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCloseDialog"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:text="Close"
+            android:textAllCaps="false"
+            android:textColor="#64748B"
+            app:cornerRadius="12dp" />
+
     </LinearLayout>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnViewFullProfile"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:text="View Full Profile"
-        android:textAllCaps="false"
-        android:textStyle="bold"
-        app:backgroundTint="#0F325E"
-        app:cornerRadius="10dp" />
-
-</LinearLayout>
+</androidx.core.widget.NestedScrollView>
