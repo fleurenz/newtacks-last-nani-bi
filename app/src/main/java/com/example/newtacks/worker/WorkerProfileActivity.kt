@@ -8,6 +8,8 @@ import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import coil.transform.CircleCropTransformation
 import com.example.newtacks.R
 import com.example.newtacks.models.Review
@@ -55,6 +57,17 @@ class WorkerProfileActivity : AppCompatActivity() {
 
         findViewById<ImageButton>(R.id.btnReport).setOnClickListener {
             showReportDialog()
+        }
+
+        // Robust Inset Handling: Use spacer for status bar
+        val statusBarSpacer = findViewById<View>(R.id.statusBarSpacer)
+        val rootLayout = findViewById<View>(R.id.workerPreviewProfile)
+        ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val params = statusBarSpacer.layoutParams
+            params.height = systemBars.top
+            statusBarSpacer.layoutParams = params
+            insets
         }
 
         ivProfile = findViewById(R.id.ivWorkerProfile)
