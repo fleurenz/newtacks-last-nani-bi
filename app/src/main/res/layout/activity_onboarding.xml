@@ -20,8 +20,6 @@
         <ImageView
             android:layout_width="180dp"
             android:layout_height="180dp"
-            android:background="@drawable/bg_circle"
-            android:backgroundTint="#FFFFFF"
             android:contentDescription="Tacks logo"
             android:padding="16dp"
             android:src="@drawable/tacks_logo" />
@@ -31,7 +29,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:letterSpacing="0.15"
-            android:text="TACKS"
+            android:text="WorkAround"
             android:textColor="#FFFFFF"
             android:textSize="28sp"
             android:textStyle="bold" />

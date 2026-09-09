@@ -94,13 +94,12 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
+                android:layout_height="48dp"
                 android:layout_marginHorizontal="20dp"
                 android:layout_marginBottom="20dp"
                 android:background="@drawable/bg_spinner_improved"
                 android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingEnd="2dp">
+                android:gravity="center_vertical">
 
                 <EditText
                     android:id="@+id/etSearchKeywords"
@@ -114,21 +113,17 @@
                     android:textColorHint="#94A3B8"
                     android:textSize="13sp" />
 
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="0dp"
-                    app:cardBackgroundColor="#FFFFFF"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#0F325E">
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="24dp"
+                        android:background="#E2E8F0" />
+
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
-                        android:layout_gravity="center"
+                        android:layout_marginHorizontal="14dp"
                         android:src="@drawable/ic_search"
                         app:tint="#0F325E" />
-                </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </LinearLayout>
 
