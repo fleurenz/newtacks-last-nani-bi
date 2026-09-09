@@ -6,7 +6,7 @@
     android:background="@drawable/bg_hiring_chip"
     android:paddingHorizontal="12dp"
     android:paddingVertical="4dp"
-    android:textColor="#F59E0B"
+    android:textColor="#0F2F5A"
     android:textSize="11sp"
     android:textStyle="bold"
     android:layout_marginEnd="8dp" />

@@ -1,5 +1,7 @@
 package com.example.newtacks.worker
 
+import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.view.*
 import android.widget.*
@@ -10,61 +12,66 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import coil.load
 import coil.transform.CircleCropTransformation
-import com.example.newtacks.utils.NotificationHelper
 import com.example.newtacks.R
 import com.example.newtacks.models.Job
 import com.example.newtacks.models.User
 import com.example.newtacks.utils.DistanceUtils
-import com.example.newtacks.utils.RouteApiService
+import com.example.newtacks.utils.ImageUtils
+import com.example.newtacks.utils.NotificationHelper
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
+import java.text.SimpleDateFormat
 import java.util.Locale
 
 class WorkerJobFragment : Fragment() {
 
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
-    private val routeService: RouteApiService by lazy {
-        retrofit2.Retrofit.Builder()
-            .baseUrl("https://router.project-osrm.org/")
-            .addConverterFactory(retrofit2.converter.gson.GsonConverterFactory.create())
-            .build()
-            .create(RouteApiService::class.java)
-    }
     private var listener: ListenerRegistration? = null
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
-    private lateinit var tvTitle: TextView
-    private lateinit var tvDetails: TextView
-    private lateinit var tvStatus: TextView
-    private lateinit var btnDone: Button
-    private lateinit var btnNavigateToMap: Button
-    private lateinit var btnNavigateToMapSmall: Button
-    private lateinit var btnNavigateToMapArrived: Button
-    private lateinit var btnNavigateToMapDone: Button
-    private lateinit var btnStartHeading: Button
-    private lateinit var btnArrived: Button
-    private lateinit var btnMessageClient: View
-    private lateinit var btnMoreOptions: ImageButton
-    private lateinit var layoutContent: LinearLayout
-    private lateinit var layoutEmptyState: LinearLayout
-    private lateinit var layoutBottomButtons: LinearLayout
-    private lateinit var layoutHeadingButtons: LinearLayout
-    private lateinit var layoutArrivedButtons: LinearLayout
-    private lateinit var layoutDoneButtons: LinearLayout
-    private lateinit var layoutHeader: RelativeLayout
+    // Main UI
+    private lateinit var layoutContent: View
+    private lateinit var layoutEmptyState: View
+    private lateinit var layoutHeader: View
     private lateinit var loadingOverlay: View
-    private lateinit var tvLoadingMessage: TextView
-    private lateinit var cardJobDetails: View
-    private lateinit var cardClientInfo: View
-    private lateinit var tvClientDetailName: TextView
-    private lateinit var tvClientDetailPhone: TextView
+
+    // Header / Title Area
+    private lateinit var tvJobTitle: TextView
+    private lateinit var tvJobDateTop: TextView
+    private lateinit var btnMoreOptions: ImageButton
+
+    // Client Info
+    private lateinit var ivClientProfile: ImageView
+    private lateinit var tvClientName: TextView
+    private lateinit var tvClientDistance: TextView
+    private lateinit var btnViewClientProfile: View
+    private lateinit var btnMessageClient: View
+
+    // Progress Bar
+    private lateinit var stepCircles: List<View>
+    private lateinit var stepLines: List<View>
+    private lateinit var stepLabels: List<TextView>
+
+    // Job Details Card
+    private lateinit var tvServiceType: TextView
+    private lateinit var tvAddress: TextView
+    private lateinit var tvTime: TextView
+    private lateinit var tvDate: TextView
+    private lateinit var tvRate: TextView
+    private lateinit var tvDescription: TextView
+    private lateinit var btnViewImages: View
+
+    // Bottom Sticky Buttons
+    private lateinit var layoutBottomButtons: View
+    private lateinit var btnNavigateMap: Button
+    private lateinit var btnMainAction: Button
 
     private var currentJob: Job? = null
     private var currentJobId: String? = null
-    private var clientLocationListener: ListenerRegistration? = null
     private var activeRejectionDialog: AlertDialog? = null
 
     override fun onCreateView(
@@ -75,605 +82,377 @@ class WorkerJobFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_worker_job, container, false)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
 
-        tvTitle             = view.findViewById(R.id.tvJobTitle)
-        tvDetails           = view.findViewById(R.id.tvJobDetails)
-        tvStatus            = view.findViewById(R.id.tvJobStatus)
-        btnDone             = view.findViewById(R.id.btnRequestDone)
-        btnNavigateToMap    = view.findViewById(R.id.btnNavigateToMap)
-        btnNavigateToMapSmall = view.findViewById(R.id.btnNavigateToMapSmall)
-        btnNavigateToMapArrived = view.findViewById(R.id.btnNavigateToMapArrived)
-        btnNavigateToMapDone = view.findViewById(R.id.btnNavigateToMapDone)
-        btnStartHeading     = view.findViewById(R.id.btnStartHeading)
-        btnArrived          = view.findViewById(R.id.btnArrived)
-        btnMessageClient    = view.findViewById(R.id.btnMessageClientSmall)
-        btnMoreOptions      = view.findViewById(R.id.btnMoreOptions)
-        layoutContent       = view.findViewById(R.id.layoutContent)
-        layoutEmptyState    = view.findViewById(R.id.layoutEmptyState)
-        layoutBottomButtons = view.findViewById(R.id.layoutBottomButtons)
-        layoutHeadingButtons = view.findViewById(R.id.layoutHeadingButtons)
-        layoutArrivedButtons = view.findViewById(R.id.layoutArrivedButtons)
-        layoutDoneButtons    = view.findViewById(R.id.layoutDoneButtons)
-        layoutHeader        = view.findViewById(R.id.layoutHeader) as RelativeLayout
-
-        loadingOverlay      = view.findViewById(R.id.loadingOverlay)
-        tvLoadingMessage    = view.findViewById(R.id.tvLoadingMessage)
-
-        cardJobDetails      = view.findViewById(R.id.cardJobDetails)
-        cardClientInfo      = view.findViewById(R.id.cardClientInfo)
-        tvClientDetailName  = view.findViewById(R.id.tvClientDetailName)
-        tvClientDetailPhone = view.findViewById(R.id.tvClientDetailPhone)
-
-        view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
-            NotificationHelper.showNotificationDialog(requireContext())
-        }
-
-        // --------------------------------------------------
-        // ✅ WINDOW INSETS
-        // --------------------------------------------------
-        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            layoutHeader.setPadding(
-                layoutHeader.paddingLeft,
-                systemBars.top + resources.getDimensionPixelSize(R.dimen.header_padding_top),
-                layoutHeader.paddingRight,
-                layoutHeader.paddingBottom
-            )
-            insets
-        }
+        initializeViews(view)
+        setupStatusBar(view)
+        setupListeners(view)
 
         listenForActiveJob()
-        btnDone.setOnClickListener { requestDone() }
-        val mapAction = {
-            currentJob?.let { job ->
-                (activity as? com.example.newtacks.WorkerDashboardActivity)?.focusMapOnLocation(job.latitude, job.longitude)
-            }
-        }
-        btnNavigateToMap.setOnClickListener { mapAction() }
-        btnNavigateToMapSmall.setOnClickListener { mapAction() }
-        btnNavigateToMapArrived.setOnClickListener { mapAction() }
-        btnNavigateToMapDone.setOnClickListener { mapAction() }
-
-        btnStartHeading.setOnClickListener { updateJobStatus("HEADING_TO_CLIENT") }
-        btnArrived.setOnClickListener { updateJobStatus("ARRIVED") }
-        btnMessageClient.setOnClickListener { openChat() }
-        btnMoreOptions.setOnClickListener { showPopupMenu(it) }
-
-        cardJobDetails.setOnClickListener {
-            currentJob?.let { showJobDetailsDialog(it) }
-        }
-
-        cardClientInfo.setOnClickListener {
-            currentJob?.clientId?.let { showClientDetailsDialog(it) }
-        }
 
         return view
     }
 
-    // ✅ Fires every time this fragment is shown via show() in add/hide/show pattern
-    override fun onHiddenChanged(hidden: Boolean) {
-        super.onHiddenChanged(hidden)
-        if (!hidden) {
-            currentJob?.let { job ->
-                if (job.status == "REJECTED_BY_CLIENT") {
-                    showRejectionDialog(job)
-                }
+    private fun initializeViews(view: View) {
+        layoutContent = view.findViewById(R.id.layoutContent)
+        layoutEmptyState = view.findViewById(R.id.layoutEmptyState)
+        layoutHeader = view.findViewById(R.id.layoutHeader)
+        loadingOverlay = view.findViewById(R.id.loadingOverlay)
+
+        tvJobTitle = view.findViewById(R.id.tvJobTitle)
+        tvJobDateTop = view.findViewById(R.id.tvJobDateTop)
+        btnMoreOptions = view.findViewById(R.id.btnMoreOptions)
+
+        ivClientProfile = view.findViewById(R.id.ivClientProfile)
+        tvClientName = view.findViewById(R.id.tvClientDetailName)
+        tvClientDistance = view.findViewById(R.id.tvClientDistance)
+        btnViewClientProfile = view.findViewById(R.id.btnViewClientProfile)
+        btnMessageClient = view.findViewById(R.id.btnMessageClient)
+
+        // Progress Bar
+        stepCircles = listOf(
+            view.findViewById(R.id.step1),
+            view.findViewById(R.id.step2),
+            view.findViewById(R.id.step3),
+            view.findViewById(R.id.step4)
+        )
+        stepLines = listOf(
+            view.findViewById(R.id.line1),
+            view.findViewById(R.id.line2),
+            view.findViewById(R.id.line3)
+        )
+        
+        // Find step labels manually to be safe
+        val layoutProgress = view.findViewById<LinearLayout>(R.id.layoutProgress)
+        val labels = mutableListOf<TextView>()
+        for (i in 0 until layoutProgress.childCount) {
+            val stepGroup = layoutProgress.getChildAt(i) as? LinearLayout ?: continue
+            for (j in 0 until stepGroup.childCount) {
+                val child = stepGroup.getChildAt(j)
+                if (child is TextView) labels.add(child)
             }
+        }
+        stepLabels = labels
+
+        tvServiceType = view.findViewById(R.id.tvServiceType)
+        tvAddress = view.findViewById(R.id.tvAddress)
+        tvTime = view.findViewById(R.id.tvTime)
+        tvDate = view.findViewById(R.id.tvDate)
+        tvRate = view.findViewById(R.id.tvRate)
+        tvDescription = view.findViewById(R.id.tvDescription)
+        btnViewImages = view.findViewById(R.id.btnViewImages)
+
+        layoutBottomButtons = view.findViewById(R.id.layoutBottomButtons)
+        btnNavigateMap = view.findViewById(R.id.btnNavigateToMap)
+        btnMainAction = view.findViewById(R.id.btnMainAction)
+    }
+
+    private fun setupStatusBar(view: View) {
+        val spacer = view.findViewById<View>(R.id.statusBarSpacer)
+        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            spacer.layoutParams.height = systemBars.top
+            spacer.requestLayout()
+            insets
         }
     }
 
-    // --------------------------------------------------
-    // 🔥 ACTIVE JOB LISTENER
-    // --------------------------------------------------
+    private fun setupListeners(view: View) {
+        btnMoreOptions.setOnClickListener { showPopupMenu(it) }
+        btnMessageClient.setOnClickListener { openChat() }
+        btnViewClientProfile.setOnClickListener {
+            currentJob?.clientId?.let { showClientDetailsDialog(it) }
+        }
+        btnViewImages.setOnClickListener {
+            currentJob?.jobImages?.firstOrNull()?.let { url ->
+                ImageUtils.showFullscreenImage(requireContext(), url)
+            } ?: Toast.makeText(requireContext(), "No images available", Toast.LENGTH_SHORT).show()
+        }
+        
+        btnNavigateMap.setOnClickListener {
+            currentJob?.let { job ->
+                (activity as? com.example.newtacks.WorkerDashboardActivity)?.focusMapOnLocation(job.latitude, job.longitude)
+            }
+        }
+
+        view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
+            NotificationHelper.showNotificationDialog(requireContext())
+        }
+    }
+
     private fun listenForActiveJob() {
         val workerId = auth.currentUser?.uid ?: return
-        
-        // Query only by workerId to avoid composite index requirements
         listener = firestore.collection("jobs")
             .whereEqualTo("workerId", workerId)
-            .addSnapshotListener { snapshots, error ->
-                if (error != null) {
-                    android.util.Log.e("Firestore", "Error: ${error.message}")
-                    return@addSnapshotListener
+            .addSnapshotListener { snapshots, _ ->
+                val activeStatuses = listOf("IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION", "REJECTED_BY_CLIENT")
+                val jobDoc = snapshots?.documents?.firstOrNull { 
+                    val status = it.getString("status") ?: ""
+                    status in activeStatuses 
                 }
 
-                // Filter locally for the active handshake statuses
-                val activeStatuses = listOf("IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION", "REJECTED_BY_CLIENT")
-                val job = snapshots?.documents
-                    ?.mapNotNull { it.toObject(Job::class.java) }
-                    ?.firstOrNull { it.status in activeStatuses }
-
-                if (job == null) showEmptyState() else showActiveJob(job)
+                if (jobDoc == null) {
+                    showEmptyState()
+                } else {
+                    val job = jobDoc.toObject(Job::class.java)?.copy(jobId = jobDoc.id)
+                    if (job != null) showActiveJob(job) else showEmptyState()
+                }
             }
     }
 
-    // --------------------------------------------------
-    // UI STATE: ACTIVE JOB
-    // --------------------------------------------------
     private fun showActiveJob(job: Job) {
-        currentJob                  = job
-        currentJobId                = job.jobId
-        layoutContent.visibility    = View.VISIBLE
+        currentJob = job
+        currentJobId = job.jobId
+        layoutContent.visibility = View.VISIBLE
         layoutEmptyState.visibility = View.GONE
         layoutBottomButtons.visibility = View.VISIBLE
 
-        tvTitle.text = job.jobTitle
-        tvDetails.text = "Service: ${job.serviceCategory}\nRate: ₱${job.offeredAmount}\nLocation: ${job.clientAddress}"
-
-        tvClientDetailName.text = job.clientName
-        tvClientDetailPhone.text = "Tap to view contact"
-
-        tvStatus.visibility = View.VISIBLE
+        tvJobTitle.text = job.jobTitle
         
-        // Use job location for distance tracking to ensure consistency with client view
+        val displayDate = formatJobDate(job.scheduledDate)
+        tvJobDateTop.text = displayDate
+        
+        tvClientName.text = job.clientName
         updateDistanceUI(job.latitude, job.longitude)
-        
-        // Default visibility
-        layoutHeadingButtons.visibility = View.GONE
-        layoutArrivedButtons.visibility = View.GONE
-        layoutDoneButtons.visibility    = View.GONE
-        btnNavigateToMap.visibility = View.GONE
-        btnNavigateToMapSmall.visibility = View.GONE
-        btnStartHeading.visibility = View.GONE
-        btnArrived.visibility      = View.GONE
-        btnDone.visibility         = View.GONE
-        btnMessageClient.visibility = View.VISIBLE
-        btnMoreOptions.visibility   = View.VISIBLE 
 
-        when (job.status) {
-            "IN_PROGRESS" -> {
-                tvStatus.text = "Job Accepted"
-                tvStatus.setTextColor(android.graphics.Color.parseColor("#D97706"))
-                tvStatus.setBackgroundResource(R.drawable.bg_badge_yellow)
-                layoutHeadingButtons.visibility = View.VISIBLE
-                btnStartHeading.visibility = View.VISIBLE
-                btnNavigateToMapSmall.visibility = View.VISIBLE
-            }
-            "HEADING_TO_CLIENT" -> {
-                tvStatus.text = "Heading to Location..."
-                tvStatus.setTextColor(android.graphics.Color.parseColor("#0F325E"))
-                tvStatus.setBackgroundResource(R.drawable.bg_badge_blue)
-                layoutArrivedButtons.visibility = View.VISIBLE
-                btnArrived.visibility = View.VISIBLE
-                btnNavigateToMapArrived.visibility = View.VISIBLE
-                
-                // Show live distance
-                showLiveDistance(job.latitude, job.longitude)
-            }
-            "ARRIVED" -> {
-                tvStatus.text = "Arrived at Location"
-                tvStatus.setTextColor(android.graphics.Color.parseColor("#16A34A"))
-                tvStatus.setBackgroundResource(R.drawable.bg_badge_green)
-                layoutDoneButtons.visibility = View.VISIBLE
-                btnDone.visibility = View.VISIBLE
-                btnNavigateToMapDone.visibility = View.VISIBLE
-            }
-            "PENDING_VERIFICATION" -> {
-                tvStatus.text = "Waiting for client confirmation"
-                tvStatus.setTextColor(android.graphics.Color.parseColor("#16A34A"))
-                tvStatus.setBackgroundResource(R.drawable.bg_badge_green)
-                btnMoreOptions.visibility = View.GONE
-            }
-            "REJECTED_BY_CLIENT" -> {
-                tvStatus.text = "Completion Refused"
-                tvStatus.setTextColor(android.graphics.Color.parseColor("#DC2626"))
-                tvStatus.setBackgroundResource(R.drawable.bg_badge_yellow)
-                layoutDoneButtons.visibility = View.VISIBLE
-                btnDone.visibility = View.VISIBLE
-                btnDone.text = "Resubmit for Review"
-                
-                showRejectionDialog(job)
-                
-                // Allow re-opening by clicking status
-                tvStatus.setOnClickListener { showRejectionDialog(job) }
-            }
-            else -> {
-                tvStatus.text = job.status
-                tvStatus.setTextColor(android.graphics.Color.parseColor("#FFFFFF"))
-                tvStatus.setBackgroundResource(R.drawable.bg_badge_blue)
+        tvServiceType.text = job.serviceCategory
+        tvAddress.text = job.clientAddress
+        tvTime.text = job.scheduledTime
+        tvDate.text = displayDate
+        tvRate.text = "₱${job.offeredAmount.toInt()}/day"
+        tvDescription.text = job.description
+
+        loadClientProfile(job.clientId)
+        updateStatusFlow(job.status)
+    }
+
+    private fun loadClientProfile(clientId: String) {
+        firestore.collection("users").document(clientId).get().addOnSuccessListener { doc ->
+            val url = doc.getString("profileImage") ?: ""
+            ivClientProfile.load(url.ifEmpty { null }) {
+                placeholder(R.drawable.ic_person_placeholder)
+                transformations(CircleCropTransformation())
             }
         }
     }
 
-    private fun showRejectionDialog(job: Job) {
-        if (activeRejectionDialog?.isShowing == true) return
-        val details = job.rejectionDetails as? Map<String, Any> ?: return
-        
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_job_rejection, null)
-        val tvReason = dialogView.findViewById<TextView>(R.id.tvRejectionReason)
-        val tvDesc = dialogView.findViewById<TextView>(R.id.tvRejectionDescription)
-        val ivEvidence = dialogView.findViewById<ImageView>(R.id.ivRejectionEvidence)
-        val labelEvidence = dialogView.findViewById<View>(R.id.labelEvidence)
-        val btnAck = dialogView.findViewById<Button>(R.id.btnAcknowledge)
-
-        tvReason.text = details["reason"] as? String ?: "Unknown"
-        tvDesc.text = details["description"] as? String ?: "No details provided."
-        
-        val evidenceUrl = details["evidenceUrl"] as? String
-        if (!evidenceUrl.isNullOrBlank()) {
-            labelEvidence.visibility = View.VISIBLE
-            ivEvidence.visibility = View.VISIBLE
-            ivEvidence.load(evidenceUrl) {
-                crossfade(true)
-                placeholder(R.drawable.bg_image_placeholder)
-            }
-            ivEvidence.setOnClickListener {
-                com.example.newtacks.utils.ImageUtils.showFullscreenImage(requireContext(), evidenceUrl)
-            }
+    private fun updateStatusFlow(status: String) {
+        // Reset Progress Bar
+        stepCircles.forEach { it.setBackgroundResource(R.drawable.bg_step_circle_inactive) }
+        stepLines.forEach { it.setBackgroundColor(Color.parseColor("#E2E8F0")) }
+        stepLabels.forEach { 
+            it.setTextColor(Color.parseColor("#64748B"))
+            it.paint.isFakeBoldText = false
         }
 
-        activeRejectionDialog = AlertDialog.Builder(requireContext())
-            .setView(dialogView)
-            .setCancelable(false)
-            .create()
-        
-        activeRejectionDialog?.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
-        btnAck.setOnClickListener {
-            activeRejectionDialog?.dismiss()
+        when (status) {
+            "IN_PROGRESS" -> {
+                highlightStep(0)
+                btnMainAction.text = "Start heading there"
+                btnMainAction.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#0F325E"))
+                btnMainAction.setOnClickListener { updateJobStatus("HEADING_TO_CLIENT") }
+            }
+            "HEADING_TO_CLIENT" -> {
+                highlightStep(1)
+                btnMainAction.text = "I Have Arrived"
+                btnMainAction.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#16A34A"))
+                btnMainAction.setOnClickListener { updateJobStatus("ARRIVED") }
+            }
+            "ARRIVED" -> {
+                highlightStep(2)
+                btnMainAction.text = "Finish Work"
+                btnMainAction.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#0F325E"))
+                btnMainAction.setOnClickListener { requestDone() }
+            }
+            "PENDING_VERIFICATION" -> {
+                highlightStep(3)
+                btnMainAction.text = "Waiting for Verification"
+                btnMainAction.isEnabled = false
+                btnMainAction.alpha = 0.6f
+            }
+            "REJECTED_BY_CLIENT" -> {
+                highlightStep(2) // Stay at Arrived/Working
+                btnMainAction.text = "Resubmit for Review"
+                btnMainAction.isEnabled = true
+                btnMainAction.alpha = 1.0f
+                btnMainAction.setOnClickListener { requestDone() }
+                showRejectionDialog(currentJob!!)
+            }
         }
-        
-        activeRejectionDialog?.show()
+    }
+
+    private fun highlightStep(index: Int) {
+        for (i in 0..index) {
+            stepCircles[i].setBackgroundResource(R.drawable.bg_step_circle_active)
+            if (i < index && i < stepLines.size) stepLines[i].setBackgroundColor(Color.parseColor("#0F325E"))
+            if (i < stepLabels.size) {
+                stepLabels[i].setTextColor(Color.parseColor("#0F325E"))
+                stepLabels[i].paint.isFakeBoldText = true
+            }
+        }
+    }
+
+    private fun updateJobStatus(newStatus: String) {
+        val jobId = currentJobId ?: return
+        loadingOverlay.visibility = View.VISIBLE
+        firestore.collection("jobs").document(jobId).update("status", newStatus)
+            .addOnSuccessListener {
+                loadingOverlay.visibility = View.GONE
+                val title = when (newStatus) {
+                    "HEADING_TO_CLIENT" -> "Heading to You"
+                    "ARRIVED" -> "Arrived"
+                    else -> "Job Update"
+                }
+                val msg = when (newStatus) {
+                    "HEADING_TO_CLIENT" -> "Your worker is now on their way."
+                    "ARRIVED" -> "Your worker has arrived at your address."
+                    else -> "Status changed to $newStatus"
+                }
+                currentJob?.let { NotificationHelper.sendNotification(it.clientId, title, msg, "REQUESTS") }
+            }
+            .addOnFailureListener { loadingOverlay.visibility = View.GONE }
+    }
+
+    private fun requestDone() {
+        val jobId = currentJobId ?: return
+        loadingOverlay.visibility = View.VISIBLE
+        firestore.collection("jobs").document(jobId)
+            .update(mapOf("status" to "PENDING_VERIFICATION", "completedAt" to System.currentTimeMillis()))
+            .addOnSuccessListener {
+                loadingOverlay.visibility = View.GONE
+                currentJob?.let { NotificationHelper.sendNotification(it.clientId, "Job Ready", "Please verify completion.", "REQUESTS") }
+            }
+            .addOnFailureListener { loadingOverlay.visibility = View.GONE }
+    }
+
+    private fun updateDistanceUI(lat: Double, lng: Double) {
+        if (!isAdded) return
+        if (androidx.core.content.ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) 
+            != android.content.pm.PackageManager.PERMISSION_GRANTED) return
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
+            if (loc != null) {
+                val results = FloatArray(1)
+                android.location.Location.distanceBetween(loc.latitude, loc.longitude, lat, lng, results)
+                tvClientDistance.text = DistanceUtils.formatDistance(results[0]) + " away"
+            }
+        }
+    }
+
+    private fun showEmptyState() {
+        currentJob = null
+        layoutContent.visibility = View.GONE
+        layoutEmptyState.visibility = View.VISIBLE
+        layoutBottomButtons.visibility = View.GONE
     }
 
     private fun showPopupMenu(view: View) {
         val popup = PopupMenu(view.context, view)
         popup.menu.add("Cancel Job")
         popup.menu.add("Report")
-        
         popup.setOnMenuItemClickListener { item ->
-            when (item.title) {
-                "Cancel Job" -> showCancelDialog()
-                "Report"     -> Toast.makeText(requireContext(), "Non-Functionalxxxx", Toast.LENGTH_SHORT).show()
-            }
+            if (item.title == "Cancel Job") showCancelDialog()
             true
         }
         popup.show()
     }
 
-    private fun showLiveDistance(jobLat: Double, jobLng: Double) {
-        val context = context ?: return
-        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) 
-            != android.content.pm.PackageManager.PERMISSION_GRANTED) return
-
-        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            if (location != null) {
-                val results = FloatArray(1)
-                android.location.Location.distanceBetween(
-                    location.latitude, location.longitude,
-                    jobLat, jobLng,
-                    results
-                )
-                // If we are heading, start a periodic update
-                if (currentJob?.status == "HEADING_TO_CLIENT") {
-                    startPeriodicDistanceUpdate(jobLat, jobLng)
-                }
-            }
-        }
-    }
-
-    private var distanceUpdateHandler: android.os.Handler? = null
-    private var distanceUpdateRunnable: Runnable? = null
-
-    private fun startPeriodicDistanceUpdate(jobLat: Double, jobLng: Double) {
-        stopPeriodicDistanceUpdate()
-        distanceUpdateHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        distanceUpdateRunnable = object : Runnable {
-            override fun run() {
-                updateDistanceUI(jobLat, jobLng)
-                distanceUpdateHandler?.postDelayed(this, 5000) // Update every 5 seconds
-            }
-        }
-        distanceUpdateHandler?.post(distanceUpdateRunnable!!)
-    }
-
-    private fun stopPeriodicDistanceUpdate() {
-        distanceUpdateRunnable?.let { distanceUpdateHandler?.removeCallbacks(it) }
-        distanceUpdateHandler = null
-        distanceUpdateRunnable = null
-    }
-
-    private fun updateDistanceUI(jobLat: Double, jobLng: Double) {
-        if (!isAdded) return
-        val context = context ?: return
-        
-        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) 
-            != android.content.pm.PackageManager.PERMISSION_GRANTED) return
-
-        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            if (location != null) {
-                fetchRoadDistance(location.latitude, location.longitude, jobLat, jobLng)
-            }
-        }
-    }
-
-    private fun fetchRoadDistance(wLat: Double, wLng: Double, jobLat: Double, jobLng: Double) {
-        val coords = "$wLng,$wLat;$jobLng,$jobLat"
-        routeService.getRoute(coords).enqueue(object : retrofit2.Callback<com.example.newtacks.utils.OsrmResponse> {
-            override fun onResponse(call: retrofit2.Call<com.example.newtacks.utils.OsrmResponse>, response: retrofit2.Response<com.example.newtacks.utils.OsrmResponse>) {
-                if (response.isSuccessful && isAdded) {
-                    val route = response.body()?.routes?.firstOrNull() ?: return
-                    val distanceMeters = route.distance.toFloat()
-                    val distanceStr = DistanceUtils.formatDistance(distanceMeters)
-                    
-                    val currentStatus = currentJob?.status ?: ""
-                    when (currentStatus) {
-                        "HEADING_TO_CLIENT" -> {
-                            tvStatus.text = String.format(Locale.getDefault(), "Heading to Location... (%s away)", distanceStr)
-                            startPeriodicDistanceUpdate(jobLat, jobLng)
-                        }
-                        "ARRIVED" -> {
-                            tvStatus.text = String.format(Locale.getDefault(), "Arrived (%s from job site)", distanceStr)
-                        }
-                    }
-                }
-            }
-
-            override fun onFailure(call: retrofit2.Call<com.example.newtacks.utils.OsrmResponse>, t: Throwable) {
-                // Fallback to straight-line if OSRM fails
-                val results = FloatArray(1)
-                android.location.Location.distanceBetween(wLat, wLng, jobLat, jobLng, results)
-                val distanceStr = DistanceUtils.formatDistance(results[0])
-                if (isAdded) {
-                    val currentStatus = currentJob?.status ?: ""
-                    if (currentStatus == "HEADING_TO_CLIENT") {
-                        tvStatus.text = String.format(Locale.getDefault(), "Heading to Location... (%s away)", distanceStr)
-                    }
-                }
-            }
-        })
-    }
-
     private fun openChat() {
         val job = currentJob ?: return
-        val intent = android.content.Intent(requireContext(), com.example.newtacks.chatbot.presentation.ui.TransactionChatActivity::class.java)
+        val intent = Intent(requireContext(), com.example.newtacks.chatbot.presentation.ui.TransactionChatActivity::class.java)
         intent.putExtra("JOB_ID", job.jobId)
-        intent.putExtra("WORKER_ID", job.workerId) // Pass the worker ID for session isolation
+        intent.putExtra("WORKER_ID", job.workerId)
         intent.putExtra("OTHER_USER_ID", job.clientId)
         intent.putExtra("JOB_TITLE", job.jobTitle)
         startActivity(intent)
-    }
-
-    private fun updateJobStatus(newStatus: String) {
-        val jobId = currentJobId ?: return
-        
-        loadingOverlay.visibility = View.VISIBLE
-        tvLoadingMessage.text = "Updating status..."
-
-        firestore.collection("jobs").document(jobId)
-            .update("status", newStatus)
-            .addOnSuccessListener {
-                loadingOverlay.visibility = View.GONE
-                val title = when (newStatus) {
-                    "HEADING_TO_CLIENT" -> "Worker Heading to Location"
-                    "ARRIVED" -> "Worker Has Arrived"
-                    else -> "Job Update"
-                }
-                val message = when (newStatus) {
-                    "HEADING_TO_CLIENT" -> "Your worker is now on their way to you."
-                    "ARRIVED" -> "Your worker has arrived at your address."
-                    else -> "The status of your job has changed to $newStatus"
-                }
-
-                currentJob?.let { job ->
-                    com.example.newtacks.utils.NotificationHelper.sendNotification(job.clientId, title, message, "REQUESTS")
-                }
-
-                Toast.makeText(requireContext(), "Status updated: $newStatus", Toast.LENGTH_SHORT).show()
-            }
-            .addOnFailureListener {
-                loadingOverlay.visibility = View.GONE
-                Toast.makeText(requireContext(), "Status update failed", Toast.LENGTH_SHORT).show()
-            }
     }
 
     private fun showCancelDialog() {
         val dialog = android.app.Dialog(requireContext())
         dialog.setContentView(R.layout.dialog_role_select)
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        dialog.window?.setLayout(
-            (resources.displayMetrics.widthPixels * 0.88).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
+        dialog.window?.setLayout((resources.displayMetrics.widthPixels * 0.88).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
 
         dialog.findViewById<ImageView>(R.id.dialogIcon).setImageResource(R.drawable.ic_close)
         dialog.findViewById<TextView>(R.id.dialogTitle).text = "Cancel Job?"
-        dialog.findViewById<TextView>(R.id.dialogMessage).text = "Are you sure you want to cancel? This job will be returned to the feed for others."
+        dialog.findViewById<TextView>(R.id.dialogMessage).text = "This job will be returned to the feed."
 
-        dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnPositive).apply {
+        dialog.findViewById<MaterialButton>(R.id.dialogBtnPositive).apply {
             text = "Yes, Cancel"
             setOnClickListener {
                 dialog.dismiss()
-                cancelJobByWorker()
+                cancelJob()
             }
         }
-
-        dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnNegative).apply {
+        dialog.findViewById<MaterialButton>(R.id.dialogBtnNegative).apply {
             text = "Keep Working"
             setOnClickListener { dialog.dismiss() }
         }
-
         dialog.show()
     }
 
-    private fun cancelJobByWorker() {
+    private fun cancelJob() {
         val jobId = currentJobId ?: return
-        
         loadingOverlay.visibility = View.VISIBLE
-        tvLoadingMessage.text = "Cancelling job..."
-
-        // Set back to AVAILABLE and clear worker info
-        val update = mapOf(
-            "status" to "AVAILABLE",
-            "workerId" to FieldValue.delete(),
-            "workerName" to FieldValue.delete(),
-            "acceptedAt" to FieldValue.delete()
-        )
-
-        firestore.collection("jobs").document(jobId)
-            .update(update)
-            .addOnSuccessListener {
-                loadingOverlay.visibility = View.GONE
-                com.example.newtacks.utils.ChatUtils.deleteChatHistory(jobId) // Maintain privacy & save space
-                Toast.makeText(requireContext(), "Job cancelled and returned to feed", Toast.LENGTH_SHORT).show()
-                showEmptyState()
-            }
-            .addOnFailureListener {
-                loadingOverlay.visibility = View.GONE
-                Toast.makeText(requireContext(), "Failed to cancel: ${it.message}", Toast.LENGTH_SHORT).show()
-            }
+        val update = mapOf("status" to "AVAILABLE", "workerId" to FieldValue.delete(), "workerName" to FieldValue.delete(), "acceptedAt" to FieldValue.delete())
+        firestore.collection("jobs").document(jobId).update(update).addOnSuccessListener {
+            loadingOverlay.visibility = View.GONE
+            showEmptyState()
+        }.addOnFailureListener { loadingOverlay.visibility = View.GONE }
     }
 
-    // --------------------------------------------------
-    // UI STATE: EMPTY
-    // --------------------------------------------------
-    private fun showEmptyState() {
-        currentJob                     = null
-        currentJobId                   = null
-        layoutContent.visibility       = View.GONE
-        layoutEmptyState.visibility    = View.VISIBLE
-        layoutBottomButtons.visibility = View.GONE
-        layoutHeadingButtons.visibility = View.GONE
-        layoutArrivedButtons.visibility = View.GONE
-        layoutDoneButtons.visibility    = View.GONE
-        btnNavigateToMap.visibility    = View.GONE
-        tvTitle.text                   = ""
-        tvStatus.visibility            = View.GONE
-        tvStatus.background            = null
-        btnDone.visibility             = View.GONE
-        btnMoreOptions.visibility      = View.GONE
-    }
-
-    // --------------------------------------------------
-    // 🔥 DIALOGS: JOB & CLIENT DETAILS
-    // --------------------------------------------------
-
-    private fun showJobDetailsDialog(job: Job) {
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_job_details_preview, null)
-        val tvTitle = dialogView.findViewById<TextView>(R.id.tvDialogJobTitle)
-        val tvCategory = dialogView.findViewById<TextView>(R.id.tvDialogCategory)
-        val tvSchedule = dialogView.findViewById<TextView>(R.id.tvDialogSchedule)
-        val tvLocation = dialogView.findViewById<TextView>(R.id.tvDialogLocation)
-        val tvPrice = dialogView.findViewById<TextView>(R.id.tvDialogPrice)
-        val tvDescription = dialogView.findViewById<TextView>(R.id.tvDialogDescription)
-        val layoutImages = dialogView.findViewById<LinearLayout>(R.id.layoutDialogImages)
-
-        tvTitle.text = job.jobTitle
-        tvCategory.text = job.serviceCategory
-        tvSchedule.text = "${job.scheduledDate} at ${job.scheduledTime}"
-        tvLocation.text = job.clientAddress
-        tvPrice.text = "₱${job.offeredAmount}"
-        tvDescription.text = job.description
-
-        if (job.jobImages.isEmpty()) {
-            dialogView.findViewById<View>(R.id.tvNoImages).visibility = View.VISIBLE
-        } else {
-            job.jobImages.forEach { url ->
-                val imageView = ImageView(requireContext())
-                val params = LinearLayout.LayoutParams(
-                    resources.getDimensionPixelSize(R.dimen.preview_image_size),
-                    resources.getDimensionPixelSize(R.dimen.preview_image_size)
-                )
-                params.setMargins(0, 0, 12, 0)
-                imageView.layoutParams = params
-                imageView.scaleType = ImageView.ScaleType.CENTER_CROP
-                imageView.load(url) {
-                    crossfade(true)
-                    placeholder(R.drawable.bg_image_placeholder)
-                }
-                layoutImages.addView(imageView)
-            }
-        }
-
-        AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
-            .setView(dialogView)
-            .setPositiveButton("Close", null)
-            .show()
+    private fun showRejectionDialog(job: Job) {
+        if (activeRejectionDialog?.isShowing == true) return
+        val details = job.rejectionDetails as? Map<String, Any> ?: return
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_job_rejection, null)
+        dialogView.findViewById<TextView>(R.id.tvRejectionReason).text = details["reason"] as? String ?: "Unknown"
+        dialogView.findViewById<TextView>(R.id.tvRejectionDescription).text = details["description"] as? String ?: "No details"
+        
+        activeRejectionDialog = AlertDialog.Builder(requireContext()).setView(dialogView).setCancelable(false).create()
+        activeRejectionDialog?.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialogView.findViewById<Button>(R.id.btnAcknowledge).setOnClickListener { activeRejectionDialog?.dismiss() }
+        activeRejectionDialog?.show()
     }
 
     private fun showClientDetailsDialog(clientId: String) {
-        firestore.collection("users").document(clientId).get()
-            .addOnSuccessListener { doc ->
-                val client = doc.toObject(User::class.java) ?: return@addOnSuccessListener
-                
-                val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_client_details_preview, null)
-                val ivProfile = dialogView.findViewById<ImageView>(R.id.ivClientProfile)
-                val tvName = dialogView.findViewById<TextView>(R.id.tvClientName)
-                val tvRole = dialogView.findViewById<TextView>(R.id.tvClientRole)
-                val tvPhone = dialogView.findViewById<TextView>(R.id.tvClientPhone)
-                val tvAddress = dialogView.findViewById<TextView>(R.id.tvClientAddress)
-                val layoutCompany = dialogView.findViewById<LinearLayout>(R.id.layoutCompanyInfo)
-                val tvCompanyName = dialogView.findViewById<TextView>(R.id.tvCompanyName)
-
-                tvName.text = client.name
-                tvRole.text = client.role
-                tvPhone.text = client.phone
-                tvAddress.text = client.address
-
-                if (client.role == "COMPANY") {
-                    layoutCompany.visibility = View.VISIBLE
-                    tvCompanyName.text = client.companyName
-                }
-
-                ivProfile.load(client.profileImage) {
-                    crossfade(true)
-                    placeholder(R.drawable.ic_user_placeholder)
-                    transformations(CircleCropTransformation())
-                }
-
-                AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
-                    .setView(dialogView)
-                    .setPositiveButton("Close", null)
-                    .show()
-            }
+        firestore.collection("users").document(clientId).get().addOnSuccessListener { doc ->
+            val client = doc.toObject(User::class.java) ?: return@addOnSuccessListener
+            val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_client_details_preview, null)
+            dialogView.findViewById<TextView>(R.id.tvClientName).text = client.name
+            dialogView.findViewById<TextView>(R.id.tvClientPhone).text = client.phone
+            dialogView.findViewById<TextView>(R.id.tvClientAddress).text = client.address
+            val iv = dialogView.findViewById<ImageView>(R.id.ivClientProfile)
+            iv.load(client.profileImage) { placeholder(R.drawable.ic_user_placeholder); transformations(CircleCropTransformation()) }
+            AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog).setView(dialogView).setPositiveButton("Close", null).show()
+        }
     }
 
-    // --------------------------------------------------
-    // ACTION: REQUEST DONE
-    // --------------------------------------------------
-    private fun requestDone() {
-        val jobId = currentJobId ?: return
+    /**
+     * Formats job date from "M/d/yyyy" or "MM/dd/yy" to "MMMM d, yyyy"
+     */
+    private fun formatJobDate(dateStr: String): String {
+        if (dateStr.isEmpty()) return ""
         
-        loadingOverlay.visibility = View.VISIBLE
-        tvLoadingMessage.text = "Sending request to client..."
-
-        firestore.collection("jobs")
-            .document(jobId)
-            .update(
-                mapOf(
-                    "status"      to "PENDING_VERIFICATION",
-                    "completedAt" to System.currentTimeMillis()
-                )
-            )
-            .addOnSuccessListener {
-                loadingOverlay.visibility = View.GONE
-                currentJob?.let { job ->
-                    com.example.newtacks.utils.NotificationHelper.sendNotification(
-                        job.clientId,
-                        "Job Ready for Verification",
-                        "Your worker has completed the job. Please verify and confirm.",
-                        "REQUESTS"
-                    )
-                }
-                Toast.makeText(
-                    requireContext(),
-                    "Marked as done. Waiting for client verification.",
-                    Toast.LENGTH_SHORT
-                ).show()
+        val inputFormats = listOf(
+            SimpleDateFormat("M/d/yyyy", Locale.getDefault()),
+            SimpleDateFormat("MM/dd/yy", Locale.getDefault()),
+            SimpleDateFormat("dd/MM/yy", Locale.getDefault())
+        )
+        
+        val outputFormat = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
+        
+        for (format in inputFormats) {
+            try {
+                val date = format.parse(dateStr)
+                if (date != null) return outputFormat.format(date)
+            } catch (e: Exception) {
+                // Try next format
             }
-            .addOnFailureListener {
-                loadingOverlay.visibility = View.GONE
-                Toast.makeText(requireContext(), "Failed to update status", Toast.LENGTH_SHORT).show()
-            }
-            .addOnFailureListener {
-                loadingOverlay.visibility = View.GONE
-                Toast.makeText(requireContext(), "Failed to mark as done", Toast.LENGTH_SHORT).show()
-            }
+        }
+        
+        return dateStr // Fallback to original if parsing fails
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         listener?.remove()
-        clientLocationListener?.remove()
-        stopPeriodicDistanceUpdate()
     }
 }
