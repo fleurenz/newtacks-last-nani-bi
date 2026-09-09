@@ -69,9 +69,11 @@ class WorkerJobFragment : Fragment() {
     private lateinit var layoutBottomButtons: View
     private lateinit var btnNavigateMap: Button
     private lateinit var btnMainAction: Button
+    private lateinit var tvMessageBadge: TextView
 
     private var currentJob: Job? = null
     private var currentJobId: String? = null
+    private var messageListener: ListenerRegistration? = null
     private var activeRejectionDialog: AlertDialog? = null
 
     override fun onCreateView(
@@ -106,6 +108,7 @@ class WorkerJobFragment : Fragment() {
         tvClientDistance = view.findViewById(R.id.tvClientDistance)
         btnViewClientProfile = view.findViewById(R.id.btnViewClientProfile)
         btnMessageClient = view.findViewById(R.id.btnMessageClient)
+        tvMessageBadge = view.findViewById(R.id.tvMessageBadgeWorker)
 
         // Progress Bar
         progressTrackActive = view.findViewById(R.id.progressTrackActive)
@@ -184,8 +187,14 @@ class WorkerJobFragment : Fragment() {
     }
 
     private fun showActiveJob(job: Job) {
+        val oldId = currentJobId
         currentJob = job
         currentJobId = job.jobId
+        
+        if (oldId != currentJobId) {
+            listenForUnreadMessages(job.jobId)
+        }
+        
         layoutContent.visibility = View.VISIBLE
         layoutEmptyState.visibility = View.GONE
         layoutBottomButtons.visibility = View.VISIBLE
@@ -217,6 +226,25 @@ class WorkerJobFragment : Fragment() {
                 transformations(CircleCropTransformation())
             }
         }
+    }
+
+    private fun listenForUnreadMessages(jobId: String) {
+        val uid = auth.currentUser?.uid ?: return
+        messageListener?.remove()
+        
+        messageListener = firestore.collection("chats")
+            .whereEqualTo("jobId", jobId)
+            .whereEqualTo("receiverId", uid)
+            .whereEqualTo("read", false)
+            .addSnapshotListener { snapshots, _ ->
+                val count = snapshots?.size() ?: 0
+                if (count > 0) {
+                    tvMessageBadge.visibility = View.VISIBLE
+                    tvMessageBadge.text = count.toString()
+                } else {
+                    tvMessageBadge.visibility = View.GONE
+                }
+            }
     }
 
     private fun updateStatusFlow(status: String) {
@@ -456,5 +484,6 @@ class WorkerJobFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         listener?.remove()
+        messageListener?.remove()
     }
 }

@@ -85,10 +85,12 @@ class ClientRequestsFragment : Fragment() {
     private lateinit var layoutHeader: View
     private lateinit var loadingOverlay: View
     private lateinit var tvLoadingMessage: TextView
+    private lateinit var tvMessageBadge: TextView
 
     private var currentJob: Job? = null
     private var currentJobId: String? = null
     private var lastCancelTime: Long = 0
+    private var messageListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -121,6 +123,7 @@ class ClientRequestsFragment : Fragment() {
         tvWorkerDistance = view.findViewById(R.id.tvWorkerDistance)
         btnViewProfile   = view.findViewById(R.id.btnViewProfile)
         btnMessageWorker = view.findViewById(R.id.btnMessageWorkerSmall)
+        tvMessageBadge   = view.findViewById(R.id.tvMessageBadgeClient)
 
         tvDetailService     = view.findViewById(R.id.tvDetailService)
         tvDetailAddress     = view.findViewById(R.id.tvDetailAddress)
@@ -182,6 +185,25 @@ class ClientRequestsFragment : Fragment() {
         return view
     }
 
+    private fun listenForUnreadMessages(jobId: String) {
+        val uid = auth.currentUser?.uid ?: return
+        messageListener?.remove()
+        
+        messageListener = firestore.collection("chats")
+            .whereEqualTo("jobId", jobId)
+            .whereEqualTo("receiverId", uid)
+            .whereEqualTo("read", false)
+            .addSnapshotListener { snapshots, _ ->
+                val count = snapshots?.size() ?: 0
+                if (count > 0) {
+                    tvMessageBadge.visibility = View.VISIBLE
+                    tvMessageBadge.text = count.toString()
+                } else {
+                    tvMessageBadge.visibility = View.GONE
+                }
+            }
+    }
+
     private fun listenForActiveJob() {
         val clientId = auth.currentUser?.uid ?: return
         listener = firestore.collection("jobs")
@@ -201,8 +223,13 @@ class ClientRequestsFragment : Fragment() {
     }
 
     private fun showActiveJob(job: Job) {
+        val oldId = currentJobId
         currentJob = job
         currentJobId = job.jobId
+        
+        if (oldId != currentJobId) {
+            listenForUnreadMessages(job.jobId)
+        }
         
         if (job.status != "HEADING_TO_CLIENT") {
             workerLocationListener?.remove()
@@ -541,6 +568,6 @@ class ClientRequestsFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        listener?.remove(); workerLocationListener?.remove()
+        listener?.remove(); workerLocationListener?.remove(); messageListener?.remove()
     }
 }

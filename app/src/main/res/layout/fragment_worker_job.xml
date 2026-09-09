@@ -208,35 +208,58 @@
                                 </LinearLayout>
                             </com.google.android.material.card.MaterialCardView>
 
-                            <com.google.android.material.card.MaterialCardView
-                                android:id="@+id/btnMessageClient"
+                            <FrameLayout
                                 android:layout_width="wrap_content"
-                                android:layout_height="40dp"
-                                app:cardBackgroundColor="#EBF2FF"
-                                app:cardCornerRadius="8dp"
-                                app:cardElevation="0dp"
-                                android:clickable="true"
-                                android:focusable="true">
-                                <LinearLayout
+                                android:layout_height="wrap_content">
+
+                                <com.google.android.material.card.MaterialCardView
+                                    android:id="@+id/btnMessageClient"
                                     android:layout_width="wrap_content"
-                                    android:layout_height="match_parent"
-                                    android:gravity="center"
-                                    android:paddingHorizontal="10dp">
-                                    <ImageView
-                                        android:layout_width="16dp"
-                                        android:layout_height="16dp"
-                                        android:src="@drawable/ic_bubble_alert"
-                                        app:tint="#0F325E" />
-                                    <TextView
+                                    android:layout_height="40dp"
+                                    app:cardBackgroundColor="#EBF2FF"
+                                    app:cardCornerRadius="8dp"
+                                    app:cardElevation="0dp"
+                                    android:clickable="true"
+                                    android:focusable="true">
+                                    <LinearLayout
                                         android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="4dp"
-                                        android:text="Message"
-                                        android:textColor="#0F325E"
-                                        android:textSize="10sp"
-                                        android:textStyle="bold" />
-                                </LinearLayout>
-                            </com.google.android.material.card.MaterialCardView>
+                                        android:layout_height="match_parent"
+                                        android:gravity="center"
+                                        android:paddingHorizontal="10dp">
+                                        <ImageView
+                                            android:layout_width="16dp"
+                                            android:layout_height="16dp"
+                                            android:src="@drawable/ic_bubble_alert"
+                                            app:tint="#0F325E" />
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginStart="4dp"
+                                            android:text="Message"
+                                            android:textColor="#0F325E"
+                                            android:textSize="10sp"
+                                            android:textStyle="bold" />
+                                    </LinearLayout>
+                                </com.google.android.material.card.MaterialCardView>
+
+                                <!-- Notification Badge -->
+                                <TextView
+                                    android:id="@+id/tvMessageBadgeWorker"
+                                    android:layout_width="18dp"
+                                    android:layout_height="18dp"
+                                    android:layout_gravity="top|end"
+                                    android:layout_marginTop="-4dp"
+                                    android:layout_marginEnd="-4dp"
+                                    android:background="@drawable/bg_circle"
+                                    android:backgroundTint="#EF4444"
+                                    android:gravity="center"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="9sp"
+                                    android:textStyle="bold"
+                                    android:visibility="gone"
+                                    tools:text="1"
+                                    tools:visibility="visible" />
+                            </FrameLayout>
 
                         </LinearLayout>
 

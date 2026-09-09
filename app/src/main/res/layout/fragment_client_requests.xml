@@ -368,7 +368,6 @@
                             </LinearLayout>
                         </LinearLayout>
 
-                        <!-- Buttons side-by-side -->
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -392,24 +391,47 @@
                                 app:iconSize="16dp"
                                 app:iconTint="#D97706" />
 
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnMessageWorkerSmall"
-                                style="@style/Widget.MaterialComponents.Button.TextButton"
-                                android:layout_width="64dp"
-                                android:layout_height="48dp"
-                                android:layout_marginStart="8dp"
-                                android:insetTop="0dp"
-                                android:insetBottom="0dp"
-                                android:padding="0dp"
-                                android:text="Message"
-                                android:textColor="#64748B"
-                                android:textSize="9sp"
-                                app:backgroundTint="#F1F5F9"
-                                app:cornerRadius="8dp"
-                                app:icon="@drawable/message"
-                                app:iconGravity="top"
-                                app:iconSize="16dp"
-                                app:iconTint="#64748B" />
+                            <FrameLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp">
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btnMessageWorkerSmall"
+                                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                                    android:layout_width="64dp"
+                                    android:layout_height="48dp"
+                                    android:insetTop="0dp"
+                                    android:insetBottom="0dp"
+                                    android:padding="0dp"
+                                    android:text="Message"
+                                    android:textColor="#64748B"
+                                    android:textSize="9sp"
+                                    app:backgroundTint="#F1F5F9"
+                                    app:cornerRadius="8dp"
+                                    app:icon="@drawable/message"
+                                    app:iconGravity="top"
+                                    app:iconSize="16dp"
+                                    app:iconTint="#64748B" />
+
+                                <!-- Notification Badge -->
+                                <TextView
+                                    android:id="@+id/tvMessageBadgeClient"
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:layout_gravity="top|end"
+                                    android:layout_marginTop="2dp"
+                                    android:layout_marginEnd="2dp"
+                                    android:background="@drawable/bg_circle"
+                                    android:backgroundTint="#EF4444"
+                                    android:gravity="center"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="8sp"
+                                    android:textStyle="bold"
+                                    android:visibility="gone"
+                                    tools:text="1"
+                                    tools:visibility="visible" />
+                            </FrameLayout>
                         </LinearLayout>
                     </LinearLayout>
 

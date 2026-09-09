@@ -37,6 +37,9 @@ class TransactionChatActivity : AppCompatActivity() {
     private var workerId: String = "" // The current worker involved in the job
     private var otherUserId: String = ""
     private var jobTitle: String = ""
+    
+    private var myProfileUrl: String? = null
+    private var otherProfileUrl: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,12 +100,21 @@ class TransactionChatActivity : AppCompatActivity() {
 
         btnSend.setOnClickListener { sendMessage() }
 
-        setupHeader()
+        loadProfiles()
         listenForMessages()
         checkJobStatus()
     }
 
-    private fun setupHeader() {
+    private fun loadProfiles() {
+        val currentUid = auth.currentUser?.uid ?: return
+        
+        // Fetch My Profile
+        db.collection("users").document(currentUid).get().addOnSuccessListener { doc ->
+            myProfileUrl = doc.getString("profileImage")
+            adapter.setProfileImages(myProfileUrl, otherProfileUrl)
+        }
+        
+        // Fetch Other Profile
         val tvName = findViewById<TextView>(R.id.tvOtherUserName)
         val tvJob = findViewById<TextView>(R.id.tvJobTitleHeader)
         val ivOther = findViewById<ImageView>(R.id.ivOtherUser)
@@ -115,6 +127,8 @@ class TransactionChatActivity : AppCompatActivity() {
                     val user = doc.toObject(User::class.java)
                     if (user != null) {
                         tvName.text = user.name
+                        otherProfileUrl = user.profileImage
+                        adapter.setProfileImages(myProfileUrl, otherProfileUrl)
                         ivOther.load(user.profileImage) {
                             crossfade(true)
                             placeholder(R.drawable.ic_user_placeholder)
