@@ -64,8 +64,8 @@ class ClientRequestsFragment : Fragment() {
     private lateinit var ivWorkerProfile: ImageView
     private lateinit var tvWorkerName: TextView
     private lateinit var tvWorkerDistance: TextView
-    private lateinit var btnViewProfile: Button
-    private lateinit var btnMessageWorker: Button
+    private lateinit var btnViewProfile: View
+    private lateinit var btnMessageWorker: View
     
     private lateinit var tvDetailService: TextView
     private lateinit var tvDetailAddress: TextView

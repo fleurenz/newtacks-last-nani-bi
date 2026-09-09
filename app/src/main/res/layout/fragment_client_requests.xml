@@ -323,16 +323,18 @@
 
                         <com.google.android.material.imageview.ShapeableImageView
                             android:id="@+id/ivWorkerProfile"
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
+                            android:layout_width="60dp"
+                            android:layout_height="60dp"
                             android:scaleType="centerCrop"
                             android:src="@drawable/ic_user_placeholder"
-                            app:shapeAppearanceOverlay="@style/CircleImage" />
+                            app:shapeAppearanceOverlay="@style/CircleImage"
+                            app:strokeColor="#F1F5F9"
+                            app:strokeWidth="1dp" />
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
+                            android:layout_marginStart="14dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -349,11 +351,11 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:gravity="center_vertical"
-                                android:orientation="horizontal">
+                                android:layout_marginTop="2dp">
 
                                 <ImageView
-                                    android:layout_width="10dp"
-                                    android:layout_height="10dp"
+                                    android:layout_width="12dp"
+                                    android:layout_height="12dp"
                                     android:src="@drawable/ic_location"
                                     app:tint="#EF4444" />
 
@@ -361,78 +363,96 @@
                                     android:id="@+id/tvWorkerDistance"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginStart="3dp"
+                                    android:layout_marginStart="4dp"
                                     android:text="10km away"
                                     android:textColor="#64748B"
                                     android:textSize="11sp" />
                             </LinearLayout>
                         </LinearLayout>
 
-                        <LinearLayout
+                        <!-- Profile & Message Buttons -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/btnViewProfile"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnViewProfile"
-                                style="@style/Widget.MaterialComponents.Button.TextButton"
-                                android:layout_width="72dp"
-                                android:layout_height="48dp"
-                                android:insetTop="0dp"
-                                android:insetBottom="0dp"
-                                android:padding="0dp"
-                                android:text="View Profile"
-                                android:textColor="#D97706"
-                                android:textSize="9sp"
-                                app:backgroundTint="#FEF3C7"
-                                app:cornerRadius="8dp"
-                                app:icon="@drawable/ic_nav_account"
-                                app:iconGravity="top"
-                                app:iconSize="16dp"
-                                app:iconTint="#D97706" />
-
-                            <FrameLayout
+                            android:layout_height="40dp"
+                            android:layout_marginEnd="8dp"
+                            app:cardBackgroundColor="#FFF1E2"
+                            app:cardCornerRadius="8dp"
+                            app:cardElevation="0dp"
+                            android:clickable="true"
+                            android:focusable="true">
+                            <LinearLayout
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="8dp">
-
-                                <com.google.android.material.button.MaterialButton
-                                    android:id="@+id/btnMessageWorkerSmall"
-                                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                                    android:layout_width="64dp"
-                                    android:layout_height="48dp"
-                                    android:insetTop="0dp"
-                                    android:insetBottom="0dp"
-                                    android:padding="0dp"
-                                    android:text="Message"
-                                    android:textColor="#64748B"
-                                    android:textSize="9sp"
-                                    app:backgroundTint="#F1F5F9"
-                                    app:cornerRadius="8dp"
-                                    app:icon="@drawable/message"
-                                    app:iconGravity="top"
-                                    app:iconSize="16dp"
-                                    app:iconTint="#64748B" />
-
-                                <!-- Notification Badge -->
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:paddingHorizontal="10dp">
+                                <ImageView
+                                    android:layout_width="14dp"
+                                    android:layout_height="14dp"
+                                    android:src="@drawable/ic_nav_account"
+                                    app:tint="#F59E0B" />
                                 <TextView
-                                    android:id="@+id/tvMessageBadgeClient"
-                                    android:layout_width="16dp"
-                                    android:layout_height="16dp"
-                                    android:layout_gravity="top|end"
-                                    android:layout_marginTop="2dp"
-                                    android:layout_marginEnd="2dp"
-                                    android:background="@drawable/bg_circle"
-                                    android:backgroundTint="#EF4444"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="4dp"
+                                    android:text="View Profile"
+                                    android:textColor="#F59E0B"
+                                    android:textSize="10sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <FrameLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content">
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/btnMessageWorkerSmall"
+                                android:layout_width="wrap_content"
+                                android:layout_height="40dp"
+                                app:cardBackgroundColor="#EBF2FF"
+                                app:cardCornerRadius="8dp"
+                                app:cardElevation="0dp"
+                                android:clickable="true"
+                                android:focusable="true">
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="match_parent"
                                     android:gravity="center"
-                                    android:textColor="#FFFFFF"
-                                    android:textSize="8sp"
-                                    android:textStyle="bold"
-                                    android:visibility="gone"
-                                    tools:text="1"
-                                    tools:visibility="visible" />
-                            </FrameLayout>
-                        </LinearLayout>
+                                    android:paddingHorizontal="10dp">
+                                    <ImageView
+                                        android:layout_width="16dp"
+                                        android:layout_height="16dp"
+                                        android:src="@drawable/message_icon" />
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="4dp"
+                                        android:text="Message"
+                                        android:textColor="#004A99"
+                                        android:textSize="10sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Notification Badge -->
+                            <TextView
+                                android:id="@+id/tvMessageBadgeClient"
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="top|end"
+                                android:layout_marginTop="-4dp"
+                                android:layout_marginEnd="-4dp"
+                                android:background="@drawable/bg_circle"
+                                android:backgroundTint="#EF4444"
+                                android:gravity="center"
+                                android:textColor="#FFFFFF"
+                                android:textSize="9sp"
+                                android:textStyle="bold"
+                                android:visibility="gone"
+                                tools:text="1"
+                                tools:visibility="visible" />
+                        </FrameLayout>
                     </LinearLayout>
 
                     <!-- DETAILS LIST IN A CARD -->

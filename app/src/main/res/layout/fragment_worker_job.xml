@@ -229,8 +229,7 @@
                                         <ImageView
                                             android:layout_width="16dp"
                                             android:layout_height="16dp"
-                                            android:src="@drawable/ic_bubble_alert"
-                                            app:tint="#0F325E" />
+                                            android:src="@drawable/message_icon" />
                                         <TextView
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
@@ -260,7 +259,6 @@
                                     tools:text="1"
                                     tools:visibility="visible" />
                             </FrameLayout>
-
                         </LinearLayout>
 
                         <!-- PROGRESS BAR SECTION (Worker's Version) -->

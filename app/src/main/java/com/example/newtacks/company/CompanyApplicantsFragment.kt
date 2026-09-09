@@ -1,29 +1,34 @@
 package com.example.newtacks.company
 
+import android.app.DatePickerDialog
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import coil.load
+import coil.transform.CircleCropTransformation
 import com.example.newtacks.R
 import com.example.newtacks.models.Application
 import com.example.newtacks.models.HiringPost
 import com.example.newtacks.models.User
+import com.example.newtacks.utils.ImageUtils
 import com.example.newtacks.utils.NotificationHelper
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.gson.Gson
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import java.util.*
 
 class CompanyApplicantsFragment : Fragment() {
 
@@ -40,6 +45,7 @@ class CompanyApplicantsFragment : Fragment() {
     private lateinit var layoutActiveFilter: View
     private lateinit var tvActiveFilterName: TextView
     private lateinit var btnClearFilter: View
+    private lateinit var loadingOverlay: View
 
     private var appsListener: ListenerRegistration? = null
     private val allData = mutableListOf<Pair<User, Application>>()
@@ -66,6 +72,7 @@ class CompanyApplicantsFragment : Fragment() {
         layoutActiveFilter = view.findViewById(R.id.layoutActiveFilter)
         tvActiveFilterName = view.findViewById(R.id.tvActiveFilterName)
         btnClearFilter     = view.findViewById(R.id.btnClearFilter)
+        loadingOverlay     = view.findViewById(R.id.loadingOverlay)
 
         // Robust Inset Handling: Use spacer for status bar
         val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)
@@ -97,6 +104,7 @@ class CompanyApplicantsFragment : Fragment() {
 
         swipeRefresh.setOnRefreshListener {
             listenForApplications()
+            fetchHiringPosts()
         }
 
         return view
@@ -104,10 +112,10 @@ class CompanyApplicantsFragment : Fragment() {
 
     private fun setupRecyclerView() {
         adapter = CompanyApplicantFullAdapter(emptyList(), { user, app ->
-            // On Item Click: Open Job Details
-            fetchPostAndOpen(app.hiringId)
+            // On Item Click: Open Worker Details Dialog directly instead of Job Details screen
+            showWorkerDetailsDialog(user, app)
         }, { user ->
-            // On "View Profile" Label Click: Open Full Profile directly
+            // On Profile Label Click: Open Full Profile directly
             val intent = Intent(requireContext(), com.example.newtacks.worker.WorkerProfileActivity::class.java)
             intent.putExtra("WORKER_ID", user.uid)
             startActivity(intent)
@@ -116,15 +124,199 @@ class CompanyApplicantsFragment : Fragment() {
         rvApplicants.adapter = adapter
     }
 
-    private fun fetchPostAndOpen(hiringId: String) {
-        db.collection("hiring").document(hiringId).get().addOnSuccessListener { doc ->
-            val post = doc.toObject(HiringPost::class.java)?.copy(hiringId = doc.id)
-            if (post != null) {
-                val intent = Intent(requireContext(), HiringDetailsActivity::class.java)
-                intent.putExtra("HIRING_POST_JSON", Gson().toJson(post))
-                intent.putExtra("FOCUS_TAB", 2) // Tell it to open Applicants tab
-                startActivity(intent)
+    private fun showWorkerDetailsDialog(worker: User, app: Application) {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_worker_details_preview, null)
+        val ivProfile = dialogView.findViewById<ImageView>(R.id.ivWorkerProfile)
+        val tvName = dialogView.findViewById<TextView>(R.id.tvWorkerName)
+        val tvRating = dialogView.findViewById<TextView>(R.id.tvWorkerRating)
+        val tvBadge = dialogView.findViewById<TextView>(R.id.tvWorkerBadge)
+        val tvPhone = dialogView.findViewById<TextView>(R.id.tvWorkerPhone)
+        val tvExp = dialogView.findViewById<TextView>(R.id.tvWorkerExperience)
+        val tvCat = dialogView.findViewById<TextView>(R.id.tvWorkerCategories)
+        
+        val tvDetailedStatus = dialogView.findViewById<TextView>(R.id.tvDetailedStatus)
+        val btnPrimary = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnProcessPrimary)
+        val btnSecondary = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnProcessSecondary)
+        
+        tvName.text = worker.name
+        tvRating.text = "⭐ %.1f (%d reviews)".format(worker.rating, worker.totalRatings)
+        tvPhone.text = worker.phone
+        tvExp.text = "${worker.serviceExperience ?: 0} years of experience"
+        tvCat.text = worker.serviceCategories?.joinToString(", ") ?: "General Services"
+
+        if (worker.verificationStatus > 0) {
+            tvBadge.visibility = View.VISIBLE
+            tvBadge.text = "NC${worker.verificationStatus}"
+            tvBadge.setBackgroundResource(R.drawable.bg_badge_green1)
+        } else {
+            tvBadge.visibility = View.GONE
+        }
+
+        ivProfile.load(worker.profileImage) {
+            crossfade(true)
+            placeholder(R.drawable.ic_person_placeholder)
+            transformations(CircleCropTransformation())
+        }
+
+        // Setup Detailed Status Text
+        val statusText = when (app.status) {
+            "APPLIED" -> "Awaiting Review"
+            "INTERVIEW_SCHEDULED" -> {
+                val sdf = java.text.SimpleDateFormat("MMM dd, yyyy 'at' h:mm a", Locale.getDefault())
+                val dateStr = if (app.interviewDate != null) sdf.format(Date(app.interviewDate)) else "TBD"
+                val response = when(app.workerResponse) {
+                    "ACCEPTED" -> " (Confirmed)"
+                    "REJECTED" -> " (Rejected)"
+                    else -> " (Pending Confirmation)"
+                }
+                "Interview: $dateStr$response"
             }
+            "HIRED" -> "Officially Hired"
+            "REJECTED" -> "Application Rejected"
+            else -> app.status
+        }
+        tvDetailedStatus.text = statusText
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        dialogView.findViewById<View>(R.id.btnCloseDialog).setOnClickListener { dialog.dismiss() }
+
+        // Process Buttons Logic
+        btnPrimary.visibility = View.GONE
+        btnSecondary.visibility = View.GONE
+
+        when (app.status) {
+            "APPLIED" -> {
+                btnPrimary.visibility = View.VISIBLE
+                btnPrimary.text = "Schedule Interview"
+                btnPrimary.setOnClickListener { dialog.dismiss(); showScheduleInterviewDialog(worker, app) }
+                
+                btnSecondary.visibility = View.VISIBLE
+                btnSecondary.text = "Reject Applicant"
+                btnSecondary.setOnClickListener { 
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("Reject Applicant")
+                        .setMessage("Are you sure you want to reject this applicant?")
+                        .setPositiveButton("Reject") { _, _ -> dialog.dismiss(); rejectApplicant(worker, app) }
+                        .setNegativeButton("Cancel", null)
+                        .show()
+                }
+            }
+            "INTERVIEW_SCHEDULED" -> {
+                if (app.workerResponse == "ACCEPTED") {
+                    btnPrimary.visibility = View.VISIBLE
+                    btnPrimary.text = "Hire Worker"
+                    btnPrimary.setOnClickListener { dialog.dismiss(); confirmHiring(worker, app) }
+                } else {
+                    btnPrimary.visibility = View.VISIBLE
+                    btnPrimary.text = "Reschedule Interview"
+                    btnPrimary.setOnClickListener { dialog.dismiss(); showScheduleInterviewDialog(worker, app) }
+                }
+                
+                btnSecondary.visibility = View.VISIBLE
+                btnSecondary.text = "Reject Applicant"
+                btnSecondary.setOnClickListener { 
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("Reject Applicant")
+                        .setMessage("Are you sure you want to reject this applicant?")
+                        .setPositiveButton("Reject") { _, _ -> dialog.dismiss(); rejectApplicant(worker, app) }
+                        .setNegativeButton("Cancel", null)
+                        .show()
+                }
+            }
+        }
+
+        // Certificates buttons
+        val btnNC1 = dialogView.findViewById<Button>(R.id.btnViewNC1)
+        val btnNC2 = dialogView.findViewById<Button>(R.id.btnViewNC2)
+        val btnNC3 = dialogView.findViewById<Button>(R.id.btnViewNC3)
+        val tvNoCert = dialogView.findViewById<TextView>(R.id.tvNoCertificates)
+
+        var hasCert = false
+        worker.nc1CertificateUrl?.let { url -> if (url.isNotEmpty()) { btnNC1.visibility = View.VISIBLE; btnNC1.setOnClickListener { ImageUtils.showFullscreenImage(requireContext(), url) }; hasCert = true } }
+        worker.nc2CertificateUrl?.let { url -> if (url.isNotEmpty()) { btnNC2.visibility = View.VISIBLE; btnNC2.setOnClickListener { ImageUtils.showFullscreenImage(requireContext(), url) }; hasCert = true } }
+        worker.nc3CertificateUrl?.let { url -> if (url.isNotEmpty()) { btnNC3.visibility = View.VISIBLE; btnNC3.setOnClickListener { ImageUtils.showFullscreenImage(requireContext(), url) }; hasCert = true } }
+        if (!hasCert) tvNoCert.visibility = View.VISIBLE
+
+        dialogView.findViewById<Button>(R.id.btnViewFullProfile).setOnClickListener {
+            val intent = Intent(requireContext(), com.example.newtacks.worker.WorkerProfileActivity::class.java)
+            intent.putExtra("WORKER_ID", worker.uid)
+            startActivity(intent)
+        }
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        // Match standard width
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.95).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        dialog.show()
+    }
+
+    private fun showScheduleInterviewDialog(worker: User, app: Application) {
+        val cal = Calendar.getInstance()
+        DatePickerDialog(requireContext(), { _, y, m, d ->
+            val interviewCal = Calendar.getInstance()
+            interviewCal.set(y, m, d, 10, 0)
+            scheduleInterview(worker, app, interviewCal.timeInMillis)
+        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
+    }
+
+    private fun scheduleInterview(worker: User, app: Application, timestamp: Long) {
+        loadingOverlay.visibility = View.VISIBLE
+        db.collection("applications").document(app.applicationId)
+            .update(mapOf("status" to "INTERVIEW_SCHEDULED", "interviewDate" to timestamp, "workerResponse" to null))
+            .addOnSuccessListener {
+                loadingOverlay.visibility = View.GONE
+                NotificationHelper.sendNotification(worker.uid, "Interview Scheduled", "You have an interview request for ${app.jobTitle}.", "HIRING")
+                Toast.makeText(requireContext(), "Interview scheduled", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(requireContext(), "Action failed", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun rejectApplicant(worker: User, app: Application) {
+        loadingOverlay.visibility = View.VISIBLE
+        db.collection("applications").document(app.applicationId).update("status", "REJECTED")
+            .addOnSuccessListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(requireContext(), "Applicant rejected", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(requireContext(), "Action failed", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun confirmHiring(worker: User, app: Application) {
+        loadingOverlay.visibility = View.VISIBLE
+        db.runTransaction { transaction ->
+            val ref = db.collection("hiring").document(app.hiringId)
+            val post = transaction.get(ref).toObject(HiringPost::class.java) ?: throw Exception("Post not found")
+            
+            if (post.acceptedWorkers.size >= post.vacancies) {
+                throw Exception("Vacancy full")
+            }
+
+            val newList = post.acceptedWorkers.toMutableList()
+            newList.add(worker.uid)
+            
+            transaction.update(ref, mapOf(
+                "acceptedWorkers" to newList,
+                "status" to if (newList.size >= post.vacancies) "CLOSED" else "OPEN"
+            ))
+            transaction.update(db.collection("applications").document(app.applicationId), mapOf("status" to "HIRED"))
+        }.addOnSuccessListener {
+            loadingOverlay.visibility = View.GONE
+            NotificationHelper.sendNotification(worker.uid, "Status: Hired!", "You are officially hired for ${app.jobTitle}!", "HIRING")
+            Toast.makeText(requireContext(), "Worker hired successfully!", Toast.LENGTH_SHORT).show()
+        }.addOnFailureListener {
+            loadingOverlay.visibility = View.GONE
+            Toast.makeText(requireContext(), "Hiring failed: ${it.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -196,8 +388,6 @@ class CompanyApplicantsFragment : Fragment() {
                 // Fetch user profiles for all applicants
                 val workerIds = applications.map { it.workerId }.distinct()
                 
-                // Firestore whereIn limit is 10. For simplicity in this update, we take first 10.
-                // In production, we'd chunk this.
                 db.collection("users")
                     .whereIn(com.google.firebase.firestore.FieldPath.documentId(), workerIds.take(10))
                     .get()
@@ -256,9 +446,8 @@ class CompanyApplicantsFragment : Fragment() {
         val rvFilter = dialogView.findViewById<RecyclerView>(R.id.rvFilterJobs)
         val btnApply = dialogView.findViewById<View>(R.id.btnApplyFilter)
 
-        // Add "All posts" option
         val options = mutableListOf<HiringPost?>()
-        options.add(null) // Represents "All posts"
+        options.add(null)
         options.addAll(allHiringPosts)
 
         var tempSelectedId = selectedJobFilterId
@@ -273,10 +462,7 @@ class CompanyApplicantsFragment : Fragment() {
             override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
                 val post = options[position]
                 val tv = holder.itemView.findViewById<TextView>(R.id.tvJobTitle)
-                
                 tv.text = post?.jobTitle ?: "All posts"
-                
-                // Highlight selection
                 val isSelected = if (post == null) tempSelectedId == null else post.hiringId == tempSelectedId
                 if (isSelected) {
                     tv.setBackgroundResource(R.drawable.bg_tab_selected)
@@ -287,13 +473,11 @@ class CompanyApplicantsFragment : Fragment() {
                     tv.setTextColor(Color.parseColor("#1E293B"))
                     tv.paint.isFakeBoldText = false
                 }
-
                 tv.setOnClickListener {
                     tempSelectedId = post?.hiringId
                     notifyDataSetChanged()
                 }
             }
-
             override fun getItemCount() = options.size
         }
 
@@ -303,7 +487,6 @@ class CompanyApplicantsFragment : Fragment() {
             filterAndDisplay()
             dialog.dismiss()
         }
-
         dialog.show()
     }
 
