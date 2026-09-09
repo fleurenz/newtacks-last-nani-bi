@@ -247,44 +247,58 @@
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
                             android:paddingHorizontal="24dp"
-                            android:layout_marginBottom="24dp">
+                            android:layout_marginBottom="32dp">
 
-                            <LinearLayout
+                            <RelativeLayout
                                 android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+                                <!-- Track Background -->
+                                <View
+                                    android:layout_width="match_parent"
+                                    android:layout_height="4dp"
+                                    android:layout_centerVertical="true"
+                                    android:layout_marginHorizontal="16dp"
+                                    android:background="#E2E8F0" />
+                                <!-- Active Track -->
+                                <View
+                                    android:id="@+id/progressTrackActive"
+                                    android:layout_width="0dp"
+                                    android:layout_height="4dp"
+                                    android:layout_centerVertical="true"
+                                    android:layout_marginStart="16dp"
+                                    android:background="#0F325E" />
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal">
+
+                                    <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                                        <ImageView android:id="@+id/step1" android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_active" android:padding="6dp" android:src="@drawable/ic_search" app:tint="#FFFFFF" />
+                                    </FrameLayout>
+                                    <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                                        <ImageView android:id="@+id/step2" android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_inactive" android:padding="6dp" android:src="@drawable/ic_location" app:tint="#94A3B8" />
+                                    </FrameLayout>
+                                    <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                                        <ImageView android:id="@+id/step3" android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_inactive" android:padding="6dp" android:src="@drawable/ic_check_circle" app:tint="#94A3B8" />
+                                    </FrameLayout>
+                                    <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1">
+                                        <ImageView android:id="@+id/step4" android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center" android:background="@drawable/bg_step_circle_inactive" android:padding="6dp" android:src="@drawable/ic_check" app:tint="#94A3B8" />
+                                    </FrameLayout>
+
+                                </LinearLayout>
+                            </RelativeLayout>
+
+                            <TextView
+                                android:id="@+id/tvProgressStatus"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical">
-
-                                <!-- Step 1: Found -->
-                                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-                                    <View android:id="@+id/step1" android:layout_width="20dp" android:layout_height="20dp" android:background="@drawable/bg_step_circle_active" />
-                                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Found" android:textSize="9sp" android:textColor="#0F325E" android:textStyle="bold" android:layout_marginTop="4dp" />
-                                </LinearLayout>
-
-                                <View android:id="@+id/line1" android:layout_width="0dp" android:layout_height="2dp" android:layout_weight="1" android:background="#E2E8F0" android:layout_marginBottom="12dp" />
-
-                                <!-- Step 2: Heading -->
-                                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-                                    <View android:id="@+id/step2" android:layout_width="20dp" android:layout_height="20dp" android:background="@drawable/bg_step_circle_inactive" />
-                                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Heading" android:textSize="9sp" android:textColor="#64748B" android:layout_marginTop="4dp" />
-                                </LinearLayout>
-
-                                <View android:id="@+id/line2" android:layout_width="0dp" android:layout_height="2dp" android:layout_weight="1" android:background="#E2E8F0" android:layout_marginBottom="12dp" />
-
-                                <!-- Step 3: Arrived -->
-                                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-                                    <View android:id="@+id/step3" android:layout_width="20dp" android:layout_height="20dp" android:background="@drawable/bg_step_circle_inactive" />
-                                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Arrived" android:textSize="9sp" android:textColor="#64748B" android:layout_marginTop="4dp" />
-                                </LinearLayout>
-
-                                <View android:id="@+id/line3" android:layout_width="0dp" android:layout_height="2dp" android:layout_weight="1" android:background="#E2E8F0" android:layout_marginBottom="12dp" />
-
-                                <!-- Step 4: Done -->
-                                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-                                    <View android:id="@+id/step4" android:layout_width="20dp" android:layout_height="20dp" android:background="@drawable/bg_step_circle_inactive" />
-                                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Done" android:textSize="9sp" android:textColor="#64748B" android:layout_marginTop="4dp" />
-                                </LinearLayout>
-                            </LinearLayout>
+                                android:layout_marginTop="8dp"
+                                android:gravity="center"
+                                android:text="Found"
+                                android:textColor="#0F325E"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
 
                         <!-- JOB DETAILS CARD -->
@@ -540,7 +554,7 @@
                     android:layout_height="54dp"
                     android:layout_weight="0.8"
                     android:layout_marginEnd="10dp"
-                    android:text="View on Map"
+                    android:text="Map"
                     android:textAllCaps="false"
                     android:textColor="#0F325E"
                     android:textSize="14sp"
