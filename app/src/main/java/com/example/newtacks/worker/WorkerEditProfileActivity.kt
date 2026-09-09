@@ -16,6 +16,8 @@ import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
 import com.example.newtacks.R
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.example.newtacks.models.User
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -60,32 +62,34 @@ class WorkerEditProfileActivity : AppCompatActivity() {
         uri?.let { startCrop(it) }
     }
 
-    private val cropImage = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val resultUri = UCrop.getOutput(result.data!!)
-            if (resultUri != null) {
-                selectedImageUri = resultUri
-                ivProfileImage.load(resultUri) {
-                    transformations(CircleCropTransformation())
+    private val cropImage =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val resultUri = UCrop.getOutput(result.data!!)
+                if (resultUri != null) {
+                    selectedImageUri = resultUri
+                    ivProfileImage.load(resultUri) {
+                        transformations(CircleCropTransformation())
+                    }
                 }
+            } else if (result.resultCode == UCrop.RESULT_ERROR) {
+                val cropError = UCrop.getError(result.data!!)
+                Toast.makeText(this, "Crop error: ${cropError?.message}", Toast.LENGTH_SHORT).show()
             }
-        } else if (result.resultCode == UCrop.RESULT_ERROR) {
-            val cropError = UCrop.getError(result.data!!)
-            Toast.makeText(this, "Crop error: ${cropError?.message}", Toast.LENGTH_SHORT).show()
         }
-    }
 
     private fun startCrop(uri: Uri) {
-        val destinationUri = Uri.fromFile(java.io.File(cacheDir, "profile_crop_${System.currentTimeMillis()}.jpg"))
+        val destinationUri =
+            Uri.fromFile(java.io.File(cacheDir, "profile_crop_${System.currentTimeMillis()}.jpg"))
         val uCrop = UCrop.of(uri, destinationUri)
             .withAspectRatio(1f, 1f)
             .withMaxResultSize(500, 500)
-        
+
         val options = UCrop.Options()
         options.setToolbarColor(ContextCompat.getColor(this, R.color.primary))
         options.setToolbarWidgetColor(Color.WHITE)
         options.setActiveControlsWidgetColor(ContextCompat.getColor(this, R.color.primary))
-        
+
         uCrop.withOptions(options)
         cropImage.launch(uCrop.getIntent(this))
     }
@@ -106,6 +110,17 @@ class WorkerEditProfileActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         toolbar.setNavigationOnClickListener { finish() }
 
+        // Robust Inset Handling: Use spacer for status bar
+        val statusBarSpacer = findViewById<View>(R.id.statusBarSpacer)
+        val rootLayout = findViewById<View>(R.id.workerEditProfileRoot)
+        ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val params = statusBarSpacer.layoutParams
+            params.height = systemBars.top
+            statusBarSpacer.layoutParams = params
+            insets
+        }
+
         ivProfileImage = findViewById(R.id.ivProfileImage)
         layoutProfileImage = findViewById(R.id.layoutProfileImage)
         etName = findViewById(R.id.etName)
@@ -114,7 +129,7 @@ class WorkerEditProfileActivity : AppCompatActivity() {
         switchRealTimeLocation = findViewById(R.id.switchRealTimeLocation)
         etExperience = findViewById(R.id.etExperience)
         etAbout = findViewById(R.id.etAbout)
-        
+
         cbPlumbing = findViewById(R.id.cbPlumbing)
         cbElectrical = findViewById(R.id.cbElectrical)
         cbCarpentry = findViewById(R.id.cbCarpentry)
@@ -122,7 +137,7 @@ class WorkerEditProfileActivity : AppCompatActivity() {
         cbWelding = findViewById(R.id.cbWelding)
         cbPainting = findViewById(R.id.cbPainting)
         cbLandscaping = findViewById(R.id.cbLandscaping)
-        
+
         btnSave = findViewById(R.id.btnSave)
         loadingOverlay = findViewById(R.id.loadingOverlay)
 
@@ -148,12 +163,12 @@ class WorkerEditProfileActivity : AppCompatActivity() {
     private fun loadCurrentData() {
         val uid = auth.currentUser?.uid ?: return
         loadingOverlay.visibility = View.VISIBLE
-        
+
         firestore.collection("users").document(uid).get()
             .addOnSuccessListener { doc ->
                 loadingOverlay.visibility = View.GONE
                 val user = doc.toObject(User::class.java) ?: return@addOnSuccessListener
-                
+
                 etName.setText(user.name)
                 etPhone.setText(user.phone)
                 etAddress.setText(user.address)
@@ -173,7 +188,7 @@ class WorkerEditProfileActivity : AppCompatActivity() {
 
                 etExperience.setText((user.serviceExperience ?: 0).toString())
                 etAbout.setText(user.aboutUs ?: "")
-                
+
                 user.serviceCategories?.forEach { category ->
                     when (category) {
                         "Plumbing" -> cbPlumbing.isChecked = true
@@ -193,8 +208,12 @@ class WorkerEditProfileActivity : AppCompatActivity() {
     }
 
     private fun detectRealTimeLocation() {
-        if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) 
-            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+        if (androidx.core.content.ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            )
+            != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
             requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
             return
         }
@@ -208,7 +227,11 @@ class WorkerEditProfileActivity : AppCompatActivity() {
                     selectedLng = location.longitude
                     reverseGeocode(location.latitude, location.longitude)
                 } else {
-                    Toast.makeText(this, "Could not get location. Ensure GPS is on.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        "Could not get location. Ensure GPS is on.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     switchRealTimeLocation.isChecked = false
                     etAddress.setText(profileAddress)
                 }
@@ -266,24 +289,30 @@ class WorkerEditProfileActivity : AppCompatActivity() {
                     val imageUrl = resultData?.get("secure_url").toString()
                     saveData(imageUrl)
                 }
+
                 override fun onError(requestId: String?, error: ErrorInfo?) {
                     loadingOverlay.visibility = View.GONE
-                    Toast.makeText(this@WorkerEditProfileActivity, "Upload failed: ${error?.description}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@WorkerEditProfileActivity,
+                        "Upload failed: ${error?.description}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
+
                 override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
             }).dispatch()
     }
 
     private fun saveData(imageUrl: String) {
         val uid = auth.currentUser?.uid ?: return
-        
+
         val name = etName.text.toString()
         val phone = etPhone.text.toString()
         val address = etAddress.text.toString()
         val expText = etExperience.text.toString()
         val experience = if (expText.isNotEmpty()) expText.toInt() else 0
         val about = etAbout.text.toString()
-        
+
         val categories = mutableListOf<String>()
         if (cbPlumbing.isChecked) categories.add("Plumbing")
         if (cbElectrical.isChecked) categories.add("Electrical")
@@ -294,7 +323,7 @@ class WorkerEditProfileActivity : AppCompatActivity() {
         if (cbLandscaping.isChecked) categories.add("Landscaping")
 
         loadingOverlay.visibility = View.VISIBLE
-        
+
         val updates = mapOf(
             "name" to name,
             "phone" to phone,

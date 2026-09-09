@@ -1,16 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/workerEditProfileRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="#FFFFFF">
 
+    <!-- Status Bar Spacer -->
+    <View
+        android:id="@+id/statusBarSpacer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="#0F325E" />
+
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="#004A99"
+        android:background="#0F325E"
         app:navigationIcon="@drawable/ic_back"
         app:navigationIconTint="#FFFFFF"
         app:title="Edit Profile"
@@ -51,7 +59,7 @@
                     android:layout_gravity="bottom|end"
                     app:cardCornerRadius="18dp"
                     app:cardElevation="4dp"
-                    app:cardBackgroundColor="#004A99"
+                    app:cardBackgroundColor="#0F325E"
                     app:strokeWidth="2dp"
                     app:strokeColor="#FFFFFF">
                     <ImageView
@@ -205,7 +213,7 @@
                 android:layout_marginTop="32dp"
                 android:layout_marginBottom="24dp"
                 app:cornerRadius="12dp"
-                app:backgroundTint="#004A99" />
+                app:backgroundTint="#0F325E" />
 
         </LinearLayout>
     </ScrollView>
