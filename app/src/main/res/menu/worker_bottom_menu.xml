@@ -2,16 +2,16 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_feed"
-        android:title="Feed"
+        android:title="Home"
         android:icon="@drawable/ic_nav_home" />
     <item
         android:id="@+id/nav_job"
         android:title="Job"
-        android:icon="@drawable/ic_nav_requests" />
+        android:icon="@drawable/ic_hammer" />
     <item
         android:id="@+id/nav_hiring"
-        android:title="Posts"
-        android:icon="@drawable/ic_company" />
+        android:title="Hiring"
+        android:icon="@drawable/ic_list_check" />
     <item
         android:id="@+id/nav_history"
         android:title="History"

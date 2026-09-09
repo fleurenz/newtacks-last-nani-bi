@@ -5,6 +5,8 @@ sealed class FeedOpportunity {
     data class CompanyHiring(val post: HiringPost) : FeedOpportunity()
     data class ActiveJob(val job: Job) : FeedOpportunity()
 
+    var distanceStr: String = "-- km away"
+
     val title: String
         get() = when (this) {
             is ClientJob -> job.jobTitle

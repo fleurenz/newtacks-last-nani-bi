@@ -27,19 +27,13 @@
                 android:src="@drawable/client_cover_photo"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="180dp"
-                android:background="#40000000"
-                app:layout_constraintTop_toTopOf="parent" />
-
             <!-- Profile Picture -->
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/ivProfile"
-                android:layout_width="110dp"
-                android:layout_height="110dp"
-                android:layout_marginTop="-55dp"
-                android:padding="3dp"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_marginTop="-60dp"
+                android:padding="4dp"
                 android:src="@drawable/ic_person_placeholder"
                 android:background="#FFFFFF"
                 android:scaleType="centerCrop"
@@ -56,7 +50,7 @@
                 android:layout_marginTop="12dp"
                 android:text="Maison Baga"
                 android:textColor="#FFFFFF"
-                android:textSize="20sp"
+                android:textSize="24sp"
                 android:textStyle="bold"
                 app:layout_constraintTop_toBottomOf="@id/ivProfile"
                 app:layout_constraintStart_toStartOf="parent"
@@ -77,20 +71,20 @@
                     android:layout_height="wrap_content"
                     android:text="ACCOUNT"
                     android:textColor="#FFFFFF"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:textStyle="bold"
-                    android:letterSpacing="0.1"
-                    android:layout_marginBottom="10dp" />
+                    android:letterSpacing="0.05"
+                    android:layout_marginBottom="12dp" />
 
                 <!-- Edit Profile Card -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardEditProfile"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFFFFF"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
                     app:strokeWidth="0dp"
-                    android:layout_marginBottom="10dp"
+                    android:layout_marginBottom="12dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground">
@@ -100,54 +94,57 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp">
+                        android:padding="16dp">
 
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:src="@drawable/ic_person"
-                            app:tint="#94A3B8" />
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:src="@drawable/ic_nav_account"
+                            app:tint="#64748B"
+                            android:padding="8dp"
+                            android:background="@drawable/bg_circle"
+                            android:backgroundTint="#F1F5F9" />
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:orientation="vertical"
-                            android:layout_marginStart="14dp">
+                            android:layout_marginStart="16dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Edit Profile"
                                 android:textColor="#1E293B"
-                                android:textSize="14sp"
+                                android:textSize="15sp"
                                 android:textStyle="bold" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Update your information"
-                                android:textColor="#94A3B8"
-                                android:textSize="11sp" />
+                                android:textColor="#64748B"
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:src="@drawable/ic_arrow_right"
-                            app:tint="#94A3B8" />
+                            app:tint="#64748B" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- Notifications Card -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardNotifications"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFFFFF"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
                     app:strokeWidth="0dp"
-                    android:layout_marginBottom="10dp"
+                    android:layout_marginBottom="12dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground">
@@ -157,54 +154,57 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp">
+                        android:padding="16dp">
 
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
                             android:src="@drawable/ic_notifications"
-                            app:tint="#004A99" />
+                            app:tint="#004A99"
+                            android:padding="8dp"
+                            android:background="@drawable/bg_circle"
+                            android:backgroundTint="#EBF2FF" />
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:orientation="vertical"
-                            android:layout_marginStart="14dp">
+                            android:layout_marginStart="16dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Notifications"
                                 android:textColor="#1E293B"
-                                android:textSize="14sp"
+                                android:textSize="15sp"
                                 android:textStyle="bold" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Manage alerts"
-                                android:textColor="#94A3B8"
-                                android:textSize="11sp" />
+                                android:textColor="#64748B"
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:src="@drawable/ic_arrow_right"
-                            app:tint="#94A3B8" />
+                            app:tint="#64748B" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- Privacy & Security Card -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardPrivacy"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFFFFF"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
                     app:strokeWidth="0dp"
-                    android:layout_marginBottom="10dp"
+                    android:layout_marginBottom="24dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground">
@@ -214,41 +214,45 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp">
+                        android:padding="16dp">
 
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:src="@drawable/ic_key" />
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:src="@drawable/ic_star"
+                            app:tint="#F59E0B"
+                            android:padding="8dp"
+                            android:background="@drawable/bg_circle"
+                            android:backgroundTint="#FEF3C7" />
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:orientation="vertical"
-                            android:layout_marginStart="14dp">
+                            android:layout_marginStart="16dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Privacy &amp; Security"
                                 android:textColor="#1E293B"
-                                android:textSize="14sp"
+                                android:textSize="15sp"
                                 android:textStyle="bold" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Password"
-                                android:textColor="#94A3B8"
-                                android:textSize="11sp" />
+                                android:textColor="#64748B"
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:src="@drawable/ic_arrow_right"
-                            app:tint="#94A3B8" />
+                            app:tint="#64748B" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -268,20 +272,20 @@
                     android:layout_height="wrap_content"
                     android:text="SUPPORT"
                     android:textColor="#FFFFFF"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:textStyle="bold"
-                    android:letterSpacing="0.1"
-                    android:layout_marginBottom="10dp" />
+                    android:letterSpacing="0.05"
+                    android:layout_marginBottom="12dp" />
 
                 <!-- Help & Support Card -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardHelp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFFFFF"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
                     app:strokeWidth="0dp"
-                    android:layout_marginBottom="10dp"
+                    android:layout_marginBottom="12dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground">
@@ -291,26 +295,30 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp">
+                        android:padding="16dp">
 
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:src="@drawable/ic_help_circle_red" />
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:src="@drawable/ic_help_outline"
+                            app:tint="#DC2626"
+                            android:padding="8dp"
+                            android:background="@drawable/bg_circle"
+                            android:backgroundTint="#FEE2E2" />
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:orientation="vertical"
-                            android:layout_marginStart="14dp">
+                            android:layout_marginStart="16dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Help &amp; Support"
                                 android:textColor="#1E293B"
-                                android:textSize="14sp"
+                                android:textSize="15sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -318,14 +326,14 @@
                                 android:layout_height="wrap_content"
                                 android:text="FAQs, Contact us"
                                 android:textColor="#94A3B8"
-                                android:textSize="11sp" />
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:src="@drawable/ic_arrow_right"
-                            app:tint="#94A3B8" />
+                            app:tint="#64748B" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -334,9 +342,8 @@
                     android:id="@+id/cardLogout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFFFFF"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
                     app:strokeWidth="0dp"
                     android:layout_marginBottom="10dp"
                     android:clickable="true"
@@ -348,27 +355,30 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:padding="14dp">
+                        android:padding="16dp">
 
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
                             android:src="@drawable/ic_logout"
-                            app:tint="#94A3B8" />
+                            app:tint="#64748B"
+                            android:padding="8dp"
+                            android:background="@drawable/bg_circle"
+                            android:backgroundTint="#F1F5F9" />
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:orientation="vertical"
-                            android:layout_marginStart="14dp">
+                            android:layout_marginStart="16dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Logout"
                                 android:textColor="#1E293B"
-                                android:textSize="14sp"
+                                android:textSize="15sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -376,14 +386,14 @@
                                 android:layout_height="wrap_content"
                                 android:text="Sign out of account"
                                 android:textColor="#94A3B8"
-                                android:textSize="11sp" />
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:src="@drawable/ic_arrow_right"
-                            app:tint="#94A3B8" />
+                            app:tint="#64748B" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

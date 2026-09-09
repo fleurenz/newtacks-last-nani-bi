@@ -61,6 +61,7 @@ class CreateHiringActivity : AppCompatActivity() {
     private lateinit var etJobDescription: EditText
     private lateinit var etResponsibilities: EditText
     
+    private lateinit var tvToolbarTitle: TextView
     private lateinit var hiringScrollView: NestedScrollView
     private lateinit var loadingOverlay: View
     private lateinit var tvLoadingMessage: TextView
@@ -74,6 +75,7 @@ class CreateHiringActivity : AppCompatActivity() {
     private var profileLat = 0.0
     private var profileLng = 0.0
     private var expiresAtTimestamp: Long = 0
+    private var editingHiringId: String? = null
     
     private val selectedImageUris = mutableListOf<Uri>()
 
@@ -94,6 +96,25 @@ class CreateHiringActivity : AppCompatActivity() {
 
         setupToolbar()
         initializeViews()
+        
+        editingHiringId = intent.getStringExtra("EDIT_HIRING_ID")
+        val editPostJson = intent.getStringExtra("EDIT_POST_JSON")
+        
+        if (editPostJson != null) {
+            val post = com.google.gson.Gson().fromJson(editPostJson, HiringPost::class.java)
+            editingHiringId = post.hiringId
+            tvToolbarTitle.text = "Edit Hiring Post"
+            btnSubmit.text = "Update Post"
+            btnDraft.visibility = View.GONE
+            prefillHiringData(post)
+        } else if (editingHiringId != null) {
+            tvToolbarTitle.text = "Edit Hiring Post"
+            btnSubmit.text = "Update Post"
+            btnDraft.visibility = View.GONE
+            loadHiringForEditing(editingHiringId!!)
+        } else {
+            loadCompanyInfo()
+        }
 
         // Robust Inset Handling: Use spacer for status bar
         val statusBarSpacer = findViewById<View>(R.id.statusBarSpacer)
@@ -118,6 +139,7 @@ class CreateHiringActivity : AppCompatActivity() {
     }
 
     private fun initializeViews() {
+        tvToolbarTitle = findViewById(R.id.tvToolbarTitle)
         hiringScrollView = findViewById(R.id.hiringScrollView)
         loadingOverlay = findViewById(R.id.loadingOverlay)
         tvLoadingMessage = findViewById(R.id.tvLoadingMessage)
@@ -186,6 +208,61 @@ class CreateHiringActivity : AppCompatActivity() {
         }
     }
 
+    private fun loadHiringForEditing(hiringId: String) {
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = "Loading details..."
+        
+        db.collection("hiring").document(hiringId).get()
+            .addOnSuccessListener { doc ->
+                loadingOverlay.visibility = View.GONE
+                val post = doc.toObject(HiringPost::class.java) ?: return@addOnSuccessListener
+                prefillHiringData(post)
+            }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(this, "Failed to load post", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun prefillHiringData(post: HiringPost) {
+        etHiringTitle.setText(post.jobTitle)
+        etCompanyAddress.setText(post.companyAddress)
+        etDailyRate.setText(post.dailyRate.toInt().toString())
+        etVacancies.setText(post.vacancies.toString())
+        etJobDescription.setText(post.description)
+        etResponsibilities.setText(post.responsibilities)
+        selectedLat = post.latitude
+        selectedLng = post.longitude
+        expiresAtTimestamp = post.expiresAt
+
+        if (expiresAtTimestamp > 0) {
+            val sdf = java.text.SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
+            btnSelectClosingDate.text = "Close: ${sdf.format(Date(expiresAtTimestamp))}"
+        }
+
+        // Select employment type
+        when (post.employmentType) {
+            "FULL_TIME" -> toggleEmploymentType.check(R.id.btnFullTime)
+            "PART_TIME" -> toggleEmploymentType.check(R.id.btnPartTime)
+            "CONTRACT" -> toggleEmploymentType.check(R.id.btnContract)
+        }
+
+        // Select categories
+        post.serviceCategories.forEach { category ->
+            when (category) {
+                "Carpentry" -> cbCarpentry.isChecked = true
+                "Plumbing" -> cbPlumbing.isChecked = true
+                "Masonry" -> cbMasonry.isChecked = true
+                "Welding" -> cbWelding.isChecked = true
+                "Painting" -> cbPainting.isChecked = true
+                else -> {
+                    cbOthers.isChecked = true
+                    etOtherService.setText(category)
+                }
+            }
+        }
+    }
+
     private fun setupListeners() {
         btnAddPhoto.setOnClickListener {
             pickImages.launch("image/*")
@@ -246,6 +323,38 @@ class CreateHiringActivity : AppCompatActivity() {
         val uid = auth.currentUser?.uid ?: return
         
         loadingOverlay.visibility = View.VISIBLE
+        
+        if (editingHiringId != null) {
+            tvLoadingMessage.text = "Updating post..."
+            uploadImagesAndSubmit(selectedImageUris) { imageUrls ->
+                val updates = mutableMapOf<String, Any>(
+                    "jobTitle" to title,
+                    "companyAddress" to etCompanyAddress.text.toString(),
+                    "serviceCategories" to services,
+                    "employmentType" to empType,
+                    "dailyRate" to rate,
+                    "vacancies" to vacancies,
+                    "description" to description,
+                    "responsibilities" to responsibilities,
+                    "latitude" to selectedLat,
+                    "longitude" to selectedLng,
+                    "expiresAt" to expiresAtTimestamp
+                )
+                if (imageUrls.isNotEmpty()) updates["images"] = imageUrls
+                
+                db.collection("hiring").document(editingHiringId!!).update(updates)
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "Hiring post updated", Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+                    .addOnFailureListener {
+                        loadingOverlay.visibility = View.GONE
+                        Toast.makeText(this, "Update failed", Toast.LENGTH_SHORT).show()
+                    }
+            }
+            return
+        }
+        
         tvLoadingMessage.text = if (status == "OPEN") "Publishing..." else "Saving draft..."
 
         uploadImagesAndSubmit(selectedImageUris) { imageUrls ->

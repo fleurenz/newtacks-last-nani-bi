@@ -27,6 +27,7 @@
             app:navigationIcon="@drawable/ic_back"
             app:titleTextColor="#FFFFFF">
             <TextView
+                android:id="@+id/tvToolbarTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="New Job Posting"

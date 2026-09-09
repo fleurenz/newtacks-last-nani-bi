@@ -76,6 +76,7 @@ class CreateJobActivity : AppCompatActivity() {
 
     private var isSubmitting = false
     private var isDetectingLocation = false
+    private var editingJobId: String? = null
 
     private val selectedImages = mutableListOf<Uri>()
 
@@ -115,7 +116,16 @@ class CreateJobActivity : AppCompatActivity() {
 
         initializeViews()
         setupStatusBarPadding()
-        loadClientInformation()
+        
+        editingJobId = intent.getStringExtra("EDIT_JOB_ID")
+        if (editingJobId != null) {
+            tvToolbarTitle.text = "Edit Job Post"
+            btnSubmit.text = "Update Job"
+            loadJobForEditing(editingJobId!!)
+        } else {
+            loadClientInformation()
+        }
+        
         setupServiceSpinner()
         setupRateSpinner()
         setupDatePicker()
@@ -277,6 +287,48 @@ class CreateJobActivity : AppCompatActivity() {
             }
             .addOnFailureListener {
                 Toast.makeText(this, "Failed to load user info", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun loadJobForEditing(jobId: String) {
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = "Loading job details..."
+        
+        firestore.collection("jobs").document(jobId).get()
+            .addOnSuccessListener { doc ->
+                loadingOverlay.visibility = View.GONE
+                val job = doc.toObject(Job::class.java) ?: return@addOnSuccessListener
+                
+                etJobTitle.setText(job.jobTitle)
+                etDescription.setText(job.description)
+                etOfferAmount.setText(job.offeredAmount.toInt().toString())
+                selectedDate = job.scheduledDate
+                btnSelectDate.text = selectedDate
+                selectedTime = job.scheduledTime
+                btnSelectTime.text = selectedTime
+                
+                etClientName.setText(job.clientName)
+                etClientAddress.setText(job.clientAddress)
+                selectedLat = job.latitude
+                selectedLng = job.longitude
+                
+                // Pre-select service
+                val services = arrayOf("Plumbing", "Electrical", "Carpentry", "Masonry", "Welding", "Painting", "Landscaping", "Others")
+                val index = services.indexOf(job.serviceCategory)
+                if (index != -1) spinnerServiceType.setSelection(index)
+                
+                // Pre-select rate
+                val rates = arrayOf("One-time", "Per Hour", "Per Day")
+                val rateIndex = rates.indexOf(job.rateType)
+                if (rateIndex != -1) spinnerRateType.setSelection(rateIndex)
+                
+                // Note: handling existing images for editing would require more logic (showing them as URLs)
+                // For now, we'll just keep it simple. If they add new images, they replace or add to the list?
+                // The user said "necessary ones", so let's focus on text data first.
+            }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(this, "Failed to load job", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -497,6 +549,14 @@ class CreateJobActivity : AppCompatActivity() {
 
         isSubmitting = true
         loadingOverlay.visibility = View.VISIBLE
+        
+        if (editingJobId != null) {
+            tvLoadingMessage.text = "Updating job..."
+            // For updates, we skip the "active job check" because this IS the active job
+            uploadImagesAndCreateJob(currentUser.uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType)
+            return
+        }
+
         tvLoadingMessage.text = "Checking for active jobs..."
 
         firestore.collection("jobs")
@@ -644,9 +704,40 @@ class CreateJobActivity : AppCompatActivity() {
         rateType: String,
         jobImages: List<String>
     ) {
-        tvLoadingMessage.text = "Finalizing request..."
+        tvLoadingMessage.text = if (editingJobId != null) "Updating request..." else "Finalizing request..."
         val jobsRef = firestore.collection("jobs")
         
+        if (editingJobId != null) {
+            val updates = mutableMapOf<String, Any>(
+                "jobTitle" to jobTitle,
+                "clientAddress" to clientAddress,
+                "serviceCategory" to serviceCategory,
+                "offeredAmount" to offeredAmount,
+                "description" to description,
+                "rateType" to rateType,
+                "scheduledDate" to selectedDate,
+                "scheduledTime" to selectedTime,
+                "latitude" to selectedLat,
+                "longitude" to selectedLng
+            )
+            // Only update images if new ones were added
+            if (jobImages.isNotEmpty()) {
+                updates["jobImages"] = jobImages
+            }
+            
+            jobsRef.document(editingJobId!!).update(updates)
+                .addOnSuccessListener {
+                    Toast.makeText(this, "Job Updated Successfully", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+                .addOnFailureListener {
+                    isSubmitting = false
+                    loadingOverlay.visibility = View.GONE
+                    Toast.makeText(this, "Update failed", Toast.LENGTH_SHORT).show()
+                }
+            return
+        }
+
         jobsRef.whereEqualTo("clientId", uid).get().addOnSuccessListener { snapshots ->
             val activeStatuses = listOf("AVAILABLE", "IN_PROGRESS", "HEADING_TO_CLIENT", "ARRIVED", "PENDING_VERIFICATION", "REJECTED_BY_CLIENT")
             val hasActiveJob = snapshots.documents.any { it.getString("status") in activeStatuses }

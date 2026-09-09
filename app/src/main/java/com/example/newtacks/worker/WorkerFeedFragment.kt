@@ -46,8 +46,9 @@ class WorkerFeedFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: WorkerJobAdapter
-    private lateinit var fabToggleList: FloatingActionButton
-    private lateinit var fabMyLocation: FloatingActionButton
+    private lateinit var fabToggleList: View
+    private lateinit var tvRequestBadge: TextView
+    private lateinit var fabMyLocation: ImageButton
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var cardListOverlay: View
     private lateinit var cardNavInfo: View
@@ -55,9 +56,11 @@ class WorkerFeedFragment : Fragment() {
     private lateinit var tvNavEstimate: TextView
     private lateinit var mapView: MapView
     private var mapLibreMap: MapLibreMap? = null
+    private lateinit var tabLayoutFeed: TabLayout
+    private lateinit var tvWorkerNameHeader: TextView
 
-    private lateinit var fabZoomIn: FloatingActionButton
-    private lateinit var fabZoomOut: FloatingActionButton
+    private lateinit var fabZoomIn: ImageButton
+    private lateinit var fabZoomOut: ImageButton
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val db = FirebaseFirestore.getInstance()
@@ -116,6 +119,7 @@ class WorkerFeedFragment : Fragment() {
 
         recyclerView        = view.findViewById(R.id.workerFeedRecycler)
         fabToggleList       = view.findViewById(R.id.fabToggleList)
+        tvRequestBadge      = view.findViewById(R.id.tvRequestBadge)
         fabMyLocation       = view.findViewById(R.id.fabMyLocation)
         swipeRefresh        = view.findViewById(R.id.swipeRefreshFeed)
         cardListOverlay     = view.findViewById(R.id.cardListOverlay)
@@ -123,11 +127,24 @@ class WorkerFeedFragment : Fragment() {
         tvNavDistance       = view.findViewById(R.id.tvNavDistance)
         tvNavEstimate       = view.findViewById(R.id.tvNavEstimate)
         mapView             = view.findViewById(R.id.mapView)
+        tabLayoutFeed       = view.findViewById(R.id.tabLayoutFeed)
+        tvWorkerNameHeader  = view.findViewById(R.id.tvWorkerNameHeader)
 
         fabZoomIn           = view.findViewById(R.id.fabZoomIn)
         fabZoomOut          = view.findViewById(R.id.fabZoomOut)
 
         mapView.onCreate(savedInstanceState)
+
+        loadWorkerName()
+
+        view.findViewById<View>(R.id.btnHelp).setOnClickListener {
+            Toast.makeText(requireContext(), "Support coming soon", Toast.LENGTH_SHORT).show()
+        }
+        
+        view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
+            // Already handled by Dashboard activity badges, but can link to a list here
+            Toast.makeText(requireContext(), "No new notifications", Toast.LENGTH_SHORT).show()
+        }
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = WorkerJobAdapter(combinedOpportunities) { opportunity -> 
@@ -189,10 +206,18 @@ class WorkerFeedFragment : Fragment() {
             mapLibreMap?.animateCamera(CameraUpdateFactory.zoomOut())
         }
 
+        tabLayoutFeed.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab?) {
+                updateCombinedList()
+            }
+            override fun onTabUnselected(tab: TabLayout.Tab?) {}
+            override fun onTabReselected(tab: TabLayout.Tab?) {}
+        })
+
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            fabToggleList.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                topMargin = systemBars.top + (resources.displayMetrics.density * 16).toInt()
+            view.findViewById<View>(R.id.layoutHeader).updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = systemBars.top
             }
             insets
         }
@@ -200,6 +225,16 @@ class WorkerFeedFragment : Fragment() {
         listenForJobs()
         initMap()
         return view
+    }
+
+    private fun loadWorkerName() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        db.collection("users").document(uid).get().addOnSuccessListener { doc ->
+            if (isAdded) {
+                val name = doc.getString("name") ?: "Worker"
+                tvWorkerNameHeader.text = name
+            }
+        }
     }
 
     fun zoomToLocation(lat: Double, lng: Double) {
@@ -312,24 +347,37 @@ class WorkerFeedFragment : Fragment() {
     private fun updateCombinedList() {
         combinedOpportunities.clear()
         
-        // Add Client Jobs
-        for (job in availableJobs) {
-            combinedOpportunities.add(FeedOpportunity.ClientJob(job))
-        }
+        val isJobRequestsTab = tabLayoutFeed.selectedTabPosition == 0
         
-        // Add Company Posts
-        for (post in hiringList) {
-            combinedOpportunities.add(FeedOpportunity.CompanyHiring(post))
+        if (isJobRequestsTab) {
+            // Add Client Jobs
+            for (job in availableJobs) {
+                combinedOpportunities.add(FeedOpportunity.ClientJob(job))
+            }
+            // Add Active Handshake Jobs
+            for (job in myActiveHandshakeJobs) {
+                combinedOpportunities.add(FeedOpportunity.ActiveJob(job))
+            }
+        } else {
+            // Add Company Posts
+            for (post in hiringList) {
+                combinedOpportunities.add(FeedOpportunity.CompanyHiring(post))
+            }
         }
 
-        // Add Active Handshake Jobs
-        for (job in myActiveHandshakeJobs) {
-            combinedOpportunities.add(FeedOpportunity.ActiveJob(job))
-        }
-
-        // Sort by distance if location is available
+        // Sort by distance if location is available and calculate distance string
         val workerLoc = mapLibreMap?.locationComponent?.lastKnownLocation
         if (workerLoc != null) {
+            for (opportunity in combinedOpportunities) {
+                val results = FloatArray(1)
+                android.location.Location.distanceBetween(
+                    workerLoc.latitude, workerLoc.longitude,
+                    opportunity.latitude, opportunity.longitude,
+                    results
+                )
+                opportunity.distanceStr = com.example.newtacks.utils.DistanceUtils.formatDistance(results[0]) + " away"
+            }
+            
             combinedOpportunities.sortBy { opportunity ->
                 val results = FloatArray(1)
                 android.location.Location.distanceBetween(
@@ -339,7 +387,16 @@ class WorkerFeedFragment : Fragment() {
                 )
                 results[0]
             }
+        } else {
+            for (opportunity in combinedOpportunities) {
+                opportunity.distanceStr = "Distance unknown"
+            }
         }
+        
+        // Update badge count to show TOTAL requests (Client + Company)
+        val totalRequests = availableJobs.size + hiringList.size
+        tvRequestBadge.visibility = if (totalRequests > 0) View.VISIBLE else View.GONE
+        tvRequestBadge.text = totalRequests.toString()
         
         adapter.notifyDataSetChanged()
     }
@@ -356,9 +413,10 @@ class WorkerFeedFragment : Fragment() {
                 map.setMinZoomPreference(2.0)
                 map.setMaxZoomPreference(18.0)
                 
-                // Position compass above MapLibre label
+                // Use default MapLibre compass as requested
+                map.uiSettings.isCompassEnabled = true
                 map.uiSettings.setCompassGravity(Gravity.BOTTOM or Gravity.START)
-                map.uiSettings.setCompassMargins(48, 0, 0, 48) // Left, Top, Right, Bottom in pixels
+                map.uiSettings.setCompassMargins(48, 0, 0, 48)
                 
                 enableUserLocation(map, moveCamera = true)
                 updateMapMarkers()

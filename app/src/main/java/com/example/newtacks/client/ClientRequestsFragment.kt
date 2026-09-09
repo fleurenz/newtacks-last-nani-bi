@@ -355,10 +355,18 @@ class ClientRequestsFragment : Fragment() {
 
     private fun showPopupMenu(view: View) {
         val popup = androidx.appcompat.widget.PopupMenu(view.context, view)
-        if (currentJob?.status == "AVAILABLE") popup.menu.add("Cancel Request")
+        if (currentJob?.status == "AVAILABLE") {
+            popup.menu.add("Edit Request")
+            popup.menu.add("Cancel Request")
+        }
         popup.menu.add("Report")
         popup.setOnMenuItemClickListener { item ->
             when (item.title) {
+                "Edit Request" -> {
+                    val intent = android.content.Intent(requireContext(), com.example.newtacks.CreateJobActivity::class.java)
+                    intent.putExtra("EDIT_JOB_ID", currentJobId)
+                    startActivity(intent)
+                }
                 "Cancel Request" -> showCancelConfirmationDialog()
                 "Report" -> Toast.makeText(requireContext(), "Report submitted", Toast.LENGTH_SHORT).show()
             }

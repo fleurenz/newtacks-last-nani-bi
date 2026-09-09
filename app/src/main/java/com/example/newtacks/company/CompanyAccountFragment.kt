@@ -96,68 +96,8 @@ class CompanyAccountFragment : Fragment() {
 
     private fun setupEditProfileMenu() {
         menuEditProfile.setOnClickListener {
-            showEditAboutDialog()
+            startActivity(Intent(requireContext(), CompanyEditProfileActivity::class.java))
         }
-    }
-
-    private fun showEditAboutDialog() {
-        val dialog = Dialog(requireContext())
-        dialog.setContentView(R.layout.dialog_role_select)
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        dialog.window?.setLayout(
-            (resources.displayMetrics.widthPixels * 0.9).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-
-        val title = dialog.findViewById<TextView>(R.id.dialogTitle)
-        val message = dialog.findViewById<TextView>(R.id.dialogMessage)
-        val btnSave = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnPositive)
-        val btnCancel = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnNegative)
-        val icon = dialog.findViewById<ImageView>(R.id.dialogIcon)
-
-        icon.setImageResource(R.drawable.ic_person)
-        title.text = "Edit About Us"
-        message.visibility = View.GONE
-
-        // Add EditText dynamically
-        val container = dialog.findViewById<LinearLayout>(R.id.dialogRoot)
-        val editText = EditText(requireContext()).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                setMargins(24, 0, 24, 24)
-            }
-            hint = "Tell us about your company..."
-            setText(currentAboutUs)
-            minLines = 3
-            gravity = Gravity.TOP
-            setBackgroundResource(R.drawable.bg_message_input)
-            setPadding(16, 16, 16, 16)
-        }
-        container.addView(editText, 3) // Add after the divider
-
-        btnSave.text = "Save"
-        btnSave.setOnClickListener {
-            val newAbout = editText.text.toString().trim()
-            saveAboutUs(newAbout)
-            dialog.dismiss()
-        }
-
-        btnCancel.text = "Cancel"
-        btnCancel.setOnClickListener { dialog.dismiss() }
-
-        dialog.show()
-    }
-
-    private fun saveAboutUs(text: String) {
-        val uid = auth.currentUser?.uid ?: return
-        firestore.collection("users").document(uid)
-            .update("aboutUs", if (text.isEmpty()) null else text)
-            .addOnSuccessListener {
-                currentAboutUs = text
-                Toast.makeText(requireContext(), "Profile updated", Toast.LENGTH_SHORT).show()
-            }
     }
 
     private fun setupLogout() {

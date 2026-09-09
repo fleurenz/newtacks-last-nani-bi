@@ -28,6 +28,7 @@ class ClientAccountFragment : Fragment() {
     private lateinit var tvName: TextView
     private lateinit var ivProfile: ImageView
     private lateinit var cardLogout: View
+    private lateinit var cardEditProfile: View
     private lateinit var swipeRefresh: SwipeRefreshLayout
 
     override fun onCreateView(
@@ -40,10 +41,11 @@ class ClientAccountFragment : Fragment() {
         tvName              = view.findViewById(R.id.tvName)
         ivProfile           = view.findViewById(R.id.ivProfile)
         cardLogout          = view.findViewById(R.id.cardLogout)
+        cardEditProfile     = view.findViewById(R.id.cardEditProfile)
         swipeRefresh        = view.findViewById(R.id.swipeRefreshAccount)
 
         loadProfile()
-        setupLogout()
+        setupMenuActions()
 
         swipeRefresh.setOnRefreshListener {
             loadProfile()
@@ -80,11 +82,15 @@ class ClientAccountFragment : Fragment() {
     }
 
     // --------------------------------------------------
-    // LOGOUT
+    // ACTIONS
     // --------------------------------------------------
-    private fun setupLogout() {
+    private fun setupMenuActions() {
         cardLogout.setOnClickListener {
             showLogoutConfirmDialog()
+        }
+        
+        cardEditProfile.setOnClickListener {
+            startActivity(Intent(requireContext(), ClientEditProfileActivity::class.java))
         }
     }
 

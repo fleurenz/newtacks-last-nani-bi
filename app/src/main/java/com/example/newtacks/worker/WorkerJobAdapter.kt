@@ -14,8 +14,7 @@ class WorkerJobAdapter(
 
     class JobViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.jobTitle)
-        val amount: TextView = view.findViewById(R.id.jobAmount)
-        val location: TextView = view.findViewById(R.id.jobLocation)
+        val subtitle: TextView = view.findViewById(R.id.tvSubtitle)
         val acceptBtn: Button = view.findViewById(R.id.btnAccept)
     }
 
@@ -29,10 +28,16 @@ class WorkerJobAdapter(
         val opportunity = opportunities[position]
 
         holder.title.text = opportunity.title
-        holder.amount.text = opportunity.amount
-        holder.location.text = opportunity.location
+        
+        val name = when (opportunity) {
+            is FeedOpportunity.ClientJob -> opportunity.job.clientName
+            is FeedOpportunity.CompanyHiring -> opportunity.post.companyName
+            is FeedOpportunity.ActiveJob -> opportunity.job.clientName
+        }
+        
+        holder.subtitle.text = "$name • ${opportunity.distanceStr}"
 
-        holder.acceptBtn.text = "View on Map"
+        holder.acceptBtn.text = "View full details"
         
         holder.itemView.setOnClickListener {
             onClick(opportunity)
