@@ -68,6 +68,11 @@ class CompanyApplicantFullAdapter(
                 tvBadge.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FEE2E2"))
                 tvBadge.setTextColor(Color.parseColor("#991B1B"))
             }
+            "CANCELLED" -> {
+                tvBadge.text = "Cancelled"
+                tvBadge.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#F1F5F9"))
+                tvBadge.setTextColor(Color.parseColor("#64748B"))
+            }
             else -> {
                 tvBadge.text = status
                 tvBadge.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#E2E8F0"))

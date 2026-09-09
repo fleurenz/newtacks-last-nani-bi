@@ -77,15 +77,19 @@ class WorkerApplicationAdapter(
                 tvBadge.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#EBF2FF"))
                 tvBadge.setTextColor(Color.parseColor("#1C6EC6"))
                 
+                val timeSdf = SimpleDateFormat("MMM d, h:mm a", Locale.getDefault())
+                val timeStr = if (app.interviewDate != null) timeSdf.format(Date(app.interviewDate)) else "TBD"
+
                 if (app.workerResponse == null) {
-                    tvMsg.text = "Please confirm your schedule"
+                    tvMsg.text = "Action Required: Confirm Interview"
+                    btnDetails.visibility = View.VISIBLE
+                    btnDetails.text = "• Confirm Schedule"
                 } else {
-                    val timeSdf = SimpleDateFormat("MMM d, h:mm a", Locale.getDefault())
-                    val timeStr = if (app.interviewDate != null) timeSdf.format(Date(app.interviewDate)) else "TBD"
                     tvMsg.text = "Interview scheduled on $timeStr"
+                    btnDetails.visibility = View.VISIBLE
+                    btnDetails.text = "• View Details"
                 }
                 tvMsg.setTextColor(Color.parseColor("#1C6EC6"))
-                btnDetails.visibility = View.VISIBLE
             }
             "HIRED" -> {
                 tvBadge.text = "Hired"
@@ -101,6 +105,14 @@ class WorkerApplicationAdapter(
                 tvBadge.setTextColor(Color.parseColor("#991B1B"))
                 
                 tvMsg.text = "Did not meet the requirements"
+                tvMsg.setTextColor(Color.parseColor("#991B1B"))
+            }
+            "CANCELLED" -> {
+                tvBadge.text = "Cancelled"
+                tvBadge.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FEE2E2"))
+                tvBadge.setTextColor(Color.parseColor("#991B1B"))
+                
+                tvMsg.text = "Application withdrawn"
                 tvMsg.setTextColor(Color.parseColor("#991B1B"))
             }
             else -> {

@@ -77,6 +77,7 @@ class HiringDetailsActivity : AppCompatActivity() {
     private lateinit var tvLoadingMessage: TextView
     private lateinit var btnApply: Button
     
+    private var myApplication: Application? = null
     private var themeColor: Int = "#0F325E".toColorInt() // Default to Worker
 
     private var currentImageIndex = 0
@@ -122,7 +123,23 @@ class HiringDetailsActivity : AppCompatActivity() {
             if (focusTab != -1) {
                 selectTab(focusTab)
             }
+        } else {
+            listenForMyApplication()
         }
+    }
+
+    private fun listenForMyApplication() {
+        val uid = auth.currentUser?.uid ?: return
+        val postId = hiringPost?.hiringId ?: return
+        
+        db.collection("applications")
+            .whereEqualTo("hiringId", postId)
+            .whereEqualTo("workerId", uid)
+            .addSnapshotListener { snapshots, _ ->
+                val app = snapshots?.documents?.firstOrNull()?.toObject(Application::class.java)
+                myApplication = app
+                hiringPost?.let { setupApplyButton(it) }
+            }
     }
 
     private fun determineThemeColor() {
@@ -407,8 +424,18 @@ class HiringDetailsActivity : AppCompatActivity() {
 
         val builder = android.app.AlertDialog.Builder(this)
             .setView(dialogView)
-            .setNeutralButton("Reject", { _, _ -> rejectApplicant(worker) })
             .setNegativeButton("Close", null)
+
+        if (app?.status != "CANCELLED" && app?.status != "HIRED" && app?.status != "REJECTED") {
+            builder.setNeutralButton("Reject", { _, _ -> 
+                android.app.AlertDialog.Builder(this)
+                    .setTitle("Reject Applicant")
+                    .setMessage("Are you sure you want to reject this applicant? This action cannot be undone.")
+                    .setPositiveButton("Reject") { _, _ -> rejectApplicant(worker) }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            })
+        }
 
         when (app?.status) {
             "APPLIED" -> {
@@ -468,6 +495,11 @@ class HiringDetailsActivity : AppCompatActivity() {
     private fun rejectApplicant(worker: User) {
         val app = applicationMap[worker.uid] ?: return
         
+        // Prevent infinite rejection if already rejected or in final status
+        if (app.status == "REJECTED" || app.status == "CANCELLED" || app.status == "HIRED") {
+            return
+        }
+
         loadingOverlay.visibility = View.VISIBLE
         tvLoadingMessage.text = "Rejecting applicant..."
 
@@ -476,6 +508,14 @@ class HiringDetailsActivity : AppCompatActivity() {
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
                 Toast.makeText(this, "Applicant rejected", Toast.LENGTH_SHORT).show()
+                
+                // Notify the worker
+                com.example.newtacks.utils.NotificationHelper.sendNotification(
+                    worker.uid,
+                    "Application Update",
+                    "The company has updated your application status for ${hiringPost?.jobTitle}.",
+                    "HIRING"
+                )
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
@@ -539,6 +579,40 @@ class HiringDetailsActivity : AppCompatActivity() {
             return
         }
 
+        val app = myApplication
+        if (app != null) {
+            when (app.status) {
+                "INTERVIEW_SCHEDULED" -> {
+                    if (app.workerResponse == null) {
+                        btnApply.text = "Confirm Interview Schedule"
+                        btnApply.isEnabled = true
+                        btnApply.alpha = 1.0f
+                        btnApply.setOnClickListener { showInterviewConfirmationDialog(app) }
+                    } else if (app.workerResponse == "ACCEPTED") {
+                        btnApply.text = "Interview Confirmed"
+                        btnApply.isEnabled = false
+                        btnApply.alpha = 0.6f
+                    }
+                }
+                "HIRED" -> {
+                    btnApply.text = "You are Hired!"
+                    btnApply.isEnabled = false
+                    btnApply.alpha = 0.6f
+                }
+                "REJECTED", "CANCELLED" -> {
+                    btnApply.text = "Application Closed"
+                    btnApply.isEnabled = false
+                    btnApply.alpha = 0.6f
+                }
+                else -> {
+                    btnApply.text = "Applied"
+                    btnApply.isEnabled = false
+                    btnApply.alpha = 0.6f
+                }
+            }
+            return
+        }
+
         val hasApplied = uid != null && post.applicants.contains(uid)
         if (hasApplied) {
             btnApply.text = "Applied"
@@ -550,6 +624,91 @@ class HiringDetailsActivity : AppCompatActivity() {
             btnApply.alpha = 1.0f
             btnApply.setOnClickListener { applyForHiring(post) }
         }
+    }
+
+    private fun showInterviewConfirmationDialog(app: Application) {
+        val dialog = android.app.Dialog(this)
+        dialog.setContentView(R.layout.dialog_role_select)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.9).toInt(),
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        val title = dialog.findViewById<TextView>(R.id.dialogTitle)
+        val message = dialog.findViewById<TextView>(R.id.dialogMessage)
+        val btnAccept = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnPositive)
+        val btnReject = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnNegative)
+        val icon = dialog.findViewById<ImageView>(R.id.dialogIcon)
+
+        icon.setImageResource(R.drawable.ic_calendar)
+        title.text = "Confirm Interview"
+        
+        val sdf = java.text.SimpleDateFormat("MMMM d, h:mm a", Locale.getDefault())
+        val dateStr = if (app.interviewDate != null) sdf.format(java.util.Date(app.interviewDate)) else "TBD"
+        
+        message.text = "The company has scheduled an interview on:\n\n$dateStr\n\nWould you like to accept this schedule?"
+
+        btnAccept.text = "Accept"
+        btnAccept.setOnClickListener {
+            updateWorkerInterviewResponse(app, "ACCEPTED")
+            dialog.dismiss()
+        }
+
+        btnReject.text = "Reject"
+        btnReject.setOnClickListener {
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Reject Schedule")
+                .setMessage("Are you sure you want to reject this interview? This will also cancel your application.")
+                .setPositiveButton("Yes, Reject") { _, _ ->
+                    updateWorkerInterviewResponse(app, "REJECTED")
+                    dialog.dismiss()
+                }
+                .setNegativeButton("No", null)
+                .show()
+        }
+
+        dialog.show()
+    }
+
+    private fun updateWorkerInterviewResponse(app: Application, response: String) {
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = "Updating response..."
+        
+        val updates = mutableMapOf<String, Any>(
+            "workerResponse" to response
+        )
+        
+        if (response == "REJECTED") {
+            updates["status"] = "CANCELLED"
+        }
+
+        db.collection("applications").document(app.applicationId)
+            .update(updates)
+            .addOnSuccessListener {
+                loadingOverlay.visibility = View.GONE
+                val toastMsg = if (response == "ACCEPTED") "Interview confirmed!" else "Application cancelled."
+                Toast.makeText(this, toastMsg, Toast.LENGTH_SHORT).show()
+                
+                // Notify Company
+                val post = hiringPost
+                if (post != null) {
+                    val notifTitle = if (response == "ACCEPTED") "Interview Accepted" else "Interview Rejected"
+                    val notifMsg = if (response == "ACCEPTED") "A worker has accepted the interview for ${post.jobTitle}." 
+                                  else "A worker has rejected the interview for ${post.jobTitle}."
+                    
+                    com.example.newtacks.utils.NotificationHelper.sendNotification(
+                        post.companyId,
+                        notifTitle,
+                        notifMsg,
+                        "APPLICANTS"
+                    )
+                }
+            }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(this, "Failed to update response", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun applyForHiring(post: HiringPost) {
