@@ -36,12 +36,16 @@
             android:textStyle="bold" />
 
         <ImageView
+            android:id="@+id/btnMoreOptions"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_gravity="end"
             android:layout_marginEnd="16dp"
             android:src="@drawable/ic_more_vert"
-            app:tint="#FFFFFF" />
+            app:tint="#FFFFFF"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" />
 
     </androidx.appcompat.widget.Toolbar>
 

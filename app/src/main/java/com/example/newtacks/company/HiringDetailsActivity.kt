@@ -76,6 +76,7 @@ class HiringDetailsActivity : AppCompatActivity() {
     private lateinit var loadingOverlay: View
     private lateinit var tvLoadingMessage: TextView
     private lateinit var btnApply: Button
+    private lateinit var btnMoreOptions: ImageView
     
     private var myApplication: Application? = null
     private var themeColor: Int = "#0F325E".toColorInt() // Default to Worker
@@ -200,6 +201,7 @@ class HiringDetailsActivity : AppCompatActivity() {
         tvLoadingMessage = findViewById(R.id.tvLoadingMessage)
         
         btnApply = findViewById(R.id.btnApply)
+        btnMoreOptions = findViewById(R.id.btnMoreOptions)
     }
 
     private fun setupToolbar() {
@@ -207,6 +209,64 @@ class HiringDetailsActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
         toolbar.setNavigationOnClickListener { finish() }
+
+        btnMoreOptions.setOnClickListener { showToolbarMenu(it) }
+    }
+
+    private fun showToolbarMenu(view: View) {
+        val uid = auth.currentUser?.uid ?: return
+        val post = hiringPost ?: return
+
+        val popup = androidx.appcompat.widget.PopupMenu(this, view)
+        
+        // Options for the company owner
+        if (uid == post.companyId) {
+            if (post.status == "OPEN") {
+                popup.menu.add("Close Job Posting")
+            } else if (post.status == "CLOSED") {
+                popup.menu.add("Reopen Job Posting")
+            }
+        } else {
+            // Options for workers
+            popup.menu.add("Report Post")
+        }
+
+        popup.setOnMenuItemClickListener { item ->
+            when (item.title) {
+                "Close Job Posting" -> confirmClosePosting()
+                "Reopen Job Posting" -> updatePostStatus("OPEN")
+                "Report Post" -> Toast.makeText(this, "Post reported", Toast.LENGTH_SHORT).show()
+            }
+            true
+        }
+        popup.show()
+    }
+
+    private fun confirmClosePosting() {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Close Posting")
+            .setMessage("Are you sure you want to close this hiring post prematurely? No more applications will be accepted.")
+            .setPositiveButton("Close Now") { _, _ -> updatePostStatus("CLOSED") }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun updatePostStatus(newStatus: String) {
+        val postId = hiringPost?.hiringId ?: return
+        loadingOverlay.visibility = View.VISIBLE
+        tvLoadingMessage.text = "Updating status..."
+
+        db.collection("hiring").document(postId)
+            .update("status", newStatus)
+            .addOnSuccessListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(this, "Post marked as $newStatus", Toast.LENGTH_SHORT).show()
+                // The listener (listenForPostUpdates) will handle the UI update
+            }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(this, "Update failed", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun setupTabs() {
@@ -652,6 +712,10 @@ class HiringDetailsActivity : AppCompatActivity() {
         val hasApplied = uid != null && post.applicants.contains(uid)
         if (hasApplied) {
             btnApply.text = "Applied"
+            btnApply.isEnabled = false
+            btnApply.alpha = 0.6f
+        } else if (post.status == "CLOSED" || post.status == "EXPIRED") {
+            btnApply.text = "Hiring Closed"
             btnApply.isEnabled = false
             btnApply.alpha = 0.6f
         } else {
