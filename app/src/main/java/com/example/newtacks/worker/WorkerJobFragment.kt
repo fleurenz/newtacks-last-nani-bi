@@ -52,9 +52,9 @@ class WorkerJobFragment : Fragment() {
     private lateinit var btnMessageClient: View
 
     // Progress Bar
-    private lateinit var stepCircles: List<View>
-    private lateinit var stepLines: List<View>
-    private lateinit var stepLabels: List<TextView>
+    private lateinit var progressTrackActive: View
+    private lateinit var stepCircles: List<ImageView>
+    private lateinit var tvProgressStatus: TextView
 
     // Job Details Card
     private lateinit var tvServiceType: TextView
@@ -108,29 +108,14 @@ class WorkerJobFragment : Fragment() {
         btnMessageClient = view.findViewById(R.id.btnMessageClient)
 
         // Progress Bar
+        progressTrackActive = view.findViewById(R.id.progressTrackActive)
+        tvProgressStatus = view.findViewById(R.id.tvProgressStatus)
         stepCircles = listOf(
             view.findViewById(R.id.step1),
             view.findViewById(R.id.step2),
             view.findViewById(R.id.step3),
             view.findViewById(R.id.step4)
         )
-        stepLines = listOf(
-            view.findViewById(R.id.line1),
-            view.findViewById(R.id.line2),
-            view.findViewById(R.id.line3)
-        )
-        
-        // Find step labels manually to be safe
-        val layoutProgress = view.findViewById<LinearLayout>(R.id.layoutProgress)
-        val labels = mutableListOf<TextView>()
-        for (i in 0 until layoutProgress.childCount) {
-            val stepGroup = layoutProgress.getChildAt(i) as? LinearLayout ?: continue
-            for (j in 0 until stepGroup.childCount) {
-                val child = stepGroup.getChildAt(j)
-                if (child is TextView) labels.add(child)
-            }
-        }
-        stepLabels = labels
 
         tvServiceType = view.findViewById(R.id.tvServiceType)
         tvAddress = view.findViewById(R.id.tvAddress)
@@ -236,40 +221,38 @@ class WorkerJobFragment : Fragment() {
 
     private fun updateStatusFlow(status: String) {
         // Reset Progress Bar
-        stepCircles.forEach { it.setBackgroundResource(R.drawable.bg_step_circle_inactive) }
-        stepLines.forEach { it.setBackgroundColor(Color.parseColor("#E2E8F0")) }
-        stepLabels.forEach { 
-            it.setTextColor(Color.parseColor("#64748B"))
-            it.paint.isFakeBoldText = false
+        stepCircles.forEach { 
+            it.setBackgroundResource(R.drawable.bg_step_circle_inactive)
+            it.imageTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#94A3B8"))
         }
 
         when (status) {
             "IN_PROGRESS" -> {
-                highlightStep(0)
+                highlightStep(0, "Accepted")
                 btnMainAction.text = "Start heading there"
                 btnMainAction.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#0F325E"))
                 btnMainAction.setOnClickListener { updateJobStatus("HEADING_TO_CLIENT") }
             }
             "HEADING_TO_CLIENT" -> {
-                highlightStep(1)
+                highlightStep(1, "Heading to Client")
                 btnMainAction.text = "I Have Arrived"
                 btnMainAction.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#16A34A"))
                 btnMainAction.setOnClickListener { updateJobStatus("ARRIVED") }
             }
             "ARRIVED" -> {
-                highlightStep(2)
+                highlightStep(2, "Working...")
                 btnMainAction.text = "Finish Work"
                 btnMainAction.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#0F325E"))
                 btnMainAction.setOnClickListener { requestDone() }
             }
             "PENDING_VERIFICATION" -> {
-                highlightStep(3)
+                highlightStep(3, "Waiting for Confirmation")
                 btnMainAction.text = "Waiting for Verification"
                 btnMainAction.isEnabled = false
                 btnMainAction.alpha = 0.6f
             }
             "REJECTED_BY_CLIENT" -> {
-                highlightStep(2) // Stay at Arrived/Working
+                highlightStep(2, "Completion Refused")
                 btnMainAction.text = "Resubmit for Review"
                 btnMainAction.isEnabled = true
                 btnMainAction.alpha = 1.0f
@@ -279,14 +262,33 @@ class WorkerJobFragment : Fragment() {
         }
     }
 
-    private fun highlightStep(index: Int) {
+    private fun highlightStep(index: Int, statusText: String) {
+        tvProgressStatus.text = statusText
+        
         for (i in 0..index) {
             stepCircles[i].setBackgroundResource(R.drawable.bg_step_circle_active)
-            if (i < index && i < stepLines.size) stepLines[i].setBackgroundColor(Color.parseColor("#0F325E"))
-            if (i < stepLabels.size) {
-                stepLabels[i].setTextColor(Color.parseColor("#0F325E"))
-                stepLabels[i].paint.isFakeBoldText = true
-            }
+            stepCircles[i].imageTintList = android.content.res.ColorStateList.valueOf(Color.WHITE)
+        }
+
+        view?.post {
+            if (!isAdded) return@post
+            val totalWidth = stepCircles.last().left - stepCircles[0].left
+            val progressWidth = if (index > 0) {
+                (totalWidth / (stepCircles.size - 1)) * index
+            } else 0
+            
+            val params = progressTrackActive.layoutParams
+            params.width = progressWidth
+            progressTrackActive.layoutParams = params
+            
+            // Translate status text
+            val latestStep = stepCircles[index]
+            val container = latestStep.parent as View
+            val centerX = container.x + (container.width / 2)
+            val parent = tvProgressStatus.parent as View
+            val maxTranslation = parent.width - tvProgressStatus.width
+            val targetX = centerX - (tvProgressStatus.width / 2)
+            tvProgressStatus.translationX = targetX.coerceIn(0f, maxTranslation.toFloat())
         }
     }
 
