@@ -404,18 +404,25 @@ class CreateJobActivity : AppCompatActivity() {
     private fun setupDatePicker() {
         btnSelectDate.setOnClickListener {
             val calendar = Calendar.getInstance()
-            DatePickerDialog(
+            val dialog = DatePickerDialog(
                 this,
                 { _, year, month, day ->
                     selectedDate = "${month + 1}/$day/$year"
                     btnSelectDate.text = selectedDate
                     btnSelectDate.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.stroke_color)))
                     btnSelectDate.strokeWidth = resources.getDimensionPixelSize(R.dimen.normal_stroke_width)
+                    
+                    // If date changed, reset time to prevent "past time" on today's date
+                    selectedTime = ""
+                    btnSelectTime.text = "Select Time"
                 },
                 calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH),
                 calendar.get(Calendar.DAY_OF_MONTH)
-            ).show()
+            )
+            // Prevent selecting past dates
+            dialog.datePicker.minDate = System.currentTimeMillis() - 1000
+            dialog.show()
         }
     }
 
@@ -423,10 +430,30 @@ class CreateJobActivity : AppCompatActivity() {
 
     private fun setupTimePicker() {
         btnSelectTime.setOnClickListener {
+            if (selectedDate.isEmpty()) {
+                Toast.makeText(this, "Please select a date first", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             val calendar = Calendar.getInstance()
             TimePickerDialog(
                 this,
                 { _, hour, minute ->
+                    // Validate if selected date is today
+                    val today = Calendar.getInstance()
+                    val todayStr = "${today.get(Calendar.MONTH) + 1}/${today.get(Calendar.DAY_OF_MONTH)}/${today.get(Calendar.YEAR)}"
+                    
+                    if (selectedDate == todayStr) {
+                        val selectedCal = Calendar.getInstance()
+                        selectedCal.set(Calendar.HOUR_OF_DAY, hour)
+                        selectedCal.set(Calendar.MINUTE, minute)
+                        
+                        if (selectedCal.before(today)) {
+                            Toast.makeText(this, "Cannot select a past time for today", Toast.LENGTH_SHORT).show()
+                            return@TimePickerDialog
+                        }
+                    }
+
                     selectedTime = String.format(Locale.getDefault(), "%02d:%02d", hour, minute)
                     btnSelectTime.text = selectedTime
                     btnSelectTime.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.stroke_color)))

@@ -103,12 +103,15 @@ class CompanyApplicantsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        adapter = CompanyApplicantFullAdapter(emptyList()) { user, app ->
-            // On Item Click: Open the Job Details activity but focused on the applicants tab
-            // For now, let's just open the HiringDetailsActivity for that specific post.
-            // We'll need the HiringPost object. 
+        adapter = CompanyApplicantFullAdapter(emptyList(), { user, app ->
+            // On Item Click: Open Job Details
             fetchPostAndOpen(app.hiringId)
-        }
+        }, { user ->
+            // On "View Profile" Label Click: Open Full Profile directly
+            val intent = Intent(requireContext(), com.example.newtacks.worker.WorkerProfileActivity::class.java)
+            intent.putExtra("WORKER_ID", user.uid)
+            startActivity(intent)
+        })
         rvApplicants.layoutManager = LinearLayoutManager(requireContext())
         rvApplicants.adapter = adapter
     }
@@ -196,11 +199,11 @@ class CompanyApplicantsFragment : Fragment() {
                 // Firestore whereIn limit is 10. For simplicity in this update, we take first 10.
                 // In production, we'd chunk this.
                 db.collection("users")
-                    .whereIn("uid", workerIds.take(10))
+                    .whereIn(com.google.firebase.firestore.FieldPath.documentId(), workerIds.take(10))
                     .get()
                     .addOnSuccessListener { userSnapshots ->
                         val userMap = userSnapshots.documents.associate { 
-                            it.id to it.toObject(User::class.java)!!
+                            it.id to it.toObject(User::class.java)!!.copy(uid = it.id)
                         }
                         
                         allData.clear()

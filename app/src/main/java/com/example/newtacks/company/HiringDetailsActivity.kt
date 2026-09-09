@@ -378,12 +378,12 @@ class HiringDetailsActivity : AppCompatActivity() {
 
     private fun fetchApplicantProfiles(uids: List<String>) {
         db.collection("users")
-            .whereIn("uid", uids.take(10))
+            .whereIn(com.google.firebase.firestore.FieldPath.documentId(), uids.take(10))
             .get()
             .addOnSuccessListener { snapshots ->
                 applicantList.clear()
                 for (doc in snapshots) {
-                    val user = doc.toObject(User::class.java)
+                    val user = doc.toObject(User::class.java)?.copy(uid = doc.id)
                     if (user != null) applicantList.add(user)
                 }
                 applicantAdapter.notifyDataSetChanged()
@@ -408,18 +408,50 @@ class HiringDetailsActivity : AppCompatActivity() {
         val tvName = dialogView.findViewById<TextView>(R.id.tvWorkerName)
         val tvRating = dialogView.findViewById<TextView>(R.id.tvWorkerRating)
         val tvStatus = dialogView.findViewById<TextView>(R.id.tvWorkerBadge)
+        val tvPhone = dialogView.findViewById<TextView>(R.id.tvWorkerPhone)
+        val tvExp = dialogView.findViewById<TextView>(R.id.tvWorkerExperience)
+        val tvCat = dialogView.findViewById<TextView>(R.id.tvWorkerCategories)
         
         tvName.text = worker.name
         tvRating.text = "⭐ %.1f (%d reviews)".format(worker.rating, worker.totalRatings)
+        tvPhone.text = worker.phone
+        tvExp.text = "${worker.serviceExperience ?: 0} years of experience"
+        tvCat.text = worker.serviceCategories?.joinToString(", ") ?: "General Services"
 
         val app = applicationMap[worker.uid]
         tvStatus.visibility = View.VISIBLE
         tvStatus.text = app?.status ?: "APPLIED"
 
+        // Credentials/Badges
+        if (worker.verificationStatus > 0) {
+            tvStatus.text = "NC${worker.verificationStatus}"
+            tvStatus.setBackgroundResource(R.drawable.bg_badge_green1)
+        }
+
         ivProfile.load(worker.profileImage) {
             crossfade(true)
             placeholder(R.drawable.ic_user_placeholder)
             transformations(CircleCropTransformation())
+        }
+
+        // Certificates buttons
+        val btnNC1 = dialogView.findViewById<Button>(R.id.btnViewNC1)
+        val btnNC2 = dialogView.findViewById<Button>(R.id.btnViewNC2)
+        val btnNC3 = dialogView.findViewById<Button>(R.id.btnViewNC3)
+        val tvNoCert = dialogView.findViewById<TextView>(R.id.tvNoCertificates)
+
+        var hasCert = false
+        worker.nc1CertificateUrl?.let { url -> if (url.isNotEmpty()) { btnNC1.visibility = View.VISIBLE; btnNC1.setOnClickListener { ImageUtils.showFullscreenImage(this, url) }; hasCert = true } }
+        worker.nc2CertificateUrl?.let { url -> if (url.isNotEmpty()) { btnNC2.visibility = View.VISIBLE; btnNC2.setOnClickListener { ImageUtils.showFullscreenImage(this, url) }; hasCert = true } }
+        worker.nc3CertificateUrl?.let { url -> if (url.isNotEmpty()) { btnNC3.visibility = View.VISIBLE; btnNC3.setOnClickListener { ImageUtils.showFullscreenImage(this, url) }; hasCert = true } }
+        
+        if (!hasCert) tvNoCert.visibility = View.VISIBLE
+
+        val btnFullProfile = dialogView.findViewById<Button>(R.id.btnViewFullProfile)
+        btnFullProfile.setOnClickListener {
+            val intent = android.content.Intent(this, com.example.newtacks.worker.WorkerProfileActivity::class.java)
+            intent.putExtra("WORKER_ID", worker.uid)
+            startActivity(intent)
         }
 
         val builder = android.app.AlertDialog.Builder(this)
@@ -455,11 +487,15 @@ class HiringDetailsActivity : AppCompatActivity() {
 
     private fun showScheduleInterviewDialog(worker: User) {
         val cal = Calendar.getInstance()
-        DatePickerDialog(this, { _, y, m, d ->
+        val dialog = DatePickerDialog(this, { _, y, m, d ->
             val interviewCal = Calendar.getInstance()
             interviewCal.set(y, m, d, 10, 0) // Default 10 AM
             scheduleInterview(worker, interviewCal.timeInMillis)
-        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
+        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
+        
+        // Prevent past dates
+        dialog.datePicker.minDate = System.currentTimeMillis() - 1000
+        dialog.show()
     }
 
     private fun scheduleInterview(worker: User, timestamp: Long) {

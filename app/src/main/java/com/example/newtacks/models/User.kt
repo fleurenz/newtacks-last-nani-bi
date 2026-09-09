@@ -26,6 +26,12 @@ data class User(
     // ⭐ WORKER RATING SYSTEM
     val rating: Double = 0.0,
     val totalRatings: Int = 0,
+    val ratingAverage: Double? = null,
+    val ratingCount: Long? = null,
+
+    // 🟢 ONLINE STATUS
+    val isOnline: Boolean = false,
+    val lastActive: Long = 0,
 
     // ✅ VERIFICATION STATUS (0: Unverified, 1: NC1, 2: NC2, 3: NC3)
     val verificationStatus: Int = 0,

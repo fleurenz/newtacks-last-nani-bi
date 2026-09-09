@@ -49,6 +49,11 @@
         <activity android:name=".client.ClientEditProfileActivity" />
         <activity android:name=".company.CompanyEditProfileActivity" />
         <activity android:name=".client.RefuseCompletionActivity" />
+
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
         <activity android:name=".ClientDashboardActivity" />
         <activity android:name=".WorkerDashboardActivity" />
         <activity android:name=".CompanyDashboardActivity" />

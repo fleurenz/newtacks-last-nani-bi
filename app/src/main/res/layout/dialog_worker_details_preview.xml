@@ -128,7 +128,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="4dp">
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="24dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnViewNC1"
@@ -166,5 +167,15 @@
             android:textColor="#94A3B8"
             android:visibility="gone" />
     </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnViewFullProfile"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:text="View Full Profile"
+        android:textAllCaps="false"
+        android:textStyle="bold"
+        app:backgroundTint="#0F325E"
+        app:cornerRadius="10dp" />
 
 </LinearLayout>

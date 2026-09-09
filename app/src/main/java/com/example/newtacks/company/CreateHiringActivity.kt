@@ -15,6 +15,7 @@ import androidx.core.view.WindowInsetsCompat
 import android.text.Editable
 import android.text.TextWatcher
 import android.content.res.ColorStateList
+import android.graphics.Color
 import androidx.core.widget.NestedScrollView
 import coil.load
 import coil.transform.RoundedCornersTransformation
@@ -32,6 +33,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.yalantis.ucrop.UCrop
 import java.util.*
 
 class CreateHiringActivity : AppCompatActivity() {
@@ -79,11 +81,36 @@ class CreateHiringActivity : AppCompatActivity() {
     
     private val selectedImageUris = mutableListOf<Uri>()
 
-    private val pickImages = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
-        if (uris.isNotEmpty()) {
-            selectedImageUris.addAll(uris)
-            updateImagesUI()
+    private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { startCrop(it) }
+    }
+
+    private val cropImage = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val resultUri = UCrop.getOutput(result.data!!)
+            if (resultUri != null) {
+                selectedImageUris.add(resultUri)
+                updateImagesUI()
+            }
+        } else if (result.resultCode == UCrop.RESULT_ERROR) {
+            val cropError = UCrop.getError(result.data!!)
+            Toast.makeText(this, "Crop error: ${cropError?.message}", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun startCrop(uri: Uri) {
+        val destinationUri = Uri.fromFile(java.io.File(cacheDir, "cropped_${System.currentTimeMillis()}.jpg"))
+        val uCrop = UCrop.of(uri, destinationUri)
+            .withAspectRatio(16f, 9f) // Header aspect ratio
+            .withMaxResultSize(1080, 1080)
+        
+        val options = UCrop.Options()
+        options.setToolbarColor(ContextCompat.getColor(this, R.color.primary))
+        options.setToolbarWidgetColor(Color.WHITE)
+        options.setActiveControlsWidgetColor(ContextCompat.getColor(this, R.color.primary))
+        
+        uCrop.withOptions(options)
+        cropImage.launch(uCrop.getIntent(this))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -265,12 +292,12 @@ class CreateHiringActivity : AppCompatActivity() {
 
     private fun setupListeners() {
         btnAddPhoto.setOnClickListener {
-            pickImages.launch("image/*")
+            pickImage.launch("image/*")
         }
 
         btnSelectClosingDate.setOnClickListener {
             val cal = Calendar.getInstance()
-            DatePickerDialog(this, { _, y, m, d ->
+            val dialog = DatePickerDialog(this, { _, y, m, d ->
                 val closingCal = Calendar.getInstance()
                 closingCal.set(y, m, d, 23, 59, 59)
                 expiresAtTimestamp = closingCal.timeInMillis
@@ -281,7 +308,11 @@ class CreateHiringActivity : AppCompatActivity() {
                 // Reset error state
                 btnSelectClosingDate.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.primary)))
                 btnSelectClosingDate.strokeWidth = resources.getDimensionPixelSize(R.dimen.normal_stroke_width)
-            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
+            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
+            
+            // Prevent past dates
+            dialog.datePicker.minDate = System.currentTimeMillis() - 1000
+            dialog.show()
         }
 
         btnSubmit.setOnClickListener { submitHiring(status = "OPEN") }

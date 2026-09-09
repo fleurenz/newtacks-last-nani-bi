@@ -16,13 +16,15 @@ import com.example.newtacks.models.User
 
 class CompanyApplicantFullAdapter(
     private var dataList: List<Pair<User, Application>>,
-    private val onItemClick: (User, Application) -> Unit
+    private val onItemClick: (User, Application) -> Unit,
+    private val onProfileClick: (User) -> Unit
 ) : RecyclerView.Adapter<CompanyApplicantFullAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val ivProfile: ImageView = view.findViewById(R.id.ivWorkerProfile)
         val tvName: TextView = view.findViewById(R.id.tvWorkerName)
         val tvBadge: TextView = view.findViewById(R.id.tvStatusBadge)
+        val tvViewProfile: TextView = view.findViewById(R.id.tvViewProfileLabel)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -44,6 +46,7 @@ class CompanyApplicantFullAdapter(
         updateBadge(holder.tvBadge, app.status)
 
         holder.itemView.setOnClickListener { onItemClick(user, app) }
+        holder.tvViewProfile.setOnClickListener { onProfileClick(user) }
     }
 
     private fun updateBadge(tvBadge: TextView, status: String) {
