@@ -275,7 +275,7 @@ class WorkerJobFragment : Fragment() {
             }
             "PENDING_VERIFICATION" -> {
                 highlightStep(3, "Waiting for Confirmation")
-                btnMainAction.text = "Waiting for Verification"
+                btnMainAction.text = "Verifying..."
                 btnMainAction.isEnabled = false
                 btnMainAction.alpha = 0.6f
             }
