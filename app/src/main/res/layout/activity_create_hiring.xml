@@ -189,15 +189,16 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    app:hintEnabled="false"
                     android:layout_marginBottom="16dp">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etJobDescription"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textMultiLine"
+                        android:inputType="textMultiLine|textCapSentences"
                         android:minLines="4"
-                        android:gravity="top"
-                        android:hint="Describe duties, hours, site details, etc....." />
+                        android:gravity="top|start"
+                        android:hint="Briefly describe the job and what needs to be done." />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- REQUIREMENTS -->
@@ -212,15 +213,16 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    app:hintEnabled="false"
                     android:layout_marginBottom="16dp">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etResponsibilities"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textMultiLine"
+                        android:inputType="textMultiLine|textCapSentences"
                         android:minLines="4"
-                        android:gravity="top"
-                        android:hint="Describe duties, hours, site details, etc....." />
+                        android:gravity="top|start"
+                        android:hint="List the skills, experience, tools, or tasks required." />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- REQUIRED SERVICES -->
@@ -258,7 +260,16 @@
                     android:text="Photos (Optional)"
                     android:textColor="#64748B"
                     android:textSize="13sp"
-                    android:layout_marginTop="16dp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="16dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Add photos that show the work or work site."
+                    android:textColor="#94A3B8"
+                    android:textSize="12sp"
+                    android:textStyle="italic"
                     android:layout_marginBottom="8dp" />
                 <HorizontalScrollView
                     android:layout_width="match_parent"

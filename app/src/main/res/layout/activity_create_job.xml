@@ -168,13 +168,15 @@
                     app:boxCornerRadiusTopEnd="12dp"
                     app:boxCornerRadiusBottomStart="12dp"
                     app:boxCornerRadiusBottomEnd="12dp"
+                    app:hintEnabled="false"
                     android:layout_marginBottom="20dp">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etDescription"
                         android:layout_width="match_parent"
-                        android:layout_height="100dp"
-                        android:gravity="top"
-                        android:inputType="textMultiLine"
+                        android:layout_height="wrap_content"
+                        android:gravity="top|start"
+                        android:minLines="4"
+                        android:inputType="textMultiLine|textCapSentences"
                         android:textColor="#1E293B"
                         android:hint="Describe what's wrong and where — e.g. 'Leaking pipe under the kitchen sink'" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -183,10 +185,19 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Photos (add at least a photo of the actual problem)"
+                    android:text="Photos (Optional)"
                     android:textColor="#64748B"
                     android:textSize="13sp"
                     android:textStyle="bold"
+                    android:layout_marginTop="16dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Add photos that show the actual problem."
+                    android:textColor="#94A3B8"
+                    android:textSize="12sp"
+                    android:textStyle="italic"
                     android:layout_marginBottom="12dp" />
 
                 <HorizontalScrollView

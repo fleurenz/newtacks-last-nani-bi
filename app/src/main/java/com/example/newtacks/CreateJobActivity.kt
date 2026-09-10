@@ -115,7 +115,6 @@ class CreateJobActivity : AppCompatActivity() {
         toolbar.setNavigationOnClickListener { finish() }
 
         initializeViews()
-        setupStatusBarPadding()
         
         editingJobId = intent.getStringExtra("EDIT_JOB_ID")
         if (editingJobId != null) {
@@ -141,16 +140,6 @@ class CreateJobActivity : AppCompatActivity() {
                 handleBackPress()
             }
         })
-    }
-
-    private fun setupStatusBarPadding() {
-        val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
-        val rootView = findViewById<View>(android.R.id.content)
-        ViewCompat.setOnApplyWindowInsetsListener(toolbar) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.updatePadding(top = systemBars.top + (resources.displayMetrics.density * 8).toInt())
-            insets
-        }
     }
 
     private fun handleBackPress() {
