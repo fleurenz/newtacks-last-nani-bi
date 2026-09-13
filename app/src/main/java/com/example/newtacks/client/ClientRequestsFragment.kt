@@ -391,7 +391,7 @@ class ClientRequestsFragment : Fragment() {
             popup.menu.add("Edit Request")
             popup.menu.add("Cancel Request")
         }
-        popup.menu.add("Report")
+        popup.menu.add("Report Worker")
         popup.setOnMenuItemClickListener { item ->
             when (item.title) {
                 "Edit Request" -> {
@@ -400,7 +400,14 @@ class ClientRequestsFragment : Fragment() {
                     startActivity(intent)
                 }
                 "Cancel Request" -> showCancelConfirmationDialog()
-                "Report" -> Toast.makeText(requireContext(), "Report submitted", Toast.LENGTH_SHORT).show()
+                "Report Worker" -> {
+                    currentJob?.let { job ->
+                        val intent = android.content.Intent(requireContext(), com.example.newtacks.common.ReportUserActivity::class.java)
+                        intent.putExtra("REPORTEE_ID", job.workerId)
+                        intent.putExtra("REPORTEE_NAME", job.workerName)
+                        startActivity(intent)
+                    }
+                }
             }
             true
         }

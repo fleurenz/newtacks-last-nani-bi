@@ -251,13 +251,24 @@
 
         </LinearLayout>
 
+        <!-- Report Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnReportApplicant"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Report Applicant"
+            android:textAllCaps="false"
+            android:textColor="#EF4444"
+            app:cornerRadius="12dp" />
+
         <!-- Close Button for Dialog -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCloseDialog"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:layout_marginTop="8dp"
             android:text="Close"
             android:textAllCaps="false"
             android:textColor="#64748B"

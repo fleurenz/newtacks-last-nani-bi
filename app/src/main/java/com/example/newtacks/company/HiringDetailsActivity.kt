@@ -235,7 +235,12 @@ class HiringDetailsActivity : AppCompatActivity() {
             when (item.title) {
                 "Close Job Posting" -> confirmClosePosting()
                 "Reopen Job Posting" -> updatePostStatus("OPEN")
-                "Report Post" -> Toast.makeText(this, "Post reported", Toast.LENGTH_SHORT).show()
+                "Report Post" -> {
+                    val intent = android.content.Intent(this, com.example.newtacks.common.ReportUserActivity::class.java)
+                    intent.putExtra("REPORTEE_ID", post.companyId)
+                    intent.putExtra("REPORTEE_NAME", post.companyName)
+                    startActivity(intent)
+                }
             }
             true
         }
@@ -529,6 +534,14 @@ class HiringDetailsActivity : AppCompatActivity() {
 
         dialogView.findViewById<View>(R.id.btnCloseDialog).setOnClickListener {
             dialog.dismiss()
+        }
+
+        dialogView.findViewById<View>(R.id.btnReportApplicant).setOnClickListener {
+            dialog.dismiss()
+            val intent = android.content.Intent(this, com.example.newtacks.common.ReportUserActivity::class.java)
+            intent.putExtra("REPORTEE_ID", worker.uid)
+            intent.putExtra("REPORTEE_NAME", worker.name)
+            startActivity(intent)
         }
 
         when (app?.status) {

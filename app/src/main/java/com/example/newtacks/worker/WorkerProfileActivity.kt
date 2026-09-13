@@ -244,31 +244,9 @@ class WorkerProfileActivity : AppCompatActivity() {
     }
 
     private fun showReportDialog() {
-        val options = arrayOf("Inappropriate behavior", "Scam / Fraud", "Poor service quality", "Other")
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Report Account")
-            .setItems(options) { _, which ->
-                val reason = options[which]
-                submitReport(reason)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun submitReport(reason: String) {
-        val report = mapOf(
-            "reporterId" to (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: ""),
-            "reportedWorkerId" to (workerId ?: ""),
-            "reason" to reason,
-            "timestamp" to System.currentTimeMillis()
-        )
-        
-        firestore.collection("reports").add(report)
-            .addOnSuccessListener {
-                Toast.makeText(this, "Report submitted successfully.", Toast.LENGTH_SHORT).show()
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Failed to submit report.", Toast.LENGTH_SHORT).show()
-            }
+        val intent = android.content.Intent(this, com.example.newtacks.common.ReportUserActivity::class.java)
+        intent.putExtra("REPORTEE_ID", workerId)
+        intent.putExtra("REPORTEE_NAME", tvName.text.toString())
+        startActivity(intent)
     }
 }

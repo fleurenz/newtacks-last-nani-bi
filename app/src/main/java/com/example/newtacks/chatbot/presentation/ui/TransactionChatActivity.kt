@@ -99,6 +99,14 @@ class TransactionChatActivity : AppCompatActivity() {
         rvChat.adapter = adapter
 
         btnSend.setOnClickListener { sendMessage() }
+        
+        findViewById<View>(R.id.btnReportChat).setOnClickListener {
+            val tvName = findViewById<TextView>(R.id.tvOtherUserName)
+            val intent = android.content.Intent(this, com.example.newtacks.common.ReportUserActivity::class.java)
+            intent.putExtra("REPORTEE_ID", otherUserId)
+            intent.putExtra("REPORTEE_NAME", tvName.text.toString())
+            startActivity(intent)
+        }
 
         loadProfiles()
         listenForMessages()

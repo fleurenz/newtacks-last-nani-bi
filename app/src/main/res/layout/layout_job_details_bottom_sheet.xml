@@ -72,6 +72,16 @@
                         android:layout_marginStart="4dp" />
                 </LinearLayout>
             </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/btnReportClientBS"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_bubble_alert"
+                app:tint="#EF4444"
+                android:padding="8dp"
+                android:contentDescription="Report Client" />
         </LinearLayout>
 
         <View

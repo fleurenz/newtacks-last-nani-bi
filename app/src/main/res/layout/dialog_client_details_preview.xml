@@ -95,4 +95,15 @@
             android:textColor="#1E293B" />
     </LinearLayout>
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnReportClient"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Report User"
+        android:textAllCaps="false"
+        android:textColor="#EF4444"
+        app:cornerRadius="12dp" />
+
 </LinearLayout>

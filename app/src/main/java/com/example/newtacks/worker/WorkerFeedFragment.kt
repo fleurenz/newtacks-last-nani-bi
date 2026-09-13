@@ -268,6 +268,7 @@ class WorkerFeedFragment : Fragment() {
         val tvDesc      = bsView.findViewById<TextView>(R.id.tvDescriptionBS)
         val btnDecline  = bsView.findViewById<Button>(R.id.btnDeclineBS)
         val btnAccept   = bsView.findViewById<Button>(R.id.btnAcceptBS)
+        val btnReport   = bsView.findViewById<View>(R.id.btnReportClientBS)
 
         tvName.text = job.clientName
         tvDistance.text = distanceStr
@@ -277,6 +278,13 @@ class WorkerFeedFragment : Fragment() {
         tvDate.text = job.scheduledDate
         tvRate.text = "₱${job.offeredAmount}/${job.rateType}"
         tvDesc.text = job.description
+
+        btnReport.setOnClickListener {
+            val intent = android.content.Intent(requireContext(), com.example.newtacks.common.ReportUserActivity::class.java)
+            intent.putExtra("REPORTEE_ID", job.clientId)
+            intent.putExtra("REPORTEE_NAME", job.clientName)
+            startActivity(intent)
+        }
 
         // Load client profile pic
         db.collection("users").document(job.clientId).get().addOnSuccessListener { doc ->

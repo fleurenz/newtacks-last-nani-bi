@@ -377,9 +377,19 @@ class WorkerJobFragment : Fragment() {
     private fun showPopupMenu(view: View) {
         val popup = PopupMenu(view.context, view)
         popup.menu.add("Cancel Job")
-        popup.menu.add("Report")
+        popup.menu.add("Report Client")
         popup.setOnMenuItemClickListener { item ->
-            if (item.title == "Cancel Job") showCancelDialog()
+            when (item.title) {
+                "Cancel Job" -> showCancelDialog()
+                "Report Client" -> {
+                    currentJob?.let { job ->
+                        val intent = Intent(requireContext(), com.example.newtacks.common.ReportUserActivity::class.java)
+                        intent.putExtra("REPORTEE_ID", job.clientId)
+                        intent.putExtra("REPORTEE_NAME", job.clientName)
+                        startActivity(intent)
+                    }
+                }
+            }
             true
         }
         popup.show()
@@ -451,7 +461,21 @@ class WorkerJobFragment : Fragment() {
             dialogView.findViewById<TextView>(R.id.tvClientAddress).text = client.address
             val iv = dialogView.findViewById<ImageView>(R.id.ivClientProfile)
             iv.load(client.profileImage) { placeholder(R.drawable.ic_user_placeholder); transformations(CircleCropTransformation()) }
-            AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog).setView(dialogView).setPositiveButton("Close", null).show()
+            
+            val dialog = AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
+                .setView(dialogView)
+                .setPositiveButton("Close", null)
+                .create()
+            
+            dialogView.findViewById<View>(R.id.btnReportClient).setOnClickListener {
+                dialog.dismiss()
+                val intent = Intent(requireContext(), com.example.newtacks.common.ReportUserActivity::class.java)
+                intent.putExtra("REPORTEE_ID", client.uid)
+                intent.putExtra("REPORTEE_NAME", client.name)
+                startActivity(intent)
+            }
+            
+            dialog.show()
         }
     }
 
