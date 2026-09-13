@@ -57,6 +57,7 @@ class WorkerAccountFragment : Fragment() {
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var menuEditProfile: View
     private lateinit var menuViewProfile: View
+    private lateinit var menuPrivacy: View
     private lateinit var menuHelp: View
 
     private val pickCertificate =
@@ -83,6 +84,7 @@ class WorkerAccountFragment : Fragment() {
         swipeRefresh = view.findViewById(R.id.swipeRefreshAccount)
         menuEditProfile = view.findViewById(R.id.menuEditProfile)
         menuViewProfile = view.findViewById(R.id.menuViewProfile)
+        menuPrivacy = view.findViewById(R.id.menuPrivacy)
         menuHelp = view.findViewById(R.id.menuHelp)
 
         tvVerificationLevel = view.findViewById(R.id.tvVerificationLevel)
@@ -113,7 +115,6 @@ class WorkerAccountFragment : Fragment() {
             pickCertificate.launch("image/*")
         }
 
-        // ✅ First load when fragment is created
         loadProfile()
         loadStats()
         setupLogout()
@@ -121,6 +122,7 @@ class WorkerAccountFragment : Fragment() {
         setupReviewsMenu()
         setupEditProfileMenu()
         setupViewProfileMenu()
+        setupPrivacyMenu()
         setupHelpMenu()
 
         swipeRefresh.setOnRefreshListener {
@@ -269,6 +271,12 @@ class WorkerAccountFragment : Fragment() {
     private fun setupEditProfileMenu() {
         menuEditProfile.setOnClickListener {
             startActivity(Intent(requireContext(), WorkerEditProfileActivity::class.java))
+        }
+    }
+
+    private fun setupPrivacyMenu() {
+        menuPrivacy.setOnClickListener {
+            startActivity(Intent(requireContext(), com.example.newtacks.utils.PrivacySecurityActivity::class.java))
         }
     }
 

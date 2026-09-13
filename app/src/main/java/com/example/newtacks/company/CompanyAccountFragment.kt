@@ -28,6 +28,7 @@ class CompanyAccountFragment : Fragment() {
     private lateinit var ivCompanyProfile: ImageView
     private lateinit var menuLogout: View
     private lateinit var menuEditProfile: View
+    private lateinit var menuPrivacy: View
     private lateinit var menuHelp: View
     private lateinit var swipeRefresh: SwipeRefreshLayout
     
@@ -44,6 +45,7 @@ class CompanyAccountFragment : Fragment() {
         ivCompanyProfile = view.findViewById(R.id.ivCompanyProfile)
         menuLogout       = view.findViewById(R.id.menuLogout)
         menuEditProfile  = view.findViewById(R.id.menuEditProfile)
+        menuPrivacy      = view.findViewById(R.id.menuPrivacy)
         menuHelp         = view.findViewById(R.id.menuHelp)
         swipeRefresh     = view.findViewById(R.id.swipeRefreshAccount)
 
@@ -60,6 +62,7 @@ class CompanyAccountFragment : Fragment() {
         loadProfile()
         setupLogout()
         setupEditProfileMenu()
+        setupPrivacyMenu()
         setupHelpMenu()
 
         swipeRefresh.setOnRefreshListener {
@@ -100,6 +103,12 @@ class CompanyAccountFragment : Fragment() {
     private fun setupEditProfileMenu() {
         menuEditProfile.setOnClickListener {
             startActivity(Intent(requireContext(), CompanyEditProfileActivity::class.java))
+        }
+    }
+
+    private fun setupPrivacyMenu() {
+        menuPrivacy.setOnClickListener {
+            startActivity(Intent(requireContext(), com.example.newtacks.utils.PrivacySecurityActivity::class.java))
         }
     }
 
