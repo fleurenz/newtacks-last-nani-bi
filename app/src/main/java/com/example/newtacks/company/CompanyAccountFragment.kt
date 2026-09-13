@@ -28,6 +28,7 @@ class CompanyAccountFragment : Fragment() {
     private lateinit var ivCompanyProfile: ImageView
     private lateinit var menuLogout: View
     private lateinit var menuEditProfile: View
+    private lateinit var menuHelp: View
     private lateinit var swipeRefresh: SwipeRefreshLayout
     
     private var currentAboutUs: String = ""
@@ -43,6 +44,7 @@ class CompanyAccountFragment : Fragment() {
         ivCompanyProfile = view.findViewById(R.id.ivCompanyProfile)
         menuLogout       = view.findViewById(R.id.menuLogout)
         menuEditProfile  = view.findViewById(R.id.menuEditProfile)
+        menuHelp         = view.findViewById(R.id.menuHelp)
         swipeRefresh     = view.findViewById(R.id.swipeRefreshAccount)
 
         // Robust Inset Handling: Use spacer for status bar
@@ -58,6 +60,7 @@ class CompanyAccountFragment : Fragment() {
         loadProfile()
         setupLogout()
         setupEditProfileMenu()
+        setupHelpMenu()
 
         swipeRefresh.setOnRefreshListener {
             loadProfile()
@@ -103,6 +106,12 @@ class CompanyAccountFragment : Fragment() {
     private fun setupLogout() {
         menuLogout.setOnClickListener {
             showLogoutConfirmDialog()
+        }
+    }
+
+    private fun setupHelpMenu() {
+        menuHelp.setOnClickListener {
+            startActivity(Intent(requireContext(), com.example.newtacks.utils.HelpSupportActivity::class.java))
         }
     }
 

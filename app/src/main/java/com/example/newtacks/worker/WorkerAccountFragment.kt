@@ -57,6 +57,7 @@ class WorkerAccountFragment : Fragment() {
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var menuEditProfile: View
     private lateinit var menuViewProfile: View
+    private lateinit var menuHelp: View
 
     private val pickCertificate =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -82,6 +83,7 @@ class WorkerAccountFragment : Fragment() {
         swipeRefresh = view.findViewById(R.id.swipeRefreshAccount)
         menuEditProfile = view.findViewById(R.id.menuEditProfile)
         menuViewProfile = view.findViewById(R.id.menuViewProfile)
+        menuHelp = view.findViewById(R.id.menuHelp)
 
         tvVerificationLevel = view.findViewById(R.id.tvVerificationLevel)
         btnUploadNC1 = view.findViewById(R.id.btnUploadNC1)
@@ -119,6 +121,7 @@ class WorkerAccountFragment : Fragment() {
         setupReviewsMenu()
         setupEditProfileMenu()
         setupViewProfileMenu()
+        setupHelpMenu()
 
         swipeRefresh.setOnRefreshListener {
             loadProfile()
@@ -287,6 +290,12 @@ class WorkerAccountFragment : Fragment() {
     private fun setupLogout() {
         menuLogout.setOnClickListener {
             showLogoutConfirmDialog()
+        }
+    }
+
+    private fun setupHelpMenu() {
+        menuHelp.setOnClickListener {
+            startActivity(Intent(requireContext(), com.example.newtacks.utils.HelpSupportActivity::class.java))
         }
     }
 

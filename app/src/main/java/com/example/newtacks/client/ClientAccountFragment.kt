@@ -29,6 +29,7 @@ class ClientAccountFragment : Fragment() {
     private lateinit var ivProfile: ImageView
     private lateinit var cardLogout: View
     private lateinit var cardEditProfile: View
+    private lateinit var cardHelp: View
     private lateinit var swipeRefresh: SwipeRefreshLayout
 
     override fun onCreateView(
@@ -42,6 +43,7 @@ class ClientAccountFragment : Fragment() {
         ivProfile           = view.findViewById(R.id.ivProfile)
         cardLogout          = view.findViewById(R.id.cardLogout)
         cardEditProfile     = view.findViewById(R.id.cardEditProfile)
+        cardHelp            = view.findViewById(R.id.cardHelp)
         swipeRefresh        = view.findViewById(R.id.swipeRefreshAccount)
 
         loadProfile()
@@ -91,6 +93,10 @@ class ClientAccountFragment : Fragment() {
         
         cardEditProfile.setOnClickListener {
             startActivity(Intent(requireContext(), ClientEditProfileActivity::class.java))
+        }
+
+        cardHelp.setOnClickListener {
+            startActivity(Intent(requireContext(), com.example.newtacks.utils.HelpSupportActivity::class.java))
         }
     }
 
