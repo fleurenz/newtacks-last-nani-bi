@@ -59,10 +59,20 @@ class WorkerAccountFragment : Fragment() {
     private lateinit var menuViewProfile: View
     private lateinit var menuPrivacy: View
     private lateinit var menuHelp: View
+    
+    private lateinit var layoutResume: View
+    private lateinit var tvResumeStatus: TextView
+    private lateinit var ivResumeIcon: ImageView
+    private var currentResumeUrl: String? = null
 
     private val pickCertificate =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             uri?.let { uploadCertificate(it, pendingNCLevel) }
+        }
+
+    private val pickResume =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let { uploadResume(it) }
         }
 
     override fun onCreateView(
@@ -86,6 +96,10 @@ class WorkerAccountFragment : Fragment() {
         menuViewProfile = view.findViewById(R.id.menuViewProfile)
         menuPrivacy = view.findViewById(R.id.menuPrivacy)
         menuHelp = view.findViewById(R.id.menuHelp)
+        
+        layoutResume = view.findViewById(R.id.layoutResume)
+        tvResumeStatus = view.findViewById(R.id.tvResumeStatus)
+        ivResumeIcon = view.findViewById(R.id.ivResumeIcon)
 
         tvVerificationLevel = view.findViewById(R.id.tvVerificationLevel)
         btnUploadNC1 = view.findViewById(R.id.btnUploadNC1)
@@ -124,6 +138,7 @@ class WorkerAccountFragment : Fragment() {
         setupViewProfileMenu()
         setupPrivacyMenu()
         setupHelpMenu()
+        setupResumeAction()
 
         swipeRefresh.setOnRefreshListener {
             loadProfile()
@@ -158,6 +173,17 @@ class WorkerAccountFragment : Fragment() {
 
                 tvWorkerName.text = name
                 tvWorkerRating.text = "%.1f (%d reviews)".format(avg, count)
+                
+                currentResumeUrl = user.resumeUrl
+                if (currentResumeUrl.isNullOrEmpty()) {
+                    tvResumeStatus.text = "No resume submitted, submit now?"
+                    tvResumeStatus.setTextColor(Color.parseColor("#004A99"))
+                    ivResumeIcon.imageTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#64748B"))
+                } else {
+                    tvResumeStatus.text = "View My Resume"
+                    tvResumeStatus.setTextColor(Color.parseColor("#16A34A"))
+                    ivResumeIcon.imageTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#16A34A"))
+                }
 
                 if (user.profileImage.isNotEmpty()) {
                     ivWorkerProfile.load(user.profileImage) {
@@ -314,6 +340,42 @@ class WorkerAccountFragment : Fragment() {
         }
     }
 
+    private fun setupResumeAction() {
+        layoutResume.setOnClickListener {
+            if (currentResumeUrl.isNullOrEmpty()) {
+                pickResume.launch("application/pdf,image/*")
+            } else {
+                com.example.newtacks.utils.ImageUtils.showFullscreenImage(requireContext(), currentResumeUrl!!)
+            }
+        }
+    }
+
+    private fun uploadResume(uri: Uri) {
+        val uid = auth.currentUser?.uid ?: return
+        loadingOverlay.visibility = View.VISIBLE
+        Toast.makeText(requireContext(), "Uploading resume...", Toast.LENGTH_SHORT).show()
+
+        MediaManager.get().upload(uri)
+            .option("folder", "worker_resumes")
+            .callback(object : UploadCallback {
+                override fun onStart(requestId: String?) {}
+                override fun onProgress(requestId: String?, bytes: Long, totalBytes: Long) {}
+                override fun onSuccess(requestId: String?, resultData: MutableMap<Any?, Any?>?) {
+                    val url = resultData?.get("secure_url").toString()
+                    firestore.collection("users").document(uid).update("resumeUrl", url)
+                        .addOnSuccessListener {
+                            loadingOverlay.visibility = View.GONE
+                            Toast.makeText(requireContext(), "Resume uploaded successfully!", Toast.LENGTH_SHORT).show()
+                            loadProfile()
+                        }
+                }
+                override fun onError(requestId: String?, error: ErrorInfo?) {
+                    loadingOverlay.visibility = View.GONE
+                    Toast.makeText(requireContext(), "Upload failed", Toast.LENGTH_SHORT).show()
+                }
+                override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
+            }).dispatch()
+    }
 
     private fun showLogoutConfirmDialog() {
         val dialog = Dialog(requireContext())
