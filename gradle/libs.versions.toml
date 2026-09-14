@@ -25,6 +25,7 @@ playServicesLocation = "21.3.0"
 maplibre = "13.5.1"
 nanohttpd = "2.3.1"
 ucrop = "2.2.11"
+security-crypto = "1.1.0-alpha06"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -36,6 +37,7 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 coil = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
 ucrop = { module = "com.github.yalantis:ucrop", version.ref = "ucrop" }
+androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "security-crypto" }
 
 # Firebase (BoM handles versions)
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }

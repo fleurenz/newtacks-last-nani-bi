@@ -18,16 +18,26 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "CLOUDINARY_NAME", "\"dkuqdvofs\"")
+            buildConfigField("String", "CLOUDINARY_API_KEY", "\"599712254439336\"")
+            buildConfigField("String", "CLOUDINARY_API_SECRET", "\"oOZWsnVXETQkhhhm6aYrsZhMahc\"")
+        }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "CLOUDINARY_NAME", "\"dkuqdvofs\"")
+            buildConfigField("String", "CLOUDINARY_API_KEY", "\"599712254439336\"")
+            buildConfigField("String", "CLOUDINARY_API_SECRET", "\"oOZWsnVXETQkhhhm6aYrsZhMahc\"")
         }
     }
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
     packaging {
@@ -43,6 +53,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.security.crypto)
     implementation(libs.cloudinary.android)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)

@@ -16,6 +16,11 @@
 # debugging stack traces.
 #-keepattributes SourceFile,LineNumberTable
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keep model classes to prevent Firebase deserialization errors
+-keep class com.example.newtacks.models.** { *; }
+
+# Keep Cloudinary callback classes
+-keep class com.cloudinary.android.** { *; }
+
+# Keep MapLibre classes
+-keep class org.maplibre.android.** { *; }
