@@ -34,7 +34,7 @@ class SplashActivity : AppCompatActivity() {
             if (allGranted) {
                 checkGpsAndStart()
             } else {
-                showRequirementsDialog("Permissions Required", "NewTacks requires Location and Notification permissions to function properly. Please grant them to continue.")
+                showRequirementsDialog("Permissions Required", "STRACT requires Location and Notification permissions to function properly. Please grant them to continue.")
             }
         }
 

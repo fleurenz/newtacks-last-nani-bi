@@ -15,7 +15,7 @@ import com.google.firebase.firestore.DocumentChange
 
 object NotificationHelper {
     private const val CHANNEL_ID = "newtacks_notifications"
-    private const val CHANNEL_NAME = "NewTacks Job Updates"
+    private const val CHANNEL_NAME = "STRACT Job Updates"
     private const val CHANNEL_DESC = "Notifications for job acceptance, arrival, and completion."
 
     // Keep track of IDs we've already notified to prevent duplicates/looping

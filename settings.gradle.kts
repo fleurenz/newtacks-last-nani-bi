@@ -23,5 +23,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "newtacks"
+rootProject.name = "STRACT"
 include(":app")

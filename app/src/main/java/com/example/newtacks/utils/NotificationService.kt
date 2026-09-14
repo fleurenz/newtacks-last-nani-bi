@@ -23,7 +23,7 @@ class NotificationService : Service() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             val channel = android.app.NotificationChannel(
                 channelId,
-                "NewTacks Background Service",
+                "STRACT Background Service",
                 android.app.NotificationManager.IMPORTANCE_MIN
             )
             val manager = getSystemService(android.app.NotificationManager::class.java)
@@ -39,7 +39,7 @@ class NotificationService : Service() {
         )
 
         val notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("NewTacks is running")
+            .setContentTitle("STRACT is running")
             .setContentText("Listening for job updates in the background")
             .setSmallIcon(R.drawable.ic_check_circle)
             .setPriority(NotificationCompat.PRIORITY_MIN)

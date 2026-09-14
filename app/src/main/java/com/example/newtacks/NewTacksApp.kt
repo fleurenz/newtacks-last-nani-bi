@@ -7,7 +7,7 @@ import com.example.newtacks.utils.TileServer
 import org.maplibre.android.MapLibre
 import java.io.File
 
-class NewtacksApp : Application() {
+class StractApp : Application() {
 
     private var tileServer: TileServer? = null
 

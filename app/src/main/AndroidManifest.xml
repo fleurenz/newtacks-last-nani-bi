@@ -15,7 +15,7 @@
 
     <application
         android:allowBackup="true"
-        android:name=".NewtacksApp"
+        android:name=".StractApp"
         android:usesCleartextTraffic="true"
         android:extractNativeLibs="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -24,7 +24,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Newtacks">
+        android:theme="@style/Theme.STRACT">
         <activity
             android:name=".authentication.SplashActivity"
             android:exported="true">
