@@ -111,22 +111,44 @@
             android:textSize="14sp"
             tools:text="5 years of experience" />
 
+        <!-- Skills Sections -->
         <TextView
+            android:id="@+id/tvVerifiedSkillsLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Specialties"
-            android:textColor="#94A3B8"
+            android:text="Verified Skills"
+            android:textColor="#16A34A"
             android:textSize="12sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone"
+            tools:visibility="visible" />
 
-        <TextView
-            android:id="@+id/tvWorkerCategories"
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/cgVerifiedSkills"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:textColor="#1E293B"
-            android:textSize="14sp"
-            tools:text="Plumbing, Carpentry" />
+            android:layout_marginBottom="16dp"
+            android:visibility="gone"
+            tools:visibility="visible"
+            app:chipSpacingHorizontal="6dp" />
+
+        <TextView
+            android:id="@+id/tvOtherSkillsLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Skills"
+            android:textColor="#94A3B8"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/cgOtherSkills"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            app:chipSpacingHorizontal="6dp" />
 
         <TextView
             android:layout_width="wrap_content"

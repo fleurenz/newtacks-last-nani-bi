@@ -132,7 +132,11 @@ class CompanyApplicantsFragment : Fragment() {
         val tvBadge = dialogView.findViewById<TextView>(R.id.tvWorkerBadge)
         val tvPhone = dialogView.findViewById<TextView>(R.id.tvWorkerPhone)
         val tvExp = dialogView.findViewById<TextView>(R.id.tvWorkerExperience)
-        val tvCat = dialogView.findViewById<TextView>(R.id.tvWorkerCategories)
+        
+        val tvVerifiedLabel = dialogView.findViewById<TextView>(R.id.tvVerifiedSkillsLabel)
+        val cgVerified = dialogView.findViewById<com.google.android.material.chip.ChipGroup>(R.id.cgVerifiedSkills)
+        val tvOtherLabel = dialogView.findViewById<TextView>(R.id.tvOtherSkillsLabel)
+        val cgOther = dialogView.findViewById<com.google.android.material.chip.ChipGroup>(R.id.cgOtherSkills)
         
         val tvDetailedStatus = dialogView.findViewById<TextView>(R.id.tvDetailedStatus)
         val btnPrimary = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnProcessPrimary)
@@ -142,7 +146,36 @@ class CompanyApplicantsFragment : Fragment() {
         tvRating.text = "⭐ %.1f (%d reviews)".format(worker.rating, worker.totalRatings)
         tvPhone.text = worker.phone
         tvExp.text = "${worker.serviceExperience ?: 0} years of experience"
-        tvCat.text = worker.serviceCategories?.joinToString(", ") ?: "General Services"
+
+        // Skills Logic
+        val allSkills = worker.serviceCategories ?: emptyList()
+        val verifiedMap = worker.verifiedSkills
+        val verifiedList = allSkills.filter { verifiedMap.containsKey(it) }
+        val otherList = allSkills.filter { !verifiedMap.containsKey(it) }
+
+        cgVerified.removeAllViews()
+        if (verifiedList.isNotEmpty()) {
+            tvVerifiedLabel.visibility = View.VISIBLE
+            cgVerified.visibility = View.VISIBLE
+            verifiedList.forEach { skill ->
+                cgVerified.addView(createProfileSkillChip(skill, isVerified = true, certUrl = verifiedMap[skill]))
+            }
+        } else {
+            tvVerifiedLabel.visibility = View.GONE
+            cgVerified.visibility = View.GONE
+        }
+
+        cgOther.removeAllViews()
+        if (otherList.isNotEmpty()) {
+            tvOtherLabel.visibility = View.VISIBLE
+            cgOther.visibility = View.VISIBLE
+            otherList.forEach { skill ->
+                cgOther.addView(createProfileSkillChip(skill, isVerified = false, certUrl = null))
+            }
+        } else {
+            tvOtherLabel.visibility = View.GONE
+            cgOther.visibility = View.GONE
+        }
 
         if (worker.verificationStatus > 0) {
             tvBadge.visibility = View.VISIBLE
@@ -253,6 +286,37 @@ class CompanyApplicantsFragment : Fragment() {
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
         dialog.show()
+    }
+
+    private fun createProfileSkillChip(text: String, isVerified: Boolean, certUrl: String?): com.google.android.material.chip.Chip {
+        val chip = com.google.android.material.chip.Chip(requireContext())
+        chip.text = text
+        chip.isCheckable = false
+        chip.isClickable = isVerified
+        
+        if (isVerified) {
+            chip.setChipBackgroundColorResource(R.color.white)
+            chip.setChipStrokeColorResource(R.color.nav_item_color)
+            chip.setChipStrokeWidthResource(R.dimen.chip_stroke_width)
+            chip.setTextColor(resources.getColor(R.color.nav_item_color, null))
+            chip.chipIcon = androidx.core.content.ContextCompat.getDrawable(requireContext(), R.drawable.ic_check_circle)
+            chip.chipIconSize = 16 * resources.displayMetrics.density
+            chip.chipIconTint = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#16A34A"))
+            chip.isChipIconVisible = true
+            chip.setOnClickListener {
+                certUrl?.let { url -> ImageUtils.showFullscreenImage(requireContext(), url) }
+            }
+        } else {
+            chip.setChipBackgroundColorResource(R.color.white)
+            chip.setChipStrokeColorResource(R.color.stroke_color)
+            chip.setChipStrokeWidthResource(R.dimen.chip_stroke_width)
+            chip.setTextColor(resources.getColor(R.color.text_primary, null))
+            chip.chipIcon = androidx.core.content.ContextCompat.getDrawable(requireContext(), R.drawable.bg_circle)
+            chip.chipIconSize = 8 * resources.displayMetrics.density
+            chip.chipIconTint = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#F59E0B"))
+            chip.isChipIconVisible = true
+        }
+        return chip
     }
 
     private fun showScheduleInterviewDialog(worker: User, app: Application) {

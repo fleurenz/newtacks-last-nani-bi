@@ -37,5 +37,7 @@ data class User(
     val verificationStatus: Int = 0,
     val nc1CertificateUrl: String? = null,
     val nc2CertificateUrl: String? = null,
-    val nc3CertificateUrl: String? = null
+    val nc3CertificateUrl: String? = null,
+    val resumeUrl: String? = null,
+    val verifiedSkills: Map<String, String> = emptyMap() // Map of "SkillName" -> "CertificateUrl"
 )

@@ -84,6 +84,44 @@
                     android:textSize="12sp"
                     android:layout_marginStart="6dp" />
             </LinearLayout>
+
+            <!-- RESUME SECTION -->
+            <LinearLayout
+                android:id="@+id/layoutResume"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="6dp"
+                android:background="@drawable/bg_card"
+                android:backgroundTint="#FFFFFF"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:layout_constraintTop_toBottomOf="@id/layoutRating"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <ImageView
+                    android:id="@+id/ivResumeIcon"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_inbox"
+                    app:tint="#64748B" />
+
+                <TextView
+                    android:id="@+id/tvResumeStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="No resume submitted, submit now?"
+                    android:textColor="#004A99"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
             <!-- STATS ROW -->
             <LinearLayout
                 android:id="@+id/layoutStats"
@@ -91,9 +129,9 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:paddingHorizontal="24dp"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="16dp"
                 android:weightSum="2"
-                app:layout_constraintTop_toBottomOf="@id/layoutRating">
+                app:layout_constraintTop_toBottomOf="@id/layoutResume">
                 <!-- Accepted Jobs -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
@@ -690,4 +728,20 @@
             </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
+
+    <!-- Loading Overlay -->
+    <FrameLayout
+        android:id="@+id/loadingOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true">
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminateTint="#FFFFFF" />
+    </FrameLayout>
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

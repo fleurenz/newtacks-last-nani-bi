@@ -682,22 +682,35 @@ class WorkerFeedFragment : Fragment() {
     }
 
     private fun acceptJob(job: Job, onResult: (Boolean) -> Unit = {}) {
-        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) 
-            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            @Suppress("DEPRECATION")
-            requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1002)
-            onResult(false)
-            return
-        }
-
-        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            if (location == null) {
-                Toast.makeText(requireContext(), "Please turn on your GPS to accept jobs", Toast.LENGTH_LONG).show()
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        
+        // 1. Check if resume is submitted
+        db.collection("users").document(uid).get().addOnSuccessListener { doc ->
+            val resumeUrl = doc.getString("resumeUrl")
+            if (resumeUrl.isNullOrEmpty()) {
+                Toast.makeText(requireContext(), "You must upload a resume in Account tab to accept jobs.", Toast.LENGTH_LONG).show()
                 onResult(false)
                 return@addOnSuccessListener
             }
 
-            processJobAcceptance(job, location, onResult)
+            // 2. Check location permissions
+            if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) 
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                @Suppress("DEPRECATION")
+                requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1002)
+                onResult(false)
+                return@addOnSuccessListener
+            }
+
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                if (location == null) {
+                    Toast.makeText(requireContext(), "Please turn on your GPS to accept jobs", Toast.LENGTH_LONG).show()
+                    onResult(false)
+                    return@addOnSuccessListener
+                }
+
+                processJobAcceptance(job, location, onResult)
+            }
         }
     }
 

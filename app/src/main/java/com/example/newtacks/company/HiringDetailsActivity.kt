@@ -475,7 +475,11 @@ class HiringDetailsActivity : AppCompatActivity() {
         val tvBadge = dialogView.findViewById<TextView>(R.id.tvWorkerBadge)
         val tvPhone = dialogView.findViewById<TextView>(R.id.tvWorkerPhone)
         val tvExp = dialogView.findViewById<TextView>(R.id.tvWorkerExperience)
-        val tvCat = dialogView.findViewById<TextView>(R.id.tvWorkerCategories)
+        
+        val tvVerifiedLabel = dialogView.findViewById<TextView>(R.id.tvVerifiedSkillsLabel)
+        val cgVerified = dialogView.findViewById<ChipGroup>(R.id.cgVerifiedSkills)
+        val tvOtherLabel = dialogView.findViewById<TextView>(R.id.tvOtherSkillsLabel)
+        val cgOther = dialogView.findViewById<ChipGroup>(R.id.cgOtherSkills)
         
         val tvDetailedStatus = dialogView.findViewById<TextView>(R.id.tvDetailedStatus)
         val btnPrimary = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnProcessPrimary)
@@ -485,7 +489,36 @@ class HiringDetailsActivity : AppCompatActivity() {
         tvRating.text = "⭐ %.1f (%d reviews)".format(worker.rating, worker.totalRatings)
         tvPhone.text = worker.phone
         tvExp.text = "${worker.serviceExperience ?: 0} years of experience"
-        tvCat.text = worker.serviceCategories?.joinToString(", ") ?: "General Services"
+
+        // Skills Logic
+        val allSkills = worker.serviceCategories ?: emptyList()
+        val verifiedMap = worker.verifiedSkills
+        val verifiedList = allSkills.filter { verifiedMap.containsKey(it) }
+        val otherList = allSkills.filter { !verifiedMap.containsKey(it) }
+
+        cgVerified.removeAllViews()
+        if (verifiedList.isNotEmpty()) {
+            tvVerifiedLabel.visibility = View.VISIBLE
+            cgVerified.visibility = View.VISIBLE
+            verifiedList.forEach { skill ->
+                cgVerified.addView(createProfileSkillChip(skill, isVerified = true, certUrl = verifiedMap[skill]))
+            }
+        } else {
+            tvVerifiedLabel.visibility = View.GONE
+            cgVerified.visibility = View.GONE
+        }
+
+        cgOther.removeAllViews()
+        if (otherList.isNotEmpty()) {
+            tvOtherLabel.visibility = View.VISIBLE
+            cgOther.visibility = View.VISIBLE
+            otherList.forEach { skill ->
+                cgOther.addView(createProfileSkillChip(skill, isVerified = false, certUrl = null))
+            }
+        } else {
+            tvOtherLabel.visibility = View.GONE
+            cgOther.visibility = View.GONE
+        }
 
         val app = applicationMap[worker.uid]
         
@@ -611,6 +644,37 @@ class HiringDetailsActivity : AppCompatActivity() {
             (resources.displayMetrics.heightPixels * 0.85).toInt()
         )
         dialog.show()
+    }
+
+    private fun createProfileSkillChip(text: String, isVerified: Boolean, certUrl: String?): Chip {
+        val chip = Chip(this)
+        chip.text = text
+        chip.isCheckable = false
+        chip.isClickable = isVerified
+        
+        if (isVerified) {
+            chip.setChipBackgroundColorResource(R.color.white)
+            chip.setChipStrokeColorResource(R.color.nav_item_color)
+            chip.setChipStrokeWidthResource(R.dimen.chip_stroke_width)
+            chip.setTextColor(resources.getColor(R.color.nav_item_color, theme))
+            chip.chipIcon = androidx.core.content.ContextCompat.getDrawable(this, R.drawable.ic_check_circle)
+            chip.chipIconSize = 16 * resources.displayMetrics.density
+            chip.chipIconTint = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#16A34A"))
+            chip.isChipIconVisible = true
+            chip.setOnClickListener {
+                certUrl?.let { url -> ImageUtils.showFullscreenImage(this, url) }
+            }
+        } else {
+            chip.setChipBackgroundColorResource(R.color.white)
+            chip.setChipStrokeColorResource(R.color.stroke_color)
+            chip.setChipStrokeWidthResource(R.dimen.chip_stroke_width)
+            chip.setTextColor(resources.getColor(R.color.text_primary, theme))
+            chip.chipIcon = androidx.core.content.ContextCompat.getDrawable(this, R.drawable.bg_circle)
+            chip.chipIconSize = 8 * resources.displayMetrics.density
+            chip.chipIconTint = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#F59E0B"))
+            chip.isChipIconVisible = true
+        }
+        return chip
     }
 
     private fun showScheduleInterviewDialog(worker: User) {
@@ -881,42 +945,52 @@ class HiringDetailsActivity : AppCompatActivity() {
 
     private fun applyForHiring(post: HiringPost) {
         val uid = auth.currentUser?.uid ?: return
-        btnApply.isEnabled = false
         
-        loadingOverlay.visibility = View.VISIBLE
-        tvLoadingMessage.text = "Sending application..."
-
-        val appId = db.collection("applications").document().id
-        val app = Application(
-            applicationId = appId,
-            hiringId = post.hiringId,
-            companyId = post.companyId,
-            workerId = uid,
-            jobTitle = post.jobTitle,
-            status = "APPLIED"
-        )
-
-        db.collection("applications").document(appId).set(app)
-            .addOnSuccessListener {
-                // Update the hiring post's applicants list in Firestore
-                db.collection("hiring").document(post.hiringId)
-                    .update("applicants", FieldValue.arrayUnion(uid))
-
-                loadingOverlay.visibility = View.GONE
-                com.example.newtacks.utils.NotificationHelper.sendNotification(
-                    post.companyId,
-                    "New Job Applicant",
-                    "Someone has applied for your ${post.jobTitle} position.",
-                    "APPLICANTS"
-                )
-                Toast.makeText(this, "Application sent!", Toast.LENGTH_SHORT).show()
-                finish()
+        // Check for resume first
+        db.collection("users").document(uid).get().addOnSuccessListener { doc ->
+            val resumeUrl = doc.getString("resumeUrl")
+            if (resumeUrl.isNullOrEmpty()) {
+                Toast.makeText(this, "You must upload a resume in your profile to apply for jobs.", Toast.LENGTH_LONG).show()
+                return@addOnSuccessListener
             }
-            .addOnFailureListener {
-                loadingOverlay.visibility = View.GONE
-                btnApply.isEnabled = true
-                Toast.makeText(this, "Application failed", Toast.LENGTH_SHORT).show()
-            }
+
+            btnApply.isEnabled = false
+            
+            loadingOverlay.visibility = View.VISIBLE
+            tvLoadingMessage.text = "Sending application..."
+
+            val appId = db.collection("applications").document().id
+            val app = Application(
+                applicationId = appId,
+                hiringId = post.hiringId,
+                companyId = post.companyId,
+                workerId = uid,
+                jobTitle = post.jobTitle,
+                status = "APPLIED"
+            )
+
+            db.collection("applications").document(appId).set(app)
+                .addOnSuccessListener {
+                    // Update the hiring post's applicants list in Firestore
+                    db.collection("hiring").document(post.hiringId)
+                        .update("applicants", FieldValue.arrayUnion(uid))
+
+                    loadingOverlay.visibility = View.GONE
+                    com.example.newtacks.utils.NotificationHelper.sendNotification(
+                        post.companyId,
+                        "New Job Applicant",
+                        "Someone has applied for your ${post.jobTitle} position.",
+                        "APPLICANTS"
+                    )
+                    Toast.makeText(this, "Application sent!", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+                .addOnFailureListener {
+                    loadingOverlay.visibility = View.GONE
+                    btnApply.isEnabled = true
+                    Toast.makeText(this, "Application failed", Toast.LENGTH_SHORT).show()
+                }
+        }
     }
 
     private fun Int.withAlpha(alpha: Int): Int {
