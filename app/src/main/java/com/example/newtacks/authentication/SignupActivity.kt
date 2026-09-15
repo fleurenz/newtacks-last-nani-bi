@@ -24,6 +24,9 @@ import com.google.android.gms.location.Priority
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import android.location.Geocoder
+import android.text.Editable
+import android.text.TextWatcher
+import android.graphics.Color
 import java.util.Locale
 
 class SignupActivity : AppCompatActivity() {
@@ -108,6 +111,7 @@ class SignupActivity : AppCompatActivity() {
 
         setupUIByRole()
         setupLocationDetection()
+        setupPasswordStrengthListener()
 
         val email = findViewById<EditText>(R.id.etEmail)
         val password = findViewById<EditText>(R.id.etPassword)
@@ -316,7 +320,7 @@ class SignupActivity : AppCompatActivity() {
         val bottomCard = findViewById<ViewGroup>(R.id.bottomCard)
 
         // Use TransitionManager for smooth visibility changes
-        TransitionManager.beginDelayedTransition(bottomCard)
+        android.transition.TransitionManager.beginDelayedTransition(bottomCard)
 
         clientGroup.visibility = View.GONE
         workerGroup.visibility = View.GONE
@@ -327,6 +331,62 @@ class SignupActivity : AppCompatActivity() {
             "CLIENT" -> clientGroup.visibility = View.VISIBLE
             "WORKER" -> workerGroup.visibility = View.VISIBLE
             "COMPANY" -> companyGroup.visibility = View.VISIBLE
+        }
+    }
+
+    private fun setupPasswordStrengthListener() {
+        val etPassword = findViewById<EditText>(R.id.etPassword)
+        val layoutStrength = findViewById<View>(R.id.layoutPasswordStrength)
+        val tvLabel = findViewById<TextView>(R.id.tvStrengthLabel)
+        val strengthBars = listOf<View>(
+            findViewById(R.id.strengthBar1),
+            findViewById(R.id.strengthBar2),
+            findViewById(R.id.strengthBar3),
+            findViewById(R.id.strengthBar4),
+            findViewById(R.id.strengthBar5)
+        )
+
+        etPassword.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val pwd = s?.toString() ?: ""
+                if (pwd.isEmpty()) {
+                    layoutStrength.visibility = View.GONE
+                } else {
+                    layoutStrength.visibility = View.VISIBLE
+                    updateStrengthUI(pwd, tvLabel, strengthBars)
+                }
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+    }
+
+    private fun updateStrengthUI(pwd: String, label: TextView, bars: List<View>) {
+        var score = 0
+        if (pwd.length >= 8) score++
+        if (pwd.any { it.isUpperCase() }) score++
+        if (pwd.any { it.isLowerCase() }) score++
+        if (pwd.any { it.isDigit() }) score++
+        if (pwd.any { !it.isLetterOrDigit() }) score++
+
+        val (text, color) = when (score) {
+            1 -> "weak" to "#EF4444"
+            2 -> "good" to "#F59E0B"
+            3 -> "strong" to "#EAB308"
+            4 -> "too strong" to "#22C55E"
+            5 -> "IMPASABAL" to "#15803D"
+            else -> "weak" to "#EF4444"
+        }
+
+        label.text = text
+        label.setTextColor(Color.parseColor(color))
+
+        bars.forEachIndexed { index, view ->
+            if (index < score) {
+                view.setBackgroundColor(Color.parseColor(color))
+            } else {
+                view.setBackgroundColor(Color.parseColor("#E2E8F0"))
+            }
         }
     }
 
