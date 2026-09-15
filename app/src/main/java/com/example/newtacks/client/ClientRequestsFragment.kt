@@ -1,9 +1,11 @@
 package com.example.newtacks.client
 
 import android.app.Dialog
+import android.content.Intent
 import android.os.Bundle
 import android.view.*
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -92,6 +94,14 @@ class ClientRequestsFragment : Fragment() {
     private var lastCancelTime: Long = 0
     private var messageListener: ListenerRegistration? = null
 
+    private val paymentLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            confirmJob()
+        } else {
+            Toast.makeText(requireContext(), "Payment cancelled or failed", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -161,7 +171,7 @@ class ClientRequestsFragment : Fragment() {
 
         listenForActiveJob()
         
-        btnConfirm.setOnClickListener { confirmJob() }
+        btnConfirm.setOnClickListener { startPaymentFlow() }
         btnReject.setOnClickListener { rejectJob() }
         btnMoreOptions.setOnClickListener { showPopupMenu(it) }
         btnMessageWorker.setOnClickListener { openChat() }
@@ -445,6 +455,15 @@ class ClientRequestsFragment : Fragment() {
                 showEmptyState()
             }
             .addOnFailureListener { loadingOverlay.visibility = View.GONE }
+    }
+
+    private fun startPaymentFlow() {
+        val job = currentJob ?: return
+        val intent = Intent(requireContext(), PaymentActivity::class.java)
+        intent.putExtra("AMOUNT", job.offeredAmount)
+        intent.putExtra("JOB_TITLE", job.jobTitle)
+        intent.putExtra("WORKER_NAME", job.workerName ?: "Worker")
+        paymentLauncher.launch(intent)
     }
 
     private fun confirmJob() {

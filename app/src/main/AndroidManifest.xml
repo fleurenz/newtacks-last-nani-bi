@@ -62,6 +62,7 @@
         <activity android:name=".CreateJobActivity" />
         <activity android:name=".company.CreateHiringActivity" />
         <activity android:name=".company.HiringDetailsActivity" />
+        <activity android:name=".client.PaymentActivity" />
         <activity android:name=".utils.HelpSupportActivity" />
         <activity android:name=".utils.PrivacySecurityActivity" />
         <activity android:name=".utils.LegalDocumentActivity" />
