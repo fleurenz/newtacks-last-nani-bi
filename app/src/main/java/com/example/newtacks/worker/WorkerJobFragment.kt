@@ -178,12 +178,34 @@ class WorkerJobFragment : Fragment() {
                 }
 
                 if (jobDoc == null) {
+                    // Check if the previous job was just completed
+                    val lastId = currentJobId
+                    if (lastId != null) {
+                        checkForCompletion(lastId)
+                    }
                     showEmptyState()
                 } else {
                     val job = jobDoc.toObject(Job::class.java)?.copy(jobId = jobDoc.id)
                     if (job != null) showActiveJob(job) else showEmptyState()
                 }
             }
+    }
+
+    private fun checkForCompletion(jobId: String) {
+        firestore.collection("jobs").document(jobId).get().addOnSuccessListener { doc ->
+            if (doc.getString("status") == "COMPLETED") {
+                // Find the receipt for this job and open it
+                firestore.collection("receipts")
+                    .whereEqualTo("jobId", jobId)
+                    .get()
+                    .addOnSuccessListener { snapshots ->
+                        val receiptId = snapshots.documents.firstOrNull()?.id
+                        if (receiptId != null) {
+                            com.example.newtacks.receipt.ReceiptDetailActivity.open(requireContext(), receiptId)
+                        }
+                    }
+            }
+        }
     }
 
     private fun showActiveJob(job: Job) {

@@ -37,14 +37,26 @@ class PaymentActivity : AppCompatActivity() {
 
         rgMethods.setOnCheckedChangeListener { _, checkedId ->
             layoutCard.visibility = if (checkedId == R.id.rbCard) View.VISIBLE else View.GONE
+            if (checkedId == R.id.rbCOD) {
+                btnPay.text = "Confirm COD - $amountStr"
+            } else {
+                btnPay.text = "Pay $amountStr Now"
+            }
         }
 
         btnPay.setOnClickListener {
-            processMockPayment()
+            val selectedId = rgMethods.checkedRadioButtonId
+            val method = when (selectedId) {
+                R.id.rbCard -> "CARD"
+                R.id.rbGCash -> "GCASH"
+                R.id.rbCOD -> "CASH"
+                else -> "CASH"
+            }
+            processMockPayment(method)
         }
     }
 
-    private fun processMockPayment() {
+    private fun processMockPayment(method: String) {
         val loading = findViewById<View>(R.id.paymentLoadingOverlay)
         val success = findViewById<View>(R.id.layoutSuccess)
         
@@ -57,7 +69,9 @@ class PaymentActivity : AppCompatActivity() {
             
             // Wait 2 seconds then finish with result
             Handler(Looper.getMainLooper()).postDelayed({
-                setResult(RESULT_OK)
+                val resultIntent = android.content.Intent()
+                resultIntent.putExtra("PAYMENT_METHOD", method)
+                setResult(RESULT_OK, resultIntent)
                 finish()
             }, 2000)
             

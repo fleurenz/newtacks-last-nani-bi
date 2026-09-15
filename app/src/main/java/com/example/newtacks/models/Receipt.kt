@@ -17,6 +17,7 @@ data class Receipt(
     val amount: Double = 0.0,
 
     val referenceNumber: String = "",
+    val paymentMethod: String = "CASH", // Default to CASH
 
     val createdAt: Long = System.currentTimeMillis(),
     val completedAt: Long = System.currentTimeMillis()

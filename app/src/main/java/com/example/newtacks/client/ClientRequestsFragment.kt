@@ -20,6 +20,7 @@ import com.example.newtacks.models.Job
 import com.example.newtacks.models.Receipt
 import com.example.newtacks.models.Review
 import com.example.newtacks.models.User
+import com.example.newtacks.receipt.ReceiptDetailActivity
 import com.example.newtacks.utils.DistanceUtils
 import com.example.newtacks.utils.ImageUtils
 import com.example.newtacks.utils.RouteApiService
@@ -96,7 +97,8 @@ class ClientRequestsFragment : Fragment() {
 
     private val paymentLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
-            confirmJob()
+            val method = result.data?.getStringExtra("PAYMENT_METHOD") ?: "CASH"
+            confirmJob(method)
         } else {
             Toast.makeText(requireContext(), "Payment cancelled or failed", Toast.LENGTH_SHORT).show()
         }
@@ -466,27 +468,27 @@ class ClientRequestsFragment : Fragment() {
         paymentLauncher.launch(intent)
     }
 
-    private fun confirmJob() {
+    private fun confirmJob(paymentMethod: String) {
         val jobId = currentJobId ?: return
         loadingOverlay.visibility = View.VISIBLE
         tvLoadingMessage.text = "Confirming job..."
         firestore.collection("jobs").document(jobId).update(mapOf("status" to "COMPLETED", "completedAt" to System.currentTimeMillis()))
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
-                fetchJobAndGenerateReceipt(jobId)
+                fetchJobAndGenerateReceipt(jobId, paymentMethod)
             }
             .addOnFailureListener { loadingOverlay.visibility = View.GONE }
     }
 
-    private fun fetchJobAndGenerateReceipt(jobId: String) {
+    private fun fetchJobAndGenerateReceipt(jobId: String, paymentMethod: String) {
         firestore.collection("jobs").document(jobId).get()
             .addOnSuccessListener { doc ->
                 val job = doc.toObject(Job::class.java)
-                if (job != null) generateReceipt(job)
+                if (job != null) generateReceipt(job, paymentMethod)
             }
     }
 
-    private fun generateReceipt(job: Job) {
+    private fun generateReceipt(job: Job, paymentMethod: String) {
         val workerId = job.workerId ?: return
         val receiptId = firestore.collection("receipts").document().id
         val refNum = (10000000..99999999).random().toString()
@@ -501,13 +503,15 @@ class ClientRequestsFragment : Fragment() {
             serviceCategory = job.serviceCategory,
             amount = job.offeredAmount,
             referenceNumber = refNum,
+            paymentMethod = paymentMethod,
             createdAt = job.createdAt,
             completedAt = job.completedAt ?: System.currentTimeMillis()
         )
         firestore.collection("receipts").document(receiptId).set(receipt)
             .addOnSuccessListener {
                 com.example.newtacks.utils.NotificationHelper.sendNotification(workerId, "Job Confirmed", "Client has confirmed work.", "JOB")
-                showReviewDialog(job)
+                ReceiptDetailActivity.open(requireContext(), receiptId, showReview = true)
+                showEmptyState()
             }
     }
 
@@ -516,36 +520,6 @@ class ClientRequestsFragment : Fragment() {
             val intent = android.content.Intent(requireContext(), RefuseCompletionActivity::class.java)
             intent.putExtra("JOB_ID", id)
             startActivity(intent)
-        }
-    }
-
-    private fun showReviewDialog(job: Job) {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_review, null)
-        val ratingBar = dialogView.findViewById<RatingBar>(R.id.ratingBar)
-        val etComment = dialogView.findViewById<EditText>(R.id.etComment)
-        val cbAnonymous = dialogView.findViewById<CheckBox>(R.id.cbAnonymous)
-
-        AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
-            .setView(dialogView)
-            .setPositiveButton("Submit") { _, _ ->
-                val review = Review(reviewId = firestore.collection("reviews").document().id, jobId = job.jobId, clientId = job.clientId, clientName = job.clientName, workerId = job.workerId ?: "", rating = ratingBar.rating, comment = etComment.text.toString(), isAnonymous = cbAnonymous.isChecked)
-                saveReview(review)
-            }.setNegativeButton("Skip", null).show()
-    }
-
-    private fun saveReview(review: Review) {
-        firestore.collection("reviews").document(review.reviewId).set(review).addOnSuccessListener { updateWorkerRating(review) }
-    }
-
-    private fun updateWorkerRating(review: Review) {
-        val workerRef = firestore.collection("users").document(review.workerId)
-        firestore.runTransaction { transaction ->
-            val snapshot = transaction.get(workerRef)
-            val currentAvg = snapshot.getDouble("ratingAverage") ?: 0.0
-            val count = snapshot.getLong("ratingCount") ?: 0
-            val newCount = count + 1
-            val newAvg = ((currentAvg * count) + review.rating) / newCount
-            transaction.update(workerRef, mapOf("ratingAverage" to newAvg, "ratingCount" to newCount))
         }
     }
 

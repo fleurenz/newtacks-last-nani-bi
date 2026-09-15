@@ -11,15 +11,14 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.newtacks.R
 import com.example.newtacks.models.Receipt
+import com.example.newtacks.models.Review
 import com.google.firebase.firestore.FirebaseFirestore
 import java.io.OutputStream
 import java.text.SimpleDateFormat
@@ -29,17 +28,19 @@ import java.util.Locale
 class ReceiptDetailActivity : AppCompatActivity() {
 
     private val db = FirebaseFirestore.getInstance()
+    private var currentReceipt: Receipt? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_receipt_detail)
 
         val receiptId = intent.getStringExtra("receiptId") ?: return
+        val showReview = intent.getBooleanExtra("showReview", false)
 
-        loadReceipt(receiptId)
+        loadReceipt(receiptId, showReview)
     }
 
-    private fun loadReceipt(receiptId: String) {
+    private fun loadReceipt(receiptId: String, showReview: Boolean) {
 
         db.collection("receipts")
             .document(receiptId)
@@ -47,6 +48,7 @@ class ReceiptDetailActivity : AppCompatActivity() {
             .addOnSuccessListener { doc ->
 
                 val receipt = doc.toObject(Receipt::class.java) ?: return@addOnSuccessListener
+                currentReceipt = receipt
 
                 findViewById<TextView>(R.id.tvReceiptTitle).text = receipt.jobTitle
                 findViewById<TextView>(R.id.tvClientName).text = receipt.clientName
@@ -57,9 +59,8 @@ class ReceiptDetailActivity : AppCompatActivity() {
                 val ref = if (receipt.referenceNumber.isNotEmpty()) {
                     receipt.referenceNumber
                 } else {
-                    // Fallback for old receipts
                     receipt.receiptId.filter { it.isDigit() }.take(8).let {
-                        if (it.length == 8) it else "24921023" // Example fallback
+                        if (it.length == 8) it else "24921023"
                     }
                 }
                 findViewById<TextView>(R.id.tvReferenceNumber).text = "Ref: #TX-$ref"
@@ -67,6 +68,11 @@ class ReceiptDetailActivity : AppCompatActivity() {
                 val sdf = SimpleDateFormat("dd/MM/yy hh:mm a", Locale.getDefault())
                 findViewById<TextView>(R.id.tvRequestedDate).text = sdf.format(Date(receipt.createdAt))
                 findViewById<TextView>(R.id.tvCompletedDate).text = sdf.format(Date(receipt.completedAt))
+                findViewById<TextView>(R.id.tvPaymentMethod).text = receipt.paymentMethod
+                
+                if (showReview) {
+                    showReviewDialog()
+                }
             }
 
         findViewById<com.google.android.material.button.MaterialButton>(R.id.btnDownload).setOnClickListener {
@@ -75,6 +81,54 @@ class ReceiptDetailActivity : AppCompatActivity() {
 
         findViewById<com.google.android.material.button.MaterialButton>(R.id.btnOkay).setOnClickListener {
             finish()
+        }
+    }
+
+    private fun showReviewDialog() {
+        val receipt = currentReceipt ?: return
+        val dialogView = layoutInflater.inflate(R.layout.dialog_review, null)
+        val ratingBar = dialogView.findViewById<RatingBar>(R.id.ratingBar)
+        val etComment = dialogView.findViewById<EditText>(R.id.etComment)
+        val cbAnonymous = dialogView.findViewById<CheckBox>(R.id.cbAnonymous)
+
+        AlertDialog.Builder(this, R.style.CustomAlertDialog)
+            .setTitle("Rate your experience")
+            .setView(dialogView)
+            .setPositiveButton("Submit") { _, _ ->
+                val review = Review(
+                    reviewId = db.collection("reviews").document().id,
+                    jobId = receipt.jobId,
+                    clientId = receipt.clientId,
+                    clientName = receipt.clientName,
+                    workerId = receipt.workerId,
+                    rating = ratingBar.rating,
+                    comment = etComment.text.toString(),
+                    isAnonymous = cbAnonymous.isChecked
+                )
+                saveReview(review)
+            }
+            .setNegativeButton("Skip", null)
+            .show()
+    }
+
+    private fun saveReview(review: Review) {
+        db.collection("reviews").document(review.reviewId).set(review)
+            .addOnSuccessListener {
+                updateWorkerRating(review)
+            }
+    }
+
+    private fun updateWorkerRating(review: Review) {
+        val workerRef = db.collection("users").document(review.workerId)
+        db.runTransaction { transaction ->
+            val snapshot = transaction.get(workerRef)
+            val currentAvg = snapshot.getDouble("ratingAverage") ?: 0.0
+            val count = snapshot.getLong("ratingCount") ?: 0
+            val newCount = count + 1
+            val newAvg = ((currentAvg * count) + review.rating) / newCount
+            transaction.update(workerRef, mapOf("ratingAverage" to newAvg, "ratingCount" to newCount))
+        }.addOnSuccessListener {
+            Toast.makeText(this, "Thank you for your feedback!", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -170,10 +224,11 @@ class ReceiptDetailActivity : AppCompatActivity() {
 
     companion object {
 
-        fun open(context: Context, receiptId: String) {
+        fun open(context: Context, receiptId: String, showReview: Boolean = false) {
 
             val intent = Intent(context, ReceiptDetailActivity::class.java)
             intent.putExtra("receiptId", receiptId)
+            intent.putExtra("showReview", showReview)
             context.startActivity(intent)
         }
     }

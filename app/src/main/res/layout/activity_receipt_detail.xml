@@ -31,7 +31,7 @@
                 android:layout_marginBottom="20dp"
                 android:background="@drawable/bg_circle"
                 android:backgroundTint="#FFFFFF"
-                android:contentDescription="Tacks logo"
+                android:contentDescription="STRACT logo"
                 android:padding="16dp"
                 android:src="@drawable/tacks_logo" />
 
@@ -193,6 +193,31 @@
                     android:id="@+id/tvCompletedDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textColor="#1E293B"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Payment Method row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Payment Method"
+                    android:textColor="#94A3B8"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/tvPaymentMethod"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="CARD"
                     android:textColor="#1E293B"
                     android:textSize="13sp"
                     android:textStyle="bold" />

@@ -168,6 +168,22 @@
                     android:textColor="#1E293B"
                     android:textStyle="bold"
                     app:buttonTint="#004A99"/>
+
+                <RadioButton
+                    android:id="@+id/rbCOD"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:text="Cash on Delivery"
+                    android:button="@null"
+                    android:drawableStart="@drawable/ic_location"
+                    android:drawablePadding="16dp"
+                    android:drawableEnd="?android:attr/listChoiceIndicatorSingle"
+                    android:paddingHorizontal="16dp"
+                    android:background="@drawable/bg_card"
+                    android:layout_marginBottom="12dp"
+                    android:textColor="#1E293B"
+                    android:textStyle="bold"
+                    app:buttonTint="#004A99"/>
             </RadioGroup>
 
             <!-- CARD DETAILS (Shown if Card selected) -->
