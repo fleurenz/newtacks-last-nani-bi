@@ -3,6 +3,7 @@ package com.example.newtacks.worker
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.view.*
 import android.net.Uri
@@ -31,6 +32,7 @@ import com.example.newtacks.models.Review
 import com.example.newtacks.models.User
 import com.example.newtacks.worker.account.WorkerReviewsActivity
 import com.google.android.material.appbar.AppBarLayout
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -44,17 +46,12 @@ class WorkerAccountFragment : Fragment() {
     private lateinit var tvCompletedJobs: TextView
     private lateinit var ivWorkerProfile: ImageView
     private lateinit var tvVerificationLevel: TextView
-    private lateinit var btnUploadNC1: Button
-    private lateinit var btnUploadNC2: Button
-    private lateinit var btnUploadNC3: Button
-    private var isShowingAllReviews = false
-    private var currentRatingFilter: Int? = null
-    private var pendingNCLevel: Int = 0
+    
     private lateinit var menuLogout: View
     private lateinit var menuCertificates: View
-    private lateinit var layoutNCButtons: LinearLayout
     private lateinit var menuReviews: View
     private lateinit var swipeRefresh: SwipeRefreshLayout
+    private lateinit var loadingOverlay: View
     private lateinit var menuEditProfile: View
     private lateinit var menuViewProfile: View
     private lateinit var menuPrivacy: View
@@ -65,13 +62,8 @@ class WorkerAccountFragment : Fragment() {
     private lateinit var ivResumeIcon: ImageView
     private var currentResumeUrl: String? = null
 
-    private val pickCertificate =
-        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            uri?.let { uploadCertificate(it, pendingNCLevel) }
-        }
-
     private val pickResume =
-        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             uri?.let { uploadResume(it) }
         }
 
@@ -89,9 +81,9 @@ class WorkerAccountFragment : Fragment() {
         ivWorkerProfile = view.findViewById(R.id.ivWorkerProfile)
         menuLogout = view.findViewById(R.id.menuLogout)
         menuCertificates = view.findViewById(R.id.menuCertificates)
-        layoutNCButtons = view.findViewById(R.id.layoutNCButtons)
         menuReviews = view.findViewById(R.id.menuReviews)
         swipeRefresh = view.findViewById(R.id.swipeRefreshAccount)
+        loadingOverlay = view.findViewById(R.id.loadingOverlay)
         menuEditProfile = view.findViewById(R.id.menuEditProfile)
         menuViewProfile = view.findViewById(R.id.menuViewProfile)
         menuPrivacy = view.findViewById(R.id.menuPrivacy)
@@ -102,9 +94,6 @@ class WorkerAccountFragment : Fragment() {
         ivResumeIcon = view.findViewById(R.id.ivResumeIcon)
 
         tvVerificationLevel = view.findViewById(R.id.tvVerificationLevel)
-        btnUploadNC1 = view.findViewById(R.id.btnUploadNC1)
-        btnUploadNC2 = view.findViewById(R.id.btnUploadNC2)
-        btnUploadNC3 = view.findViewById(R.id.btnUploadNC3)
 
         // Robust Inset Handling: Use spacer for status bar
         val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)
@@ -114,19 +103,6 @@ class WorkerAccountFragment : Fragment() {
             params.height = systemBars.top
             statusBarSpacer.layoutParams = params
             insets
-        }
-
-        btnUploadNC1.setOnClickListener {
-            pendingNCLevel = 1
-            pickCertificate.launch("image/*")
-        }
-        btnUploadNC2.setOnClickListener {
-            pendingNCLevel = 2
-            pickCertificate.launch("image/*")
-        }
-        btnUploadNC3.setOnClickListener {
-            pendingNCLevel = 3
-            pickCertificate.launch("image/*")
         }
 
         loadProfile()
@@ -148,7 +124,6 @@ class WorkerAccountFragment : Fragment() {
         return view
     }
 
-    // ✅ Fires every time this fragment is shown via show() in add/hide/show pattern
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
         if (!hidden) {
@@ -157,9 +132,6 @@ class WorkerAccountFragment : Fragment() {
         }
     }
 
-    // --------------------------------------------------
-    // PROFILE
-    // --------------------------------------------------
     private fun loadProfile() {
         val uid = auth.currentUser?.uid ?: return
         firestore.collection("users")
@@ -204,76 +176,12 @@ class WorkerAccountFragment : Fragment() {
 
     private fun updateVerificationUI(status: Int) {
         tvVerificationLevel.text = when (status) {
-            1 -> "Status: NC1 Verified"
-            2 -> "Status: NC2 Verified"
-            3 -> "Status: NC3 Verified"
-            else -> "Status: Unverified"
-        }
-
-        // Optional: disable buttons for levels already achieved or skipped
-        btnUploadNC1.isEnabled = status < 1
-        btnUploadNC2.isEnabled = status < 2
-        btnUploadNC3.isEnabled = status < 3
-    }
-
-    private fun uploadCertificate(uri: Uri, level: Int) {
-        val uid = auth.currentUser?.uid ?: return
-        Toast.makeText(requireContext(), "Uploading NC$level certificate...", Toast.LENGTH_SHORT)
-            .show()
-
-        MediaManager.get().upload(uri)
-            .option("folder", "worker_certificates")
-            .callback(object : UploadCallback {
-                override fun onStart(requestId: String?) {}
-                override fun onProgress(requestId: String?, bytes: Long, totalBytes: Long) {}
-                override fun onSuccess(requestId: String?, resultData: MutableMap<Any?, Any?>?) {
-                    val imageUrl = resultData?.get("secure_url").toString()
-                    saveCertificateUrl(uid, imageUrl, level)
-                }
-
-                override fun onError(requestId: String?, error: ErrorInfo?) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Upload failed: ${error?.description}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-
-                override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
-            }).dispatch()
-    }
-
-    private fun saveCertificateUrl(uid: String, url: String, level: Int) {
-        val fieldName = when (level) {
-            1 -> "nc1CertificateUrl"
-            2 -> "nc2CertificateUrl"
-            3 -> "nc3CertificateUrl"
-            else -> return
-        }
-
-        firestore.collection("users").document(uid).get().addOnSuccessListener { doc ->
-            val currentStatus = doc.getLong("verificationStatus")?.toInt() ?: 0
-            val newStatus = maxOf(currentStatus, level)
-
-            firestore.collection("users").document(uid).update(
-                mapOf(
-                    fieldName to url,
-                    "verificationStatus" to newStatus
-                )
-            ).addOnSuccessListener {
-                Toast.makeText(
-                    requireContext(),
-                    "NC$level Certificate Uploaded!",
-                    Toast.LENGTH_SHORT
-                ).show()
-                loadProfile()
-            }
+            1 -> "Status: Tier 1 Verified"
+            2 -> "Status: Tier 2 Verified"
+            else -> "Status: Tier 0 Basic"
         }
     }
 
-    // --------------------------------------------------
-    // STATS
-    // --------------------------------------------------
     private fun loadStats() {
         val uid = auth.currentUser?.uid ?: return
         firestore.collection("jobs")
@@ -291,9 +199,6 @@ class WorkerAccountFragment : Fragment() {
             }
     }
 
-    // --------------------------------------------------
-    // LOGOUT
-    // --------------------------------------------------
     private fun setupEditProfileMenu() {
         menuEditProfile.setOnClickListener {
             startActivity(Intent(requireContext(), WorkerEditProfileActivity::class.java))
@@ -335,19 +240,45 @@ class WorkerAccountFragment : Fragment() {
 
     private fun setupCertificatesMenu() {
         menuCertificates.setOnClickListener {
-            layoutNCButtons.visibility =
-                if (layoutNCButtons.visibility == View.GONE) View.VISIBLE else View.GONE
+            startActivity(Intent(requireContext(), WorkerVerificationActivity::class.java))
         }
     }
 
     private fun setupResumeAction() {
         layoutResume.setOnClickListener {
             if (currentResumeUrl.isNullOrEmpty()) {
-                pickResume.launch("application/pdf,image/*")
+                pickResume.launch(arrayOf("application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/*"))
             } else {
-                com.example.newtacks.utils.ImageUtils.showFullscreenImage(requireContext(), currentResumeUrl!!)
+                showResumeOptions()
             }
         }
+    }
+
+    private fun showResumeOptions() {
+        val dialog = BottomSheetDialog(requireContext(), R.style.BottomSheetDialogTheme)
+        val view = layoutInflater.inflate(R.layout.dialog_resume_options, null)
+        dialog.setContentView(view)
+
+        view.findViewById<View>(R.id.btnViewResume).setOnClickListener {
+            dialog.dismiss()
+            val url = currentResumeUrl ?: return@setOnClickListener
+            val isImage = url.contains(".jpg", true) || url.contains(".png", true) || url.contains(".jpeg", true)
+            
+            if (isImage) {
+                com.example.newtacks.utils.ImageUtils.showFullscreenImage(requireContext(), url)
+            } else {
+                val viewerUrl = "https://docs.google.com/viewer?url=$url"
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(viewerUrl))
+                startActivity(intent)
+            }
+        }
+
+        view.findViewById<View>(R.id.btnUpdateResume).setOnClickListener {
+            dialog.dismiss()
+            pickResume.launch(arrayOf("application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/*"))
+        }
+
+        dialog.show()
     }
 
     private fun uploadResume(uri: Uri) {
@@ -393,13 +324,9 @@ class WorkerAccountFragment : Fragment() {
         dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnPositive)
             .setOnClickListener {
                 dialog.dismiss()
-                // Clear Tey's memory on logout
                 ChatRepository.getInstance(RetrofitClient.chatApiService).clearSession()
-                // Stop notification service on logout
                 requireContext().stopService(Intent(requireContext(), com.example.newtacks.utils.NotificationService::class.java))
-                
                 auth.signOut()
-                Toast.makeText(requireContext(), "Logged out", Toast.LENGTH_SHORT).show()
                 val intent = Intent(requireContext(), OnboardingActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)

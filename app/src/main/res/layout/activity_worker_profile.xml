@@ -263,8 +263,29 @@
                     android:textSize="14sp"
                     android:layout_marginBottom="20dp" />
 
-                <!-- Skills -->
+                <!-- Verified Skills -->
                 <TextView
+                    android:id="@+id/tvVerifiedSkillsHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Verified Skills"
+                    android:textColor="#16A34A"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupVerifiedSkills"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    app:chipSpacingHorizontal="8dp" />
+
+                <!-- Other Skills -->
+                <TextView
+                    android:id="@+id/tvOtherSkillsHeader"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Skills"
@@ -274,7 +295,7 @@
                     android:layout_marginBottom="12dp" />
 
                 <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipGroupSkills"
+                    android:id="@+id/chipGroupOtherSkills"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="24dp"

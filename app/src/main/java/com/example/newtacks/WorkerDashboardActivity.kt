@@ -1,7 +1,10 @@
 package com.example.newtacks
 
+import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -24,6 +27,7 @@ class WorkerDashboardActivity : AppCompatActivity() {
 
     companion object {
         const val OPEN_FRAGMENT = "OPEN_FRAGMENT"
+        private var hasShownResumeReminderThisSession = false
     }
 
     private var backPressedTime: Long = 0
@@ -159,6 +163,11 @@ class WorkerDashboardActivity : AppCompatActivity() {
         })
     }
 
+    override fun onResume() {
+        super.onResume()
+        checkFirstTimeWorker()
+    }
+
     private fun listenForActiveHandshake() {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
         val db = FirebaseFirestore.getInstance()
@@ -218,6 +227,52 @@ class WorkerDashboardActivity : AppCompatActivity() {
                 "longitude" to lng,
                 "lastActive" to System.currentTimeMillis()
             ))
+    }
+
+    private fun checkFirstTimeWorker() {
+        if (hasShownResumeReminderThisSession) return
+        
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        FirebaseFirestore.getInstance().collection("users").document(uid).get().addOnSuccessListener { doc ->
+            val resumeUrl = doc.getString("resumeUrl")
+            if (resumeUrl.isNullOrEmpty()) {
+                hasShownResumeReminderThisSession = true
+                showWelcomeResumeDialog()
+            }
+        }
+    }
+
+    private fun showWelcomeResumeDialog() {
+        val dialog = Dialog(this)
+        dialog.setContentView(R.layout.dialog_role_select)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.88).toInt(),
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        val icon = dialog.findViewById<ImageView>(R.id.dialogIcon)
+        val title = dialog.findViewById<TextView>(R.id.dialogTitle)
+        val msg = dialog.findViewById<TextView>(R.id.dialogMessage)
+        val btnPos = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnPositive)
+        val btnNeg = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnNegative)
+
+        icon.setImageResource(R.drawable.ic_inbox)
+        icon.imageTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#004A99"))
+        
+        title.text = "Welcome to STRACT!"
+        msg.text = "To start taking jobs and applying for positions, you must first upload your resume in the Account tab."
+        
+        btnPos.text = "Go to Account"
+        btnPos.setOnClickListener {
+            switchTab(R.id.nav_account)
+            dialog.dismiss()
+        }
+        
+        btnNeg.text = "Maybe Later"
+        btnNeg.setOnClickListener { dialog.dismiss() }
+
+        dialog.show()
     }
 
     private var unreadMessagesListener: ListenerRegistration? = null

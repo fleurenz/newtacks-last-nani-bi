@@ -10,6 +10,10 @@ class LoginViewModel(
     val loginState = MutableLiveData<LoginState>()
 
     fun login(email: String, password: String) {
+        if (email.isBlank() || password.isBlank()) {
+            loginState.value = LoginState.Error("Please enter your email and password")
+            return
+        }
 
         loginState.value = LoginState.Loading
 

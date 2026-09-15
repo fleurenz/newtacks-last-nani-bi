@@ -33,7 +33,12 @@ class WorkerProfileActivity : AppCompatActivity() {
     private lateinit var tvExperience: TextView
     private lateinit var tvAbout: TextView
     private lateinit var tvContact: TextView
-    private lateinit var chipGroupSkills: ChipGroup
+    
+    private lateinit var tvVerifiedHeader: TextView
+    private lateinit var chipGroupVerified: ChipGroup
+    private lateinit var tvOtherHeader: TextView
+    private lateinit var chipGroupOther: ChipGroup
+    
     private lateinit var tvReviewsHeader: TextView
     private lateinit var rvReviews: RecyclerView
     private lateinit var btnShowAllReviews: Button
@@ -79,7 +84,12 @@ class WorkerProfileActivity : AppCompatActivity() {
         tvExperience = findViewById(R.id.tvExperienceYears)
         tvAbout = findViewById(R.id.tvAboutMe)
         tvContact = findViewById(R.id.tvContactPhone)
-        chipGroupSkills = findViewById(R.id.chipGroupSkills)
+        
+        tvVerifiedHeader = findViewById(R.id.tvVerifiedSkillsHeader)
+        chipGroupVerified = findViewById(R.id.chipGroupVerifiedSkills)
+        tvOtherHeader = findViewById(R.id.tvOtherSkillsHeader)
+        chipGroupOther = findViewById(R.id.chipGroupOtherSkills)
+
         tvReviewsHeader = findViewById(R.id.tvReviewsHeader)
         rvReviews = findViewById(R.id.rvReviews)
         btnShowAllReviews = findViewById(R.id.btnShowAllReviews)
@@ -123,28 +133,80 @@ class WorkerProfileActivity : AppCompatActivity() {
                         ImageUtils.showFullscreenImage(this, worker.profileImage)
                     }
 
-                    // Skills
-                    chipGroupSkills.removeAllViews()
-                    worker.serviceCategories?.forEach { skill ->
-                        val chip = Chip(this)
-                        chip.text = skill
-                        chip.isCheckable = false
-                        chip.isClickable = false
-                        chip.setChipBackgroundColorResource(R.color.white)
-                        chip.setChipStrokeColorResource(R.color.stroke_color)
-                        chip.setChipStrokeWidthResource(R.dimen.chip_stroke_width)
-                        chip.setTextColor(resources.getColor(R.color.text_primary, theme))
-                        
-                        // Add orange dot icon
-                        chip.chipIcon = androidx.core.content.ContextCompat.getDrawable(this, R.drawable.bg_circle)
-                        chip.chipIconSize = 8 * resources.displayMetrics.density
-                        chip.chipIconTint = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#F59E0B"))
-                        chip.isChipIconVisible = true
-                        
-                        chipGroupSkills.addView(chip)
+                    // Skills Logic: Distinguish between Verified and Others
+                    val allSkills = worker.serviceCategories ?: emptyList()
+                    val verifiedMap = worker.verifiedSkills
+                    
+                    val verifiedSkills = allSkills.filter { verifiedMap.containsKey(it) }
+                    val otherSkills = allSkills.filter { !verifiedMap.containsKey(it) }
+
+                    // Display Verified Skills
+                    chipGroupVerified.removeAllViews()
+                    if (verifiedSkills.isNotEmpty()) {
+                        tvVerifiedHeader.visibility = View.VISIBLE
+                        chipGroupVerified.visibility = View.VISIBLE
+                        verifiedSkills.forEach { skill ->
+                            val certUrl = verifiedMap[skill]
+                            val chip = createSkillChip(skill, isVerified = true, certUrl = certUrl)
+                            chipGroupVerified.addView(chip)
+                        }
+                    } else {
+                        tvVerifiedHeader.visibility = View.GONE
+                        chipGroupVerified.visibility = View.GONE
+                    }
+
+                    // Display Other Skills
+                    chipGroupOther.removeAllViews()
+                    if (otherSkills.isNotEmpty()) {
+                        tvOtherHeader.visibility = View.VISIBLE
+                        chipGroupOther.visibility = View.VISIBLE
+                        otherSkills.forEach { skill ->
+                            val chip = createSkillChip(skill, isVerified = false, certUrl = null)
+                            chipGroupOther.addView(chip)
+                        }
+                    } else {
+                        tvOtherHeader.visibility = View.GONE
+                        chipGroupOther.visibility = View.GONE
                     }
                 }
         }
+    }
+
+    private fun createSkillChip(text: String, isVerified: Boolean, certUrl: String?): Chip {
+        val chip = Chip(this)
+        chip.text = text
+        chip.isCheckable = false
+        chip.isClickable = isVerified // Allow clicking to see certificate if verified
+        
+        if (isVerified) {
+            chip.setChipBackgroundColorResource(R.color.white)
+            chip.setChipStrokeColorResource(R.color.nav_item_color) // Navy Blue
+            chip.setChipStrokeWidthResource(R.dimen.chip_stroke_width)
+            chip.setTextColor(resources.getColor(R.color.nav_item_color, theme))
+            
+            chip.chipIcon = androidx.core.content.ContextCompat.getDrawable(this, R.drawable.ic_check_circle)
+            chip.chipIconSize = 16 * resources.displayMetrics.density
+            chip.chipIconTint = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#16A34A")) // Green
+            chip.isChipIconVisible = true
+            
+            // On click, show the certificate
+            chip.setOnClickListener {
+                certUrl?.let { url ->
+                    ImageUtils.showFullscreenImage(this, url)
+                }
+            }
+        } else {
+            chip.setChipBackgroundColorResource(R.color.white)
+            chip.setChipStrokeColorResource(R.color.stroke_color)
+            chip.setChipStrokeWidthResource(R.dimen.chip_stroke_width)
+            chip.setTextColor(resources.getColor(R.color.text_primary, theme))
+            
+            chip.chipIcon = androidx.core.content.ContextCompat.getDrawable(this, R.drawable.bg_circle)
+            chip.chipIconSize = 8 * resources.displayMetrics.density
+            chip.chipIconTint = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#F59E0B"))
+            chip.isChipIconVisible = true
+        }
+        return chip
     }
 
     private fun fetchReviews() {
