@@ -301,6 +301,29 @@
                     android:layout_marginBottom="24dp"
                     app:chipSpacingHorizontal="8dp" />
 
+                <!-- General Certificates Section (Visible only to Company) -->
+                <TextView
+                    android:id="@+id/tvCertificatesHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="General Certificates"
+                    android:textColor="#1E293B"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvOtherCertificates"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
+                    android:nestedScrollingEnabled="false"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    tools:listitem="@layout/item_skill_verification" />
+
                 <!-- Reviews -->
                 <TextView
                     android:id="@+id/tvReviewsHeader"

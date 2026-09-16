@@ -37,7 +37,21 @@
         <activity android:name=".authentication.RoleSelectionActivity" />
         <activity
             android:name=".authentication.LoginActivity"
-            android:windowSoftInputMode="adjustPan" />
+            android:windowSoftInputMode="adjustPan"
+            android:exported="true">
+            <!-- Handle Magic Link -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="tacks-ddccb.firebaseapp.com"
+                    android:scheme="https" />
+                <data
+                    android:host="tacks-ddccb.page.link"
+                    android:scheme="https" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".authentication.SignupActivity"
             android:windowSoftInputMode="adjustPan" />

@@ -1,7 +1,10 @@
 package com.example.newtacks.worker
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -14,6 +17,7 @@ import coil.transform.CircleCropTransformation
 import com.example.newtacks.R
 import com.example.newtacks.models.Review
 import com.example.newtacks.models.User
+import com.example.newtacks.models.WorkerCertificate
 import com.example.newtacks.utils.ImageUtils
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -38,6 +42,9 @@ class WorkerProfileActivity : AppCompatActivity() {
     private lateinit var chipGroupVerified: ChipGroup
     private lateinit var tvOtherHeader: TextView
     private lateinit var chipGroupOther: ChipGroup
+    
+    private lateinit var tvCertsHeader: TextView
+    private lateinit var rvOtherCerts: RecyclerView
     
     private lateinit var tvReviewsHeader: TextView
     private lateinit var rvReviews: RecyclerView
@@ -89,22 +96,34 @@ class WorkerProfileActivity : AppCompatActivity() {
         chipGroupVerified = findViewById(R.id.chipGroupVerifiedSkills)
         tvOtherHeader = findViewById(R.id.tvOtherSkillsHeader)
         chipGroupOther = findViewById(R.id.chipGroupOtherSkills)
+        
+        tvCertsHeader = findViewById(R.id.tvCertificatesHeader)
+        rvOtherCerts = findViewById(R.id.rvOtherCertificates)
 
         tvReviewsHeader = findViewById(R.id.tvReviewsHeader)
         rvReviews = findViewById(R.id.rvReviews)
         btnShowAllReviews = findViewById(R.id.btnShowAllReviews)
 
         rvReviews.layoutManager = LinearLayoutManager(this)
+        rvOtherCerts.layoutManager = LinearLayoutManager(this)
 
         btnShowAllReviews.setOnClickListener {
             showAllReviewsDialog()
         }
 
-        fetchWorkerData()
+        fetchViewerRoleAndData()
         fetchReviews()
     }
 
-    private fun fetchWorkerData() {
+    private fun fetchViewerRoleAndData() {
+        val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return
+        firestore.collection("users").document(uid).get().addOnSuccessListener { doc ->
+            val viewerRole = doc.getString("role") ?: ""
+            fetchWorkerData(viewerRole)
+        }
+    }
+
+    private fun fetchWorkerData(viewerRole: String) {
         workerId?.let { id ->
             firestore.collection("users").document(id).get()
                 .addOnSuccessListener { doc ->
@@ -146,8 +165,7 @@ class WorkerProfileActivity : AppCompatActivity() {
                         tvVerifiedHeader.visibility = View.VISIBLE
                         chipGroupVerified.visibility = View.VISIBLE
                         verifiedSkills.forEach { skill ->
-                            val certUrl = verifiedMap[skill]
-                            val chip = createSkillChip(skill, isVerified = true, certUrl = certUrl)
+                            val chip = createSkillChip(skill, isVerified = true, certUrl = verifiedMap[skill])
                             chipGroupVerified.addView(chip)
                         }
                     } else {
@@ -168,6 +186,22 @@ class WorkerProfileActivity : AppCompatActivity() {
                         tvOtherHeader.visibility = View.GONE
                         chipGroupOther.visibility = View.GONE
                     }
+
+                    // Certificates (Company Only)
+                    if (viewerRole == "COMPANY") {
+                        val certs = worker.otherCertificates
+                        if (certs.isNotEmpty()) {
+                            tvCertsHeader.visibility = View.VISIBLE
+                            rvOtherCerts.visibility = View.VISIBLE
+                            rvOtherCerts.adapter = ProfileOtherCertsAdapter(certs)
+                        } else {
+                            tvCertsHeader.visibility = View.GONE
+                            rvOtherCerts.visibility = View.GONE
+                        }
+                    } else {
+                        tvCertsHeader.visibility = View.GONE
+                        rvOtherCerts.visibility = View.GONE
+                    }
                 }
         }
     }
@@ -176,20 +210,19 @@ class WorkerProfileActivity : AppCompatActivity() {
         val chip = Chip(this)
         chip.text = text
         chip.isCheckable = false
-        chip.isClickable = isVerified // Allow clicking to see certificate if verified
+        chip.isClickable = isVerified
         
         if (isVerified) {
             chip.setChipBackgroundColorResource(R.color.white)
-            chip.setChipStrokeColorResource(R.color.nav_item_color) // Navy Blue
+            chip.setChipStrokeColorResource(R.color.nav_item_color)
             chip.setChipStrokeWidthResource(R.dimen.chip_stroke_width)
             chip.setTextColor(resources.getColor(R.color.nav_item_color, theme))
             
             chip.chipIcon = androidx.core.content.ContextCompat.getDrawable(this, R.drawable.ic_check_circle)
             chip.chipIconSize = 16 * resources.displayMetrics.density
-            chip.chipIconTint = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#16A34A")) // Green
+            chip.chipIconTint = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#16A34A"))
             chip.isChipIconVisible = true
             
-            // On click, show the certificate
             chip.setOnClickListener {
                 certUrl?.let { url ->
                     ImageUtils.showFullscreenImage(this, url)
@@ -209,9 +242,39 @@ class WorkerProfileActivity : AppCompatActivity() {
         return chip
     }
 
+    inner class ProfileOtherCertsAdapter(private val certs: List<WorkerCertificate>) : RecyclerView.Adapter<ProfileOtherCertsAdapter.ViewHolder>() {
+        inner class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
+            val tvName: TextView = v.findViewById(R.id.tvSkillName)
+            val tvStatus: TextView = v.findViewById(R.id.tvVerificationStatus)
+            val btnAction: com.google.android.material.button.MaterialButton = v.findViewById(R.id.btnAction)
+        }
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_skill_verification, parent, false)
+            return ViewHolder(v)
+        }
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            val cert = certs[position]
+            holder.tvName.text = cert.name
+            holder.tvStatus.text = cert.type
+            holder.btnAction.text = "View"
+            holder.btnAction.setIconResource(R.drawable.ic_check_circle)
+            holder.btnAction.setOnClickListener {
+                val url = cert.url
+                val isImage = url.contains(".jpg", true) || url.contains(".png", true) || url.contains(".jpeg", true)
+                if (isImage) {
+                    ImageUtils.showFullscreenImage(this@WorkerProfileActivity, url)
+                } else {
+                    val viewerUrl = "https://docs.google.com/viewer?url=$url"
+                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(viewerUrl))
+                    startActivity(intent)
+                }
+            }
+        }
+        override fun getItemCount() = certs.size
+    }
+
     private fun fetchReviews() {
         workerId?.let { id ->
-            // First get the total count for the header
             firestore.collection("users").document(id).get().addOnSuccessListener { userDoc ->
                 val totalReviews = userDoc.getLong("ratingCount") ?: 0
                 tvReviewsHeader.text = "Recent Reviews"
@@ -228,9 +291,7 @@ class WorkerProfileActivity : AppCompatActivity() {
                 .get()
                 .addOnSuccessListener { snapshots ->
                     allReviewsList = snapshots.toObjects(Review::class.java)
-                        .sortedByDescending { it.createdAt } // Sort locally to avoid index requirement
-                    
-                    android.util.Log.d("WorkerProfile", "Fetched ${allReviewsList.size} reviews")
+                        .sortedByDescending { it.createdAt }
                     
                     val recentReviews = allReviewsList.take(5)
                     rvReviews.adapter = WorkerReviewAdapter(recentReviews)
@@ -240,10 +301,6 @@ class WorkerProfileActivity : AppCompatActivity() {
                     } else {
                         tvReviewsHeader.text = "Recent Reviews"
                     }
-                }
-                .addOnFailureListener { e ->
-                    android.util.Log.e("WorkerProfile", "Error fetching reviews: ${e.message}")
-                    Toast.makeText(this, "Failed to load reviews. Check logs for index link.", Toast.LENGTH_LONG).show()
                 }
         }
     }
@@ -259,7 +316,6 @@ class WorkerProfileActivity : AppCompatActivity() {
 
         rvAll.layoutManager = LinearLayoutManager(this)
         
-        // Add tabs
         val ratings = listOf("All", "5 Stars", "4 Stars", "3 Stars", "2 Stars", "1 Star")
         ratings.forEach { text ->
             tabLayout.addTab(tabLayout.newTab().setText(text))
@@ -298,9 +354,7 @@ class WorkerProfileActivity : AppCompatActivity() {
             override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab?) {}
         })
 
-        // Initial load (All)
         updateDialogList(null)
-
         btnClose.setOnClickListener { dialog.dismiss() }
         dialog.show()
     }

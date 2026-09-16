@@ -175,12 +175,10 @@ class SignupActivity : AppCompatActivity() {
                 }
             }
 
-            // SEND TO VIEWMODEL (NO UPLOAD HERE)
-            viewModel.register(
-                imageUri = imageUri,
+            // PREPARE SIGNUP DATA
+            val data = SignupData(
                 email = emailText,
                 password = passwordText,
-                confirmPassword = confirmText,
                 role = selectedRole,
                 name = name,
                 phone = phone,
@@ -191,8 +189,12 @@ class SignupActivity : AppCompatActivity() {
                 hrName = hrName,
                 aboutUs = aboutUs,
                 categories = categories,
-                experience = experience
+                experience = experience,
+                imageUriString = imageUri?.toString()
             )
+
+            // START MAGIC LINK FLOW
+            viewModel.startMagicLinkVerification(this, data)
         }
 
         observeState()

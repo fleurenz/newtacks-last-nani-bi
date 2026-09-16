@@ -3,6 +3,7 @@ package com.example.newtacks.company
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -177,6 +178,21 @@ class CompanyApplicantsFragment : Fragment() {
             cgOther.visibility = View.GONE
         }
 
+        // General Certificates
+        val tvCertsHeader = dialogView.findViewById<TextView>(R.id.tvCertificatesHeaderDialog)
+        val rvCerts = dialogView.findViewById<RecyclerView>(R.id.rvOtherCertificatesDialog)
+        
+        val otherCerts = worker.otherCertificates
+        if (otherCerts.isNotEmpty()) {
+            tvCertsHeader.visibility = View.VISIBLE
+            rvCerts.visibility = View.VISIBLE
+            rvCerts.layoutManager = LinearLayoutManager(requireContext())
+            rvCerts.adapter = DialogOtherCertsAdapter(otherCerts)
+        } else {
+            tvCertsHeader.visibility = View.GONE
+            rvCerts.visibility = View.GONE
+        }
+
         if (worker.verificationStatus > 0) {
             tvBadge.visibility = View.VISIBLE
             tvBadge.text = "NC${worker.verificationStatus}"
@@ -317,6 +333,37 @@ class CompanyApplicantsFragment : Fragment() {
             chip.isChipIconVisible = true
         }
         return chip
+    }
+
+    inner class DialogOtherCertsAdapter(private val certs: List<com.example.newtacks.models.WorkerCertificate>) : RecyclerView.Adapter<DialogOtherCertsAdapter.ViewHolder>() {
+        inner class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
+            val tvName: TextView = v.findViewById(R.id.tvSkillName)
+            val tvStatus: TextView = v.findViewById(R.id.tvVerificationStatus)
+            val btnAction: com.google.android.material.button.MaterialButton = v.findViewById(R.id.btnAction)
+        }
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_skill_verification, parent, false)
+            return ViewHolder(v)
+        }
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            val cert = certs[position]
+            holder.tvName.text = cert.name
+            holder.tvStatus.text = cert.type
+            holder.btnAction.text = "View"
+            holder.btnAction.setIconResource(R.drawable.ic_check_circle)
+            holder.btnAction.setOnClickListener {
+                val url = cert.url
+                val isImage = url.contains(".jpg", true) || url.contains(".png", true) || url.contains(".jpeg", true)
+                if (isImage) {
+                    ImageUtils.showFullscreenImage(requireContext(), url)
+                } else {
+                    val viewerUrl = "https://docs.google.com/viewer?url=$url"
+                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(viewerUrl))
+                    startActivity(intent)
+                }
+            }
+        }
+        override fun getItemCount() = certs.size
     }
 
     private fun showScheduleInterviewDialog(worker: User, app: Application) {

@@ -39,5 +39,14 @@ data class User(
     val nc2CertificateUrl: String? = null,
     val nc3CertificateUrl: String? = null,
     val resumeUrl: String? = null,
-    val verifiedSkills: Map<String, String> = emptyMap() // Map of "SkillName" -> "CertificateUrl"
+    val verifiedSkills: Map<String, String> = emptyMap(), // Map of "SkillName" -> "CertificateUrl"
+    val otherCertificates: List<WorkerCertificate> = emptyList()
+)
+
+data class WorkerCertificate(
+    val certId: String = "",
+    val name: String = "",
+    val type: String = "", // e.g., "NC1", "NC2", "NC3", "Other"
+    val url: String = "",
+    val timestamp: Long = System.currentTimeMillis()
 )

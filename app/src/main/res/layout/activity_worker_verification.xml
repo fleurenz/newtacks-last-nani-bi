@@ -102,6 +102,42 @@
                 android:nestedScrollingEnabled="false"
                 tools:listitem="@layout/item_skill_verification" />
 
+            <!-- General Certificates Section -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Other Certificates"
+                    android:textColor="#1E293B"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddCertificate"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:text="Add New"
+                    android:textAllCaps="false"
+                    android:textColor="#004A99"
+                    app:icon="@drawable/ic_plus"
+                    app:iconTint="#004A99" />
+            </RelativeLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvOtherCertificates"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                tools:listitem="@layout/item_skill_verification" />
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="0dp"

@@ -5,6 +5,8 @@ import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
 import com.example.newtacks.models.User
+import com.google.android.gms.tasks.Task
+import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -12,6 +14,100 @@ class AuthRepository(
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore
 ) {
+
+    fun sendMagicLink(email: String): Task<Void> {
+        val actionCodeSettings = ActionCodeSettings.newBuilder()
+            .setUrl("https://tacks-ddccb.firebaseapp.com") // Corrected project ID
+            .setHandleCodeInApp(true)
+            .setAndroidPackageName(
+                "com.example.newtacks",
+                true, // install if not present
+                "24" // min version
+            )
+            .build()
+
+        return auth.sendSignInLinkToEmail(email, actionCodeSettings)
+    }
+
+    fun isMagicLink(link: String?): Boolean {
+        if (link == null) return false
+        return auth.isSignInWithEmailLink(link)
+    }
+
+    fun signInWithMagicLink(email: String, link: String, onResult: (Result<String>) -> Unit) {
+        auth.signInWithEmailLink(email, link)
+            .addOnSuccessListener { result ->
+                val uid = result.user?.uid
+                if (uid != null) onResult(Result.success(uid))
+                else onResult(Result.failure(Exception("UID is null")))
+            }
+            .addOnFailureListener { onResult(Result.failure(it)) }
+    }
+
+    /**
+     * ✅ New Method: Saves profile to Firestore for an ALREADY authenticated user (Magic Link)
+     */
+    fun finalizeMagicLinkProfile(
+        uid: String,
+        data: SignupData,
+        onProgress: (String) -> Unit,
+        onResult: (Result<Unit>) -> Unit
+    ) {
+        // 1. Upload photo if present
+        if (data.imageUri != null) {
+            onProgress("Uploading photo...")
+            MediaManager.get().upload(data.imageUri)
+                .option("folder", "stract_profiles")
+                .callback(object : UploadCallback {
+                    override fun onStart(requestId: String?) {}
+                    override fun onProgress(requestId: String?, b: Long, t: Long) {}
+                    override fun onSuccess(requestId: String?, res: MutableMap<Any?, Any?>?) {
+                        val imageUrl = res?.get("secure_url").toString()
+                        saveMagicLinkProfile(uid, data, imageUrl, onProgress, onResult)
+                    }
+                    override fun onError(requestId: String?, error: ErrorInfo?) {
+                        saveMagicLinkProfile(uid, data, "", onProgress, onResult)
+                    }
+                    override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
+                }).dispatch()
+        } else {
+            saveMagicLinkProfile(uid, data, "", onProgress, onResult)
+        }
+    }
+
+    private fun saveMagicLinkProfile(
+        uid: String,
+        data: SignupData,
+        profileImage: String,
+        onProgress: (String) -> Unit,
+        onResult: (Result<Unit>) -> Unit
+    ) {
+        val user = auth.currentUser
+        onProgress("Securing account...")
+        user?.updatePassword(data.password)?.addOnCompleteListener {
+            onProgress("Saving profile...")
+            val profile = User(
+                uid = uid,
+                role = data.role,
+                name = data.name,
+                email = data.email,
+                phone = data.phone,
+                address = data.address,
+                latitude = data.latitude,
+                longitude = data.longitude,
+                profileImage = profileImage,
+                companyName = if (data.role == "COMPANY") data.companyName else null,
+                hrName = if (data.role == "COMPANY") data.hrName else null,
+                aboutUs = if (data.role == "COMPANY") data.aboutUs else null,
+                serviceCategories = if (data.role == "WORKER") data.categories else null,
+                serviceExperience = if (data.role == "WORKER") data.experience else null
+            )
+
+            db.collection("users").document(uid).set(profile)
+                .addOnSuccessListener { onResult(Result.success(Unit)) }
+                .addOnFailureListener { onResult(Result.failure(it)) }
+        }
+    }
 
     fun register(
         imageUri: Uri?,
