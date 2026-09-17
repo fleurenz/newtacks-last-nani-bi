@@ -64,6 +64,9 @@ class WorkerJobFragment : Fragment() {
     private lateinit var tvRate: TextView
     private lateinit var tvDescription: TextView
     private lateinit var btnViewImages: View
+    
+    private lateinit var layoutRecipient: View
+    private lateinit var tvRelationship: TextView
 
     // Bottom Sticky Buttons
     private lateinit var layoutBottomButtons: View
@@ -127,6 +130,9 @@ class WorkerJobFragment : Fragment() {
         tvRate = view.findViewById(R.id.tvRate)
         tvDescription = view.findViewById(R.id.tvDescription)
         btnViewImages = view.findViewById(R.id.btnViewImages)
+        
+        layoutRecipient = view.findViewById(R.id.layoutRecipientInfo)
+        tvRelationship = view.findViewById(R.id.tvRelationship)
 
         layoutBottomButtons = view.findViewById(R.id.layoutBottomButtons)
         btnNavigateMap = view.findViewById(R.id.btnNavigateToMap)
@@ -235,6 +241,13 @@ class WorkerJobFragment : Fragment() {
         tvDate.text = displayDate
         tvRate.text = "₱${job.offeredAmount.toInt()}/day"
         tvDescription.text = job.description
+        
+        if (job.recipientRelationship != null && job.recipientRelationship != "Self") {
+            layoutRecipient.visibility = View.VISIBLE
+            tvRelationship.text = job.recipientRelationship
+        } else {
+            layoutRecipient.visibility = View.GONE
+        }
 
         loadClientProfile(job.clientId)
         updateStatusFlow(job.status)

@@ -77,6 +77,9 @@ class ClientRequestsFragment : Fragment() {
     private lateinit var btnViewImages: TextView
     private lateinit var tvDetailRate: TextView
     private lateinit var tvDetailDescription: TextView
+    
+    private lateinit var layoutRecipient: View
+    private lateinit var tvRecipientRelationship: TextView
 
     private lateinit var btnConfirm: Button
     private lateinit var btnReject: Button
@@ -144,6 +147,9 @@ class ClientRequestsFragment : Fragment() {
         btnViewImages       = view.findViewById(R.id.btnViewImages)
         tvDetailRate        = view.findViewById(R.id.tvDetailRate)
         tvDetailDescription = view.findViewById(R.id.tvDetailDescription)
+        
+        layoutRecipient = view.findViewById(R.id.layoutRecipientInfo)
+        tvRecipientRelationship = view.findViewById(R.id.tvRecipientRelationship)
 
         btnConfirm           = view.findViewById(R.id.btnConfirm)
         btnReject            = view.findViewById(R.id.btnReject)
@@ -263,6 +269,13 @@ class ClientRequestsFragment : Fragment() {
         tvDetailDate.text = displayDate
         tvDetailRate.text = "₱${job.offeredAmount}"
         tvDetailDescription.text = job.description
+        
+        if (job.recipientRelationship != null && job.recipientRelationship != "Self") {
+            layoutRecipient.visibility = View.VISIBLE
+            tvRecipientRelationship.text = job.recipientRelationship
+        } else {
+            layoutRecipient.visibility = View.GONE
+        }
 
         updateProgressUI(job.status)
 

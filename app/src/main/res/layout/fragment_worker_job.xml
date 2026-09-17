@@ -513,6 +513,37 @@
                                         android:layout_marginStart="16dp" />
                                 </LinearLayout>
 
+                                <!-- Recipient Info (Added) -->
+                                <LinearLayout
+                                    android:id="@+id/layoutRecipientInfo"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:visibility="gone"
+                                    tools:visibility="visible">
+                                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" />
+                                    <RelativeLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:paddingVertical="8dp">
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="Who is this for?"
+                                            android:textColor="#94A3B8"
+                                            android:textSize="11sp" />
+                                        <TextView
+                                            android:id="@+id/tvRelationship"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_alignParentEnd="true"
+                                            android:text="Family"
+                                            android:textColor="#0F325E"
+                                            android:textSize="13sp"
+                                            android:textStyle="bold" />
+                                    </RelativeLayout>
+                                </LinearLayout>
+
                             </LinearLayout>
 
                         </com.google.android.material.card.MaterialCardView>

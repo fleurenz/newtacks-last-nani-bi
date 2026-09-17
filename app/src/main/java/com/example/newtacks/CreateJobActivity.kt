@@ -44,8 +44,25 @@ class CreateJobActivity : AppCompatActivity() {
     private lateinit var etClientName: EditText
     private lateinit var etClientAddress: EditText
     private lateinit var switchRealTimeLocation: com.google.android.material.switchmaterial.SwitchMaterial
+    private lateinit var btnPinOnMap: View
+    private lateinit var rgRecipientType: RadioGroup
+    private lateinit var layoutRelationship: View
+    private lateinit var spinnerRelationship: AutoCompleteTextView
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+
+    private val mapPickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val data = result.data
+            if (data != null) {
+                selectedLat = data.getDoubleExtra("LAT", 0.0)
+                selectedLng = data.getDoubleExtra("LNG", 0.0)
+                val address = data.getStringExtra("ADDRESS") ?: ""
+                etClientAddress.setText(address)
+                switchRealTimeLocation.isChecked = false // Manual pin overrides GPS
+            }
+        }
+    }
 
     private lateinit var spinnerServiceType: Spinner
     private lateinit var spinnerRateType: AutoCompleteTextView
@@ -202,6 +219,32 @@ class CreateJobActivity : AppCompatActivity() {
         etClientName = findViewById(R.id.etClientName)
         etClientAddress = findViewById(R.id.etClientAddress)
         switchRealTimeLocation = findViewById(R.id.switchRealTimeLocation)
+        btnPinOnMap = findViewById(R.id.btnPinOnMap)
+        rgRecipientType = findViewById(R.id.rgRecipientType)
+        layoutRelationship = findViewById(R.id.layoutRelationship)
+        spinnerRelationship = findViewById(R.id.spinnerRelationship)
+
+        btnPinOnMap.setOnClickListener {
+            val intent = Intent(this, com.example.newtacks.utils.MapPickerActivity::class.java)
+            intent.putExtra("LAT", selectedLat)
+            intent.putExtra("LNG", selectedLng)
+            mapPickerLauncher.launch(intent)
+        }
+
+        rgRecipientType.setOnCheckedChangeListener { _, checkedId ->
+            if (checkedId == R.id.rbOthers) {
+                etClientName.isEnabled = true
+                etClientName.setText("")
+                etClientName.requestFocus()
+                layoutRelationship.visibility = View.VISIBLE
+            } else {
+                etClientName.isEnabled = false
+                loadClientInformation()
+                layoutRelationship.visibility = View.GONE
+            }
+        }
+
+        setupRelationshipSpinner()
 
         switchRealTimeLocation.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -301,6 +344,15 @@ class CreateJobActivity : AppCompatActivity() {
                 selectedLat = job.latitude
                 selectedLng = job.longitude
                 
+                if (job.recipientRelationship != null && job.recipientRelationship != "Self") {
+                    rgRecipientType.check(R.id.rbOthers)
+                    spinnerRelationship.setText(job.recipientRelationship, false)
+                    etClientName.isEnabled = true
+                } else {
+                    rgRecipientType.check(R.id.rbSelf)
+                    etClientName.isEnabled = false
+                }
+                
                 // Pre-select service
                 val services = arrayOf("Plumbing", "Electrical", "Carpentry", "Masonry", "Welding", "Painting", "Landscaping", "Others")
                 val index = services.indexOf(job.serviceCategory)
@@ -389,6 +441,12 @@ class CreateJobActivity : AppCompatActivity() {
         spinnerRateType.setAdapter(adapter)
         // Default value
         spinnerRateType.setText(rates[0], false)
+    }
+
+    private fun setupRelationshipSpinner() {
+        val relationships = arrayOf("Family", "Friend", "Coworker", "Neighbor", "Other")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, relationships)
+        spinnerRelationship.setAdapter(adapter)
     }
 
     // ---------------- DATE PICKER ----------------
@@ -549,6 +607,11 @@ class CreateJobActivity : AppCompatActivity() {
         val offerInput = etOfferAmount.text.toString().trim()
         val description = etDescription.text.toString().trim()
         val rateType = spinnerRateType.text.toString()
+        val relationship = if (rgRecipientType.checkedRadioButtonId == R.id.rbOthers) {
+            spinnerRelationship.text.toString()
+        } else {
+            "Self"
+        }
 
         if (!validateForm()) {
             Toast.makeText(this, "Please complete all fields", Toast.LENGTH_SHORT).show()
@@ -572,7 +635,7 @@ class CreateJobActivity : AppCompatActivity() {
         if (editingJobId != null) {
             tvLoadingMessage.text = "Updating job..."
             // For updates, we skip the "active job check" because this IS the active job
-            uploadImagesAndCreateJob(currentUser.uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType)
+            uploadImagesAndCreateJob(currentUser.uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType, relationship)
             return
         }
 
@@ -596,7 +659,7 @@ class CreateJobActivity : AppCompatActivity() {
                 }
 
                 tvLoadingMessage.text = "Uploading images..."
-                uploadImagesAndCreateJob(currentUser.uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType)
+                uploadImagesAndCreateJob(currentUser.uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType, relationship)
             }
             .addOnFailureListener {
                 isSubmitting = false
@@ -629,6 +692,16 @@ class CreateJobActivity : AppCompatActivity() {
         if (etJobTitle.text.toString().trim().isEmpty()) {
             etJobTitle.error = "Job title is required"
             if (firstErrorView == null) firstErrorView = etJobTitle
+            isValid = false
+        }
+        if (etClientName.text.toString().trim().isEmpty()) {
+            etClientName.error = "Name is required"
+            if (firstErrorView == null) firstErrorView = etClientName
+            isValid = false
+        }
+        if (rgRecipientType.checkedRadioButtonId == R.id.rbOthers && spinnerRelationship.text.toString().isEmpty()) {
+            spinnerRelationship.error = "Please select relationship"
+            if (firstErrorView == null) firstErrorView = spinnerRelationship
             isValid = false
         }
         if (etClientAddress.text.toString().trim().isEmpty() || etClientAddress.text.toString() == "Detecting location...") {
@@ -677,10 +750,11 @@ class CreateJobActivity : AppCompatActivity() {
         serviceCategory: String,
         offeredAmount: Double,
         description: String,
-        rateType: String
+        rateType: String,
+        relationship: String
     ) {
         if (selectedImages.isEmpty()) {
-            finalizeJobCreation(uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType, emptyList())
+            finalizeJobCreation(uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType, relationship, emptyList())
             return
         }
 
@@ -698,13 +772,13 @@ class CreateJobActivity : AppCompatActivity() {
                         uploadedUrls.add(imageUrl)
                         uploadCount++
                         if (uploadCount == selectedImages.size) {
-                            finalizeJobCreation(uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType, uploadedUrls)
+                            finalizeJobCreation(uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType, relationship, uploadedUrls)
                         }
                     }
                     override fun onError(requestId: String?, error: ErrorInfo?) {
                         uploadCount++
                         if (uploadCount == selectedImages.size) {
-                            finalizeJobCreation(uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType, uploadedUrls)
+                            finalizeJobCreation(uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType, relationship, uploadedUrls)
                         }
                     }
                     override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
@@ -721,6 +795,7 @@ class CreateJobActivity : AppCompatActivity() {
         offeredAmount: Double,
         description: String,
         rateType: String,
+        relationship: String,
         jobImages: List<String>
     ) {
         tvLoadingMessage.text = if (editingJobId != null) "Updating request..." else "Finalizing request..."
@@ -737,7 +812,8 @@ class CreateJobActivity : AppCompatActivity() {
                 "scheduledDate" to selectedDate,
                 "scheduledTime" to selectedTime,
                 "latitude" to selectedLat,
-                "longitude" to selectedLng
+                "longitude" to selectedLng,
+                "recipientRelationship" to relationship
             )
             // Only update images if new ones were added
             if (jobImages.isNotEmpty()) {
@@ -774,6 +850,7 @@ class CreateJobActivity : AppCompatActivity() {
                 clientId = uid,
                 clientName = clientName,
                 clientAddress = clientAddress,
+                recipientRelationship = relationship,
                 jobTitle = jobTitle,
                 serviceCategory = serviceCategory,
                 scheduledDate = selectedDate,

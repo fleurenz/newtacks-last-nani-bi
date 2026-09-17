@@ -2,6 +2,7 @@
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#004A99">
@@ -82,16 +83,49 @@
                         android:textColor="#1E293B" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Client Name -->
+                <!-- Recipient Type Selection -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Client Name"
+                    android:text="Who is this for?"
+                    android:textColor="#64748B"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <RadioGroup
+                    android:id="@+id/rgRecipientType"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp">
+                    <RadioButton
+                        android:id="@+id/rbSelf"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Me"
+                        android:checked="true" />
+                    <RadioButton
+                        android:id="@+id/rbOthers"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Others" />
+                </RadioGroup>
+
+                <!-- Client Name / Recipient -->
+                <TextView
+                    android:id="@+id/tvRecipientLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Recipient Name"
                     android:textColor="#64748B"
                     android:textSize="13sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="8dp" />
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilClientName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -109,6 +143,41 @@
                         android:enabled="false" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- Relationship Dropdown (Hidden by default) -->
+                <LinearLayout
+                    android:id="@+id/layoutRelationship"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Relationship to you"
+                        android:textColor="#64748B"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        android:layout_marginBottom="16dp">
+                        <AutoCompleteTextView
+                            android:id="@+id/spinnerRelationship"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:hint="Select Relationship"
+                            android:textColor="#1E293B" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
                 <!-- Address Section Header -->
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -120,10 +189,23 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Address"
+                        android:text="Job Location"
                         android:textColor="#64748B"
                         android:textSize="13sp"
                         android:textStyle="bold" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPinOnMap"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Pin on Map"
+                        android:textSize="12sp"
+                        android:textAllCaps="false"
+                        app:icon="@drawable/ic_location"
+                        app:iconSize="14dp"
+                        android:textColor="#004A99" />
+
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchRealTimeLocation"
                         android:layout_width="wrap_content"

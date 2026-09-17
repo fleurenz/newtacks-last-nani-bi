@@ -5,10 +5,10 @@ data class Job(
     val jobId: String = "",
 
     // CLIENT
-
     val clientId: String = "",
     val clientName: String = "",
     val clientAddress: String = "",
+    val recipientRelationship: String? = null, // e.g. "Self", "Family", "Coworker"
 
     // WORKER
 

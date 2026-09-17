@@ -65,6 +65,7 @@
         <activity android:name=".company.CompanyEditProfileActivity" />
         <activity android:name=".client.RefuseCompletionActivity" />
         <activity android:name=".common.ReportUserActivity" />
+        <activity android:name=".utils.MapPickerActivity" />
 
         <activity
             android:name="com.yalantis.ucrop.UCropActivity"
