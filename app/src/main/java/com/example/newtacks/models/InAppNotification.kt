@@ -11,6 +11,7 @@ data class InAppNotification(
     val title: String = "",
     val message: String = "",
     val targetFragment: String? = null,
+    val targetId: String? = null,
     val read: Boolean = false,
     val notifiedTray: Boolean = false,
     @ServerTimestamp

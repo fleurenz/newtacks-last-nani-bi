@@ -524,7 +524,7 @@ class ClientRequestsFragment : Fragment() {
         )
         firestore.collection("receipts").document(receiptId).set(receipt)
             .addOnSuccessListener {
-                com.example.newtacks.utils.NotificationHelper.sendNotification(workerId, "Job Confirmed", "Client has confirmed work.", "JOB")
+                com.example.newtacks.utils.NotificationHelper.sendNotification(workerId, "Job Confirmed", "Client has confirmed work.", "HISTORY", receiptId)
                 ReceiptDetailActivity.open(requireContext(), receiptId, showReview = true)
                 showEmptyState()
             }

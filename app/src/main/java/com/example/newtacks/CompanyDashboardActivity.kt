@@ -1,5 +1,6 @@
 package com.example.newtacks
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -33,6 +34,7 @@ class CompanyDashboardActivity : AppCompatActivity() {
         val bottomNav = findViewById<BottomNavigationView>(R.id.companyBottomNav)
 
         val fragmentToOpen = intent.getStringExtra("OPEN_FRAGMENT")
+        val startId = intent.getStringExtra("OPEN_ID")
 
         // Use savedInstanceState check to prevent duplicate fragments on Activity recreation
         if (savedInstanceState == null) {
@@ -56,6 +58,21 @@ class CompanyDashboardActivity : AppCompatActivity() {
                 add(R.id.companyFragmentContainer, fragmentHome!!, "home")
                 show(activeFragment!!)
             }.commit()
+
+            // Process specific ID navigation if needed
+            if (!startId.isNullOrEmpty()) {
+                if (fragmentToOpen == "HIRING_DETAILS") {
+                    val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    db.collection("hiring").document(startId).get().addOnSuccessListener { doc ->
+                        val post = doc.toObject(com.example.newtacks.models.HiringPost::class.java)?.copy(hiringId = doc.id)
+                        if (post != null) {
+                            val intent = Intent(this, com.example.newtacks.company.HiringDetailsActivity::class.java)
+                            intent.putExtra("HIRING_POST_JSON", com.google.gson.Gson().toJson(post))
+                            startActivity(intent)
+                        }
+                    }
+                }
+            }
         } else {
             // Restore references
             fragmentAccount = supportFragmentManager.findFragmentByTag("account") as? CompanyAccountFragment
@@ -135,10 +152,13 @@ class CompanyDashboardActivity : AppCompatActivity() {
             }
     }
 
-    fun switchToApplicants(tabName: String = "ALL") {
+    fun switchToApplicants(tabName: String = "ALL", jobFilterId: String? = null) {
         val bottomNav = findViewById<BottomNavigationView>(R.id.companyBottomNav)
         bottomNav.selectedItemId = R.id.nav_company_history // This is the ID for applicants
         fragmentApplicants?.selectTab(tabName)
+        if (jobFilterId != null) {
+            fragmentApplicants?.setJobFilter(jobFilterId)
+        }
     }
 
     fun switchToPosts() {

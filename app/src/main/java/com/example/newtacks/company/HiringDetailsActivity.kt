@@ -1038,7 +1038,8 @@ class HiringDetailsActivity : AppCompatActivity() {
                         post.companyId,
                         "New Job Applicant",
                         "Someone has applied for your ${post.jobTitle} position.",
-                        "APPLICANTS"
+                        "APPLICANTS",
+                        post.hiringId
                     )
                     Toast.makeText(this, "Application sent!", Toast.LENGTH_SHORT).show()
                     finish()

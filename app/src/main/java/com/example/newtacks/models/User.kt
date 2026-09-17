@@ -41,7 +41,8 @@ data class User(
     val resumeUrl: String? = null,
     val verifiedSkills: Map<String, String> = emptyMap(), // Map of "SkillName" -> "CertificateUrl"
     val otherCertificates: List<WorkerCertificate> = emptyList(),
-    val deletionTimestamp: Long? = null
+    val deletionTimestamp: Long? = null,
+    val activeRoomId: String? = null
 ) {
     companion object {
         /**

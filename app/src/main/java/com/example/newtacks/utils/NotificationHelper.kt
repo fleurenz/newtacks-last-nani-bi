@@ -22,13 +22,16 @@ object NotificationHelper {
     // Keep track of IDs we've already notified to prevent duplicates/looping
     private val processedNotificationIds = mutableSetOf<String>()
 
-    fun showNotification(context: Context, title: String, message: String, targetFragment: String? = null) {
+    fun showNotification(context: Context, title: String, message: String, targetFragment: String? = null, targetId: String? = null) {
         createNotificationChannel(context)
 
         val intent = Intent(context, SplashActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             if (targetFragment != null) {
                 putExtra("TARGET_FRAGMENT", targetFragment)
+            }
+            if (targetId != null) {
+                putExtra("TARGET_ID", targetId)
             }
         }
         val pendingIntent = PendingIntent.getActivity(
@@ -47,7 +50,7 @@ object NotificationHelper {
             .setContentIntent(pendingIntent)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
-        android.util.Log.d("NotificationHelper", "Showing notification: $title - $message (Target: $targetFragment)")
+        android.util.Log.d("NotificationHelper", "Showing notification: $title - $message (Target: $targetFragment, ID: $targetId)")
 
         with(NotificationManagerCompat.from(context)) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -120,8 +123,9 @@ object NotificationHelper {
                         val title = doc.getString("title") ?: "New Update"
                         val message = doc.getString("message") ?: ""
                         val target = doc.getString("targetFragment")
+                        val targetId = doc.getString("targetId")
                         
-                        showNotification(context, title, message, target)
+                        showNotification(context, title, message, target, targetId)
 
                         // Mark as notified in tray so it doesn't show again
                         doc.reference.update("notifiedTray", true)
@@ -130,7 +134,7 @@ object NotificationHelper {
             }
     }
 
-    fun sendNotification(toUid: String, title: String, message: String, targetFragment: String? = null) {
+    fun sendNotification(toUid: String, title: String, message: String, targetFragment: String? = null, targetId: String? = null) {
         val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
         val data = mutableMapOf<String, Any>(
             "to" to toUid,
@@ -142,6 +146,9 @@ object NotificationHelper {
         )
         if (targetFragment != null) {
             data["targetFragment"] = targetFragment
+        }
+        if (targetId != null) {
+            data["targetId"] = targetId
         }
         db.collection("notifications").add(data)
     }
@@ -160,7 +167,10 @@ object NotificationHelper {
             .whereEqualTo("to", uid)
             .whereEqualTo("read", false)
             .addSnapshotListener { snapshots, _ ->
-                val count = snapshots?.size() ?: 0
+                if (snapshots == null) return@addSnapshotListener
+                
+                val count = snapshots.size()
+                
                 if (count > 0) {
                     badgeView.visibility = View.VISIBLE
                     badgeView.text = if (count > 9) "9+" else count.toString()
@@ -194,9 +204,7 @@ object NotificationHelper {
             dialog.dismiss()
             
             // DYNAMIC NAVIGATION: Redirect user based on targetFragment
-            if (!notif.targetFragment.isNullOrEmpty()) {
-                navigateToTarget(context, notif.targetFragment)
-            }
+            navigateToTarget(context, notif.targetFragment ?: "", notif.targetId)
         }
 
         rv.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(context)
@@ -205,15 +213,21 @@ object NotificationHelper {
         // Listen for notifications for this user
         val listener = db.collection("notifications")
             .whereEqualTo("to", uid)
-            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshots, _ ->
+            .addSnapshotListener { snapshots, error ->
+                if (error != null) {
+                    android.util.Log.e("NotificationHelper", "Listener error: ${error.message}")
+                    return@addSnapshotListener
+                }
+                
                 if (snapshots != null) {
+                    val allNotifs = snapshots.toObjects(com.example.newtacks.models.InAppNotification::class.java)
+                    // Sort locally to avoid index requirements and potential listener failures
+                    val sortedList = allNotifs.sortedByDescending { it.timestamp }
+                    
                     notifList.clear()
-                    for (doc in snapshots) {
-                        val n = doc.toObject(com.example.newtacks.models.InAppNotification::class.java)
-                        notifList.add(n)
-                    }
+                    notifList.addAll(sortedList)
                     adapter.notifyDataSetChanged()
+                    
                     layoutEmpty.visibility = if (notifList.isEmpty()) View.VISIBLE else View.GONE
                     btnClearAll.visibility = if (notifList.isEmpty()) View.GONE else View.VISIBLE
                 }
@@ -232,13 +246,7 @@ object NotificationHelper {
                             if (sn.isEmpty) return@addOnSuccessListener
                             val batch = db.batch()
                             for (d in sn) batch.delete(d.reference)
-                            batch.commit().addOnSuccessListener {
-                                // Explicitly update UI immediately
-                                notifList.clear()
-                                adapter.notifyDataSetChanged()
-                                layoutEmpty.visibility = View.VISIBLE
-                                btnClearAll.visibility = View.GONE
-                            }
+                            batch.commit()
                         }
                 }
                 .setNegativeButton("Cancel", null)
@@ -250,7 +258,45 @@ object NotificationHelper {
         dialog.show()
     }
 
-    private fun navigateToTarget(context: Context, target: String) {
+    private fun navigateToTarget(context: Context, target: String, targetId: String?) {
+        // Special case: If it's a chat notification
+        if (target == "CHAT" && !targetId.isNullOrEmpty()) {
+            val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            db.collection("jobs").document(targetId).get().addOnSuccessListener { doc ->
+                val job = doc.toObject(com.example.newtacks.models.Job::class.java)?.copy(jobId = doc.id)
+                if (job != null) {
+                    val intent = Intent(context, com.example.newtacks.chatbot.presentation.ui.TransactionChatActivity::class.java).apply {
+                        putExtra("JOB_ID", job.jobId)
+                        putExtra("WORKER_ID", job.workerId)
+                        putExtra("OTHER_USER_ID", if (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid == job.workerId) job.clientId else job.workerId)
+                        putExtra("JOB_TITLE", job.jobTitle)
+                    }
+                    context.startActivity(intent)
+                }
+            }
+            return
+        }
+
+        // Special case: If we have an ID for a receipt, open it directly regardless of context
+        if (target == "HISTORY" && !targetId.isNullOrEmpty()) {
+            com.example.newtacks.receipt.ReceiptDetailActivity.open(context, targetId)
+            return
+        }
+
+        // Special case: If it's a hiring post details
+        if (target == "HIRING_DETAILS" && !targetId.isNullOrEmpty()) {
+            val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            db.collection("hiring").document(targetId).get().addOnSuccessListener { doc ->
+                val post = doc.toObject(com.example.newtacks.models.HiringPost::class.java)?.copy(hiringId = doc.id)
+                if (post != null) {
+                    val intent = Intent(context, com.example.newtacks.company.HiringDetailsActivity::class.java)
+                    intent.putExtra("HIRING_POST_JSON", com.google.gson.Gson().toJson(post))
+                    context.startActivity(intent)
+                }
+            }
+            return
+        }
+
         when (context) {
             is com.example.newtacks.WorkerDashboardActivity -> {
                 when (target) {
@@ -258,6 +304,7 @@ object NotificationHelper {
                     "HISTORY" -> context.switchTab(R.id.nav_history)
                     "HIRING" -> context.switchTab(R.id.nav_hiring)
                     "FEED" -> context.switchTab(R.id.nav_feed)
+                    "ACCOUNT" -> context.switchTab(R.id.nav_account)
                 }
             }
             is com.example.newtacks.ClientDashboardActivity -> {
@@ -265,12 +312,14 @@ object NotificationHelper {
                     "REQUESTS", "CHAT" -> context.switchTab(R.id.nav_requests)
                     "HISTORY" -> context.switchTab(R.id.nav_history)
                     "HOME" -> context.switchTab(R.id.nav_home)
+                    "ACCOUNT" -> context.switchTab(R.id.nav_account)
                 }
             }
             is com.example.newtacks.CompanyDashboardActivity -> {
                 when (target) {
                     "APPLICANTS", "CHAT" -> context.switchToApplicants()
                     "POSTS" -> context.switchToPosts()
+                    "ACCOUNT" -> { /* Handle account switch if needed */ }
                 }
             }
         }

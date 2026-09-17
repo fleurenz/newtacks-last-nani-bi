@@ -195,6 +195,7 @@ class SplashActivity : AppCompatActivity() {
 
     private fun routeUser(role: String?) {
         val target = intent.getStringExtra("TARGET_FRAGMENT")
+        val targetId = intent.getStringExtra("TARGET_ID")
         val intent = when (role) {
             "CLIENT"  -> Intent(this, ClientDashboardActivity::class.java)
             "WORKER"  -> Intent(this, WorkerDashboardActivity::class.java)
@@ -203,6 +204,9 @@ class SplashActivity : AppCompatActivity() {
         }
         if (target != null) {
             intent.putExtra("OPEN_FRAGMENT", target)
+        }
+        if (targetId != null) {
+            intent.putExtra("OPEN_ID", targetId)
         }
         startActivity(intent)
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out)

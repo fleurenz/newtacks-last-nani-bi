@@ -47,6 +47,7 @@ class ClientDashboardActivity : AppCompatActivity() {
         val bottomNav = findViewById<BottomNavigationView>(R.id.clientBottomNav)
 
         val fragmentToOpen = intent.getStringExtra(OPEN_FRAGMENT)
+        val startId = intent.getStringExtra("OPEN_ID")
         
         if (savedInstanceState == null) {
             fragmentHome = ClientHomeFragment()
@@ -68,6 +69,13 @@ class ClientDashboardActivity : AppCompatActivity() {
                 add(R.id.clientFragmentContainer, fragmentHome!!, "home").hide(fragmentHome!!)
                 show(activeFragment!!)
             }.commit()
+
+            // Process specific ID navigation if needed
+            if (!startId.isNullOrEmpty()) {
+                if (fragmentToOpen == "HISTORY") {
+                    com.example.newtacks.receipt.ReceiptDetailActivity.open(this, startId)
+                }
+            }
 
             // Pre-check for active jobs to auto-switch if needed
             if (fragmentToOpen == null) {

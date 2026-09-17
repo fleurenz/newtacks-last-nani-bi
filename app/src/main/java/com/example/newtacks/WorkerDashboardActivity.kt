@@ -62,6 +62,7 @@ class WorkerDashboardActivity : AppCompatActivity() {
         val bottomNav = findViewById<BottomNavigationView>(R.id.workerBottomNav)
 
         val startFragment = intent.getStringExtra(OPEN_FRAGMENT)
+        val startId = intent.getStringExtra("OPEN_ID")
         
         // Handle fragment restoration during recreation
         if (savedInstanceState == null) {
@@ -88,6 +89,13 @@ class WorkerDashboardActivity : AppCompatActivity() {
                 add(R.id.workerFragmentContainer, fragmentFeed!!, "feed").hide(fragmentFeed!!)
                 show(activeFragment!!)
             }.commit()
+
+            // Process specific ID navigation if needed
+            if (!startId.isNullOrEmpty()) {
+                if (startFragment == "HISTORY") {
+                    com.example.newtacks.receipt.ReceiptDetailActivity.open(this, startId)
+                }
+            }
         } else {
             // Restore references from FragmentManager
             fragmentAccount = supportFragmentManager.findFragmentByTag("account") as? WorkerAccountFragment

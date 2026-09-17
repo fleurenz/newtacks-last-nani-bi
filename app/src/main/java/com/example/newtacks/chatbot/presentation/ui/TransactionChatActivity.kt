@@ -40,6 +40,8 @@ class TransactionChatActivity : AppCompatActivity() {
     
     private var myProfileUrl: String? = null
     private var otherProfileUrl: String? = null
+    
+    private var notificationMarkReadListener: com.google.firebase.firestore.ListenerRegistration? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,6 +113,44 @@ class TransactionChatActivity : AppCompatActivity() {
         loadProfiles()
         listenForMessages()
         checkJobStatus()
+        listenToMarkNotificationsAsRead()
+    }
+
+    private fun listenToMarkNotificationsAsRead() {
+        val currentUid = auth.currentUser?.uid ?: return
+        notificationMarkReadListener?.remove()
+        
+        // Auto-mark CHAT notifications for this jobId as read if they arrive while I'm here
+        notificationMarkReadListener = db.collection("notifications")
+            .whereEqualTo("to", currentUid)
+            .whereEqualTo("targetFragment", "CHAT")
+            .whereEqualTo("targetId", jobId)
+            .whereEqualTo("read", false)
+            .addSnapshotListener { snapshots, _ ->
+                snapshots?.documents?.forEach { doc ->
+                    doc.reference.update("read", true)
+                }
+            }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateActiveRoom(jobId)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        updateActiveRoom(null)
+    }
+
+    private fun updateActiveRoom(id: String?) {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("users").document(uid).update("activeRoomId", id)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        notificationMarkReadListener?.remove()
     }
 
     private fun loadProfiles() {
@@ -210,13 +250,20 @@ class TransactionChatActivity : AppCompatActivity() {
         etMessage.setText("")
         db.collection("chats").document(messageId).set(message)
             .addOnSuccessListener {
-                // Send notification to the other user
-                com.example.newtacks.utils.NotificationHelper.sendNotification(
-                    otherUserId,
-                    "New Message: $jobTitle",
-                    text,
-                    if (auth.currentUser?.uid == workerId) "REQUESTS" else "JOB" // If sender is worker, target is client (REQUESTS), else target is worker (JOB)
-                )
+                // Check if the other user is already in this room before sending notification
+                db.collection("users").document(otherUserId).get().addOnSuccessListener { doc ->
+                    val otherActiveRoom = doc.getString("activeRoomId")
+                    if (otherActiveRoom != jobId) {
+                        // Recipient NOT in room, safe to notify
+                        com.example.newtacks.utils.NotificationHelper.sendNotification(
+                            otherUserId,
+                            "New Message: $jobTitle",
+                            text,
+                            "CHAT",
+                            jobId
+                        )
+                    }
+                }
             }
             .addOnFailureListener {
                 Toast.makeText(this, "Failed to send message", Toast.LENGTH_SHORT).show()

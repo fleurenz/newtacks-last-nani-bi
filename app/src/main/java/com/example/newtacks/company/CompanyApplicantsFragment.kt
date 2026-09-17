@@ -393,7 +393,7 @@ class CompanyApplicantsFragment : Fragment() {
             .update(mapOf("status" to "INTERVIEW_SCHEDULED", "interviewDate" to timestamp, "workerResponse" to null))
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
-                NotificationHelper.sendNotification(worker.uid, "Interview Scheduled", "You have an interview request for ${app.jobTitle}.", "HIRING")
+                NotificationHelper.sendNotification(worker.uid, "Interview Scheduled", "You have an interview request for ${app.jobTitle}.", "HIRING_DETAILS", app.hiringId)
                 Toast.makeText(requireContext(), "Interview scheduled", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener {
@@ -452,6 +452,12 @@ class CompanyApplicantsFragment : Fragment() {
 
     fun selectTab(tab: String) {
         switchTab(tab)
+    }
+
+    fun setJobFilter(jobId: String?) {
+        selectedJobFilterId = jobId
+        updateFilterUI()
+        filterAndDisplay()
     }
 
     private fun switchTab(tab: String) {
