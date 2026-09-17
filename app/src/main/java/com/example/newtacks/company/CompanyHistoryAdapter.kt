@@ -15,8 +15,8 @@ class CompanyHistoryAdapter(private val historyList: List<HiringPost>) :
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvTitle: TextView = view.findViewById(R.id.jobTitle)
-        val tvAmount: TextView = view.findViewById(R.id.jobAmount)
-        val tvDate: TextView = view.findViewById(R.id.jobLocation) // Reusing field for date
+        val tvAmount: TextView = view.findViewById(R.id.tvJobAmount)
+        val tvSubtitle: TextView = view.findViewById(R.id.tvSubtitle)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -30,7 +30,7 @@ class CompanyHistoryAdapter(private val historyList: List<HiringPost>) :
         holder.tvAmount.text = "₱${item.dailyRate}/day"
         
         val sdf = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-        holder.tvDate.text = "Completed: ${sdf.format(Date(item.createdAt))}"
+        holder.tvSubtitle.text = "Completed: ${sdf.format(Date(item.createdAt))}"
         
         // Disable the button for history
         holder.itemView.findViewById<View>(R.id.btnAccept).visibility = View.GONE

@@ -15,7 +15,8 @@ class WorkerJobAdapter(
     class JobViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.jobTitle)
         val subtitle: TextView = view.findViewById(R.id.tvSubtitle)
-cceptBtn: Button = view.findViewById(R.id.btnAccept)
+        val amount: TextView = view.findViewById(R.id.tvJobAmount)
+        val actionBtn: Button = view.findViewById(R.id.btnAccept)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): JobViewHolder {
@@ -29,20 +30,29 @@ cceptBtn: Button = view.findViewById(R.id.btnAccept)
 
         holder.title.text = opportunity.title
         val name = when (opportunity) {
-            is FeedOpportunity.ClientJob -> opportunity.job.clientName
-            is FeedOpportunity.CompanyHiring -> opportunity.post.companyName
-            is FeedOpportunity.ActiveJob -> opportunity.job.clientName
+            is FeedOpportunity.ClientJob -> {
+                holder.amount.text = "₱${opportunity.job.offeredAmount.toInt()}"
+                opportunity.job.clientName
+            }
+            is FeedOpportunity.CompanyHiring -> {
+                holder.amount.text = "₱${opportunity.post.dailyRate}/day"
+                opportunity.post.companyName
+            }
+            is FeedOpportunity.ActiveJob -> {
+                holder.amount.text = "₱${opportunity.job.offeredAmount.toInt()}"
+                opportunity.job.clientName
+            }
         }
         
         holder.subtitle.text = "$name • ${opportunity.distanceStr}"
 
-        holder.acceptBtn.text = "View full details"
+        holder.actionBtn.text = "View full details"
         
         holder.itemView.setOnClickListener {
             onClick(opportunity)
         }
         
-        holder.acceptBtn.setOnClickListener {
+        holder.actionBtn.setOnClickListener {
             onClick(opportunity)
         }
     }

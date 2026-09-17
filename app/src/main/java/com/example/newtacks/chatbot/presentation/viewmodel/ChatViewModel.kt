@@ -1,38 +1,68 @@
 package com.example.newtacks.chatbot.presentation.viewmodel
 
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.newtacks.chatbot.data.repository.ChatRepository
-import com.example.newtacks.chatbot.model.ChatResponse
 import com.example.newtacks.chatbot.presentation.state.ChatMessage
-import kotlinx.coroutines.launch
+import com.google.firebase.firestore.FirebaseFirestore
+import java.util.*
 
-class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
+class ChatViewModel : ViewModel() {
 
-    private val _chatResponse = MutableLiveData<Result<ChatResponse>>()
-    val chatResponse: LiveData<Result<ChatResponse>> = _chatResponse
+    private val db = FirebaseFirestore.getInstance()
+    val messages = MutableLiveData<MutableList<ChatMessage>>(mutableListOf())
+    val isLoading = MutableLiveData<Boolean>(false)
 
-    private val _isLoading = MutableLiveData<Boolean>()
-    val isLoading: LiveData<Boolean> = _isLoading
-
-    // Expose session messages from repository
-    val sessionMessages: List<ChatMessage> get() = repository.getSessionMessages()
-
-    fun addLocalMessage(message: String, isUser: Boolean) {
-        repository.addMessageToSession(ChatMessage(message, isUser))
+    init {
+        // Initial welcome message
+        val welcome = ChatMessage("Hey! I'm Tey, your STRACT AI assistant. How can I help you today?", false)
+        messages.value?.add(welcome)
     }
 
-    fun sendMessage(message: String, role: String) {
-        // Save user message to session immediately for UI consistency
-        repository.addMessageToSession(ChatMessage(message, true))
+    fun sendMessage(text: String, role: String) {
+        if (text.isBlank()) return
 
-        viewModelScope.launch {
-            _isLoading.value = true
-            val result = repository.sendMessage(message, role)
-            _chatResponse.value = result
-            _isLoading.value = false
-        }
+        // 1. Add user message to UI
+        val userMsg = ChatMessage(text, true)
+        val currentList = messages.value ?: mutableListOf()
+        currentList.add(userMsg)
+        messages.value = currentList
+
+        // 2. Search Firestore for keywords filtered by ROLE
+        isLoading.value = true
+        val upperRole = role.uppercase(Locale.getDefault())
+        
+        db.collection("chatbot_knowledge")
+            .whereIn("role", listOf(upperRole, "ALL")) // Filter by role or general info
+            .get()
+            .addOnSuccessListener { snapshots ->
+                var responseFound = false
+                val userTextLower = text.lowercase(Locale.getDefault())
+
+                for (doc in snapshots.documents) {
+                    val keywords = doc.get("keywords") as? List<String> ?: emptyList()
+                    val response = doc.getString("response") ?: ""
+
+                    // Check if any keyword matches within the user's sentence
+                    if (keywords.any { userTextLower.contains(it.lowercase(Locale.getDefault())) }) {
+                        addBotMessage(response)
+                        responseFound = true
+                        break
+                    }
+                }
+
+                if (!responseFound) {
+                    addBotMessage("I'm sorry, I don't have role-specific information on that. Try asking about payments, verification, or how to get started!")
+                }
+                isLoading.value = false
+            }.addOnFailureListener {
+                addBotMessage("I'm having trouble connecting to my knowledge base. Please try again later.")
+                isLoading.value = false
+            }
+    }
+
+    private fun addBotMessage(text: String) {
+        val currentList = messages.value ?: mutableListOf()
+        currentList.add(ChatMessage(text, false))
+        messages.value = currentList
     }
 }
