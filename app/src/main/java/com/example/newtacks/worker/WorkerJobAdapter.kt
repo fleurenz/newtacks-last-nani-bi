@@ -15,7 +15,7 @@ class WorkerJobAdapter(
     class JobViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.jobTitle)
         val subtitle: TextView = view.findViewById(R.id.tvSubtitle)
-cceptBtn: Button = view.findViewById(R.id.btnAccept)
+        val acceptBtn: Button = view.findViewById(R.id.btnAccept)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): JobViewHolder {
