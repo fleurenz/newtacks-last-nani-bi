@@ -288,18 +288,6 @@ class CompanyApplicantsFragment : Fragment() {
             }
         }
 
-        // Certificates buttons
-        val btnNC1 = dialogView.findViewById<Button>(R.id.btnViewNC1)
-        val btnNC2 = dialogView.findViewById<Button>(R.id.btnViewNC2)
-        val btnNC3 = dialogView.findViewById<Button>(R.id.btnViewNC3)
-        val tvNoCert = dialogView.findViewById<TextView>(R.id.tvNoCertificates)
-
-        var hasCert = false
-        worker.nc1CertificateUrl?.let { url -> if (url.isNotEmpty()) { btnNC1.visibility = View.VISIBLE; btnNC1.setOnClickListener { ImageUtils.showFullscreenImage(requireContext(), url) }; hasCert = true } }
-        worker.nc2CertificateUrl?.let { url -> if (url.isNotEmpty()) { btnNC2.visibility = View.VISIBLE; btnNC2.setOnClickListener { ImageUtils.showFullscreenImage(requireContext(), url) }; hasCert = true } }
-        worker.nc3CertificateUrl?.let { url -> if (url.isNotEmpty()) { btnNC3.visibility = View.VISIBLE; btnNC3.setOnClickListener { ImageUtils.showFullscreenImage(requireContext(), url) }; hasCert = true } }
-        if (!hasCert) tvNoCert.visibility = View.VISIBLE
-
         dialogView.findViewById<Button>(R.id.btnViewFullProfile).setOnClickListener {
             val intent = Intent(requireContext(), com.example.newtacks.worker.WorkerProfileActivity::class.java)
             intent.putExtra("WORKER_ID", worker.uid)

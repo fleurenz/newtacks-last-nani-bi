@@ -33,11 +33,8 @@ data class User(
     val isOnline: Boolean = false,
     val lastActive: Long = 0,
 
-    // ✅ VERIFICATION STATUS (0: Unverified, 1: NC1, 2: NC2, 3: NC3)
+    // ✅ VERIFICATION STATUS (0: Unverified, 1: Trusted, 2: Pro)
     val verificationStatus: Int = 0,
-    val nc1CertificateUrl: String? = null,
-    val nc2CertificateUrl: String? = null,
-    val nc3CertificateUrl: String? = null,
     val resumeUrl: String? = null,
     val verifiedSkills: Map<String, String> = emptyMap(), // Map of "SkillName" -> "CertificateUrl"
     val otherCertificates: List<WorkerCertificate> = emptyList(),

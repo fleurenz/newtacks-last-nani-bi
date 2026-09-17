@@ -560,48 +560,6 @@
                                 android:src="@drawable/ic_arrow_right"
                                 app:tint="#94A3B8" />
                         </LinearLayout>
-                        <!-- NC Upload Buttons (Expandable) -->
-                        <LinearLayout
-                            android:id="@+id/layoutNCButtons"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:paddingHorizontal="14dp"
-                            android:paddingBottom="14dp"
-                            android:visibility="gone">
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnUploadNC1"
-                                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:layout_marginEnd="6dp"
-                                android:text="NC1"
-                                android:textSize="11sp"
-                                app:cornerRadius="8dp"
-                                app:strokeColor="#0F325E" />
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnUploadNC2"
-                                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:layout_marginEnd="6dp"
-                                android:text="NC2"
-                                android:textSize="11sp"
-                                app:cornerRadius="8dp"
-                                app:strokeColor="#0F325E" />
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnUploadNC3"
-                                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="NC3"
-                                android:textSize="11sp"
-                                app:cornerRadius="8dp"
-                                app:strokeColor="#0F325E" />
-                        </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
