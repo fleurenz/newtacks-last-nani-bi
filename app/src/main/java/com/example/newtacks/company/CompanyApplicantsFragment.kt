@@ -514,7 +514,7 @@ class CompanyApplicantsFragment : Fragment() {
                     .get()
                     .addOnSuccessListener { userSnapshots ->
                         val userMap = userSnapshots.documents.associate { 
-                            it.id to it.toObject(User::class.java)!!.copy(uid = it.id)
+                            it.id to User.fromSnapshot(it)!!.copy(uid = it.id)
                         }
                         
                         allData.clear()

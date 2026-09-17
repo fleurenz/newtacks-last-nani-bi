@@ -451,7 +451,7 @@ class HiringDetailsActivity : AppCompatActivity() {
             .addOnSuccessListener { snapshots ->
                 applicantList.clear()
                 for (doc in snapshots) {
-                    val user = doc.toObject(User::class.java)?.copy(uid = doc.id)
+                    val user = User.fromSnapshot(doc)?.copy(uid = doc.id)
                     if (user != null) applicantList.add(user)
                 }
                 applicantAdapter.notifyDataSetChanged()

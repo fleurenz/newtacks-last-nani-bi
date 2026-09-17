@@ -1,5 +1,8 @@
 package com.example.newtacks.models
 
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.Exclude
+
 data class User(
     val uid: String = "",
     val role: String = "",
@@ -39,7 +42,33 @@ data class User(
     val verifiedSkills: Map<String, String> = emptyMap(), // Map of "SkillName" -> "CertificateUrl"
     val otherCertificates: List<WorkerCertificate> = emptyList(),
     val deletionTimestamp: Long? = null
-)
+) {
+    companion object {
+        /**
+         * ✅ SMART PIVOT: Merges flat "verifiedSkills.SkillName" fields into the verifiedSkills map.
+         */
+        fun fromSnapshot(doc: DocumentSnapshot): User? {
+            val user = doc.toObject(User::class.java) ?: return null
+            val rawData = doc.data ?: return user
+
+            val manualVerifiedMap = mutableMapOf<String, String>()
+            
+            // 1. Check for flat fields like "verifiedSkills.Plumbing"
+            rawData.forEach { (key, value) ->
+                if (key.startsWith("verifiedSkills.") && value is String) {
+                    val skillName = key.substringAfter("verifiedSkills.")
+                    manualVerifiedMap[skillName] = value
+                }
+            }
+
+            // 2. Merge with existing map (if any) and return
+            val mergedMap = user.verifiedSkills.toMutableMap()
+            mergedMap.putAll(manualVerifiedMap)
+            
+            return user.copy(verifiedSkills = mergedMap)
+        }
+    }
+}
 
 data class WorkerCertificate(
     val certId: String = "",
