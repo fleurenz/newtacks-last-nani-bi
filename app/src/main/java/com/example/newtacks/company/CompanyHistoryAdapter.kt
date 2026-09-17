@@ -15,8 +15,8 @@ class CompanyHistoryAdapter(private val historyList: List<HiringPost>) :
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvTitle: TextView = view.findViewById(R.id.jobTitle)
-        val tvAmount: TextView = view.findViewById(R.id.jobAmount)
-        val tvDate: TextView = view.findViewById(R.id.jobLocation) // Reusing field for date
+        val tvAmount: TextView = view.findViewById(R.id.tvJobAmount)
+        val tvDate: TextView = view.findViewById(R.id.tvSubtitle) // Reusing field for date
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
