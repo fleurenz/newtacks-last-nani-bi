@@ -1,6 +1,7 @@
 package com.example.newtacks.utils
 
 import android.app.Dialog
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
@@ -13,6 +14,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.newtacks.R
+import com.example.newtacks.authentication.OnboardingActivity
 import com.example.newtacks.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -106,14 +108,14 @@ class PrivacySecurityActivity : AppCompatActivity() {
         dialog.findViewById<ImageView>(R.id.dialogIcon).setImageResource(R.drawable.ic_trash)
         dialog.findViewById<TextView>(R.id.dialogTitle).text = "Delete Account?"
         dialog.findViewById<TextView>(R.id.dialogMessage).text =
-            "Are you sure you want to permanently delete your account? This action cannot be undone."
+            "Are you sure you want to delete your account? You have 3 days to undo this action by logging back in with your credentials."
 
         val btnDelete = dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnPositive)
         btnDelete.text = "Delete"
         btnDelete.backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#DC2626"))
         btnDelete.setOnClickListener {
             dialog.dismiss()
-            Toast.makeText(this, "Account deletion request sent", Toast.LENGTH_LONG).show()
+            markAccountForDeletion()
         }
 
         dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnNegative).apply {
@@ -122,6 +124,22 @@ class PrivacySecurityActivity : AppCompatActivity() {
         }
 
         dialog.show()
+    }
+
+    private fun markAccountForDeletion() {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("users").document(uid).update("deletionTimestamp", System.currentTimeMillis())
+            .addOnSuccessListener {
+                Toast.makeText(this, "Account marked for deletion. You have 3 days to restore it.", Toast.LENGTH_LONG).show()
+                auth.signOut()
+                val intent = Intent(this, OnboardingActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                finish()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to request deletion.", Toast.LENGTH_SHORT).show()
+            }
     }
 
     companion object {

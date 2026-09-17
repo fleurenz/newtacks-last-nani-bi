@@ -1,10 +1,14 @@
 package com.example.newtacks.authentication
 
+import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -27,6 +31,8 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var viewModel: LoginViewModel
     private lateinit var repo: AuthRepository
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,7 +65,7 @@ class LoginActivity : AppCompatActivity() {
         val email    = findViewById<EditText>(R.id.etEmail)
         val password = findViewById<EditText>(R.id.etPassword)
         val btn      = findViewById<Button>(R.id.btnLogin)
-        val signUp   = findViewById<android.widget.TextView>(R.id.goToSignup)
+        val signUp   = findViewById<TextView>(R.id.goToSignup)
 
         btn.setOnClickListener { viewModel.login(email.text.toString(), password.text.toString()) }
         signUp.setOnClickListener { startActivity(Intent(this, RoleSelectionActivity::class.java)) }
@@ -134,9 +140,7 @@ class LoginActivity : AppCompatActivity() {
                 is LoginState.Success -> {
                     loginProgress.visibility = View.GONE
                     btnLogin.isEnabled = true; btnLogin.text = "Log In"
-                    Toast.makeText(this, "Welcome!", Toast.LENGTH_SHORT).show()
-                    routeUser(state.role)
-                    finish()
+                    checkAccountDeletion(state.uid, state.role)
                 }
                 is LoginState.Error -> {
                     loginProgress.visibility = View.GONE
@@ -156,5 +160,66 @@ class LoginActivity : AppCompatActivity() {
             else -> { Toast.makeText(this, "Unknown role: $role", Toast.LENGTH_SHORT).show(); null }
         }
         intent?.let { startActivity(it) }
+    }
+
+    private fun checkAccountDeletion(uid: String, role: String) {
+        db.collection("users").document(uid).get().addOnSuccessListener { doc ->
+            val timestamp = doc.getLong("deletionTimestamp")
+            if (timestamp != null) {
+                val threeDaysInMillis = 3 * 24 * 60 * 60 * 1000L
+                if (System.currentTimeMillis() - timestamp < threeDaysInMillis) {
+                    showUndoDeletionDialog(uid, role)
+                } else {
+                    Toast.makeText(this, "Account has been permanently deleted.", Toast.LENGTH_LONG).show()
+                    auth.signOut()
+                }
+            } else {
+                Toast.makeText(this, "Welcome!", Toast.LENGTH_SHORT).show()
+                routeUser(role)
+                finish()
+            }
+        }
+    }
+
+    private fun showUndoDeletionDialog(uid: String, role: String) {
+        val dialog = Dialog(this)
+        dialog.setContentView(R.layout.dialog_role_select)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.88).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        dialog.findViewById<ImageView>(R.id.dialogIcon).setImageResource(R.drawable.ic_nav_account)
+        dialog.findViewById<TextView>(R.id.dialogTitle).text = "Restore Account?"
+        dialog.findViewById<TextView>(R.id.dialogMessage).text =
+            "Your account is marked for deletion. Would you like to restore it and continue?"
+
+        dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnPositive).apply {
+            text = "Restore"
+            setOnClickListener {
+                dialog.dismiss()
+                restoreAccount(uid, role)
+            }
+        }
+
+        dialog.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnNegative).apply {
+            text = "No, Exit"
+            setOnClickListener {
+                dialog.dismiss()
+                auth.signOut()
+            }
+        }
+
+        dialog.show()
+    }
+
+    private fun restoreAccount(uid: String, role: String) {
+        db.collection("users").document(uid).update("deletionTimestamp", null)
+            .addOnSuccessListener {
+                Toast.makeText(this, "Account restored successfully!", Toast.LENGTH_SHORT).show()
+                routeUser(role)
+                finish()
+            }
     }
 }

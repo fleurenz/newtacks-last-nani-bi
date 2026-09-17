@@ -40,7 +40,8 @@ data class User(
     val nc3CertificateUrl: String? = null,
     val resumeUrl: String? = null,
     val verifiedSkills: Map<String, String> = emptyMap(), // Map of "SkillName" -> "CertificateUrl"
-    val otherCertificates: List<WorkerCertificate> = emptyList()
+    val otherCertificates: List<WorkerCertificate> = emptyList(),
+    val deletionTimestamp: Long? = null
 )
 
 data class WorkerCertificate(
