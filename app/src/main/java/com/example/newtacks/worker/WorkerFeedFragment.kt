@@ -168,6 +168,8 @@ class WorkerFeedFragment : Fragment() {
             com.example.newtacks.utils.NotificationHelper.showNotificationDialog(requireContext())
         }
 
+        com.example.newtacks.utils.NotificationHelper.setupNotificationBadge(viewLifecycleOwner, view.findViewById(R.id.tvNotificationBadge))
+
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = WorkerJobAdapter(combinedOpportunities) { opportunity -> 
             cardListOverlay.visibility = View.GONE

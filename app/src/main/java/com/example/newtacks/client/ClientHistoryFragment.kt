@@ -47,6 +47,8 @@ class ClientHistoryFragment : Fragment(R.layout.fragment_client_history) {
             NotificationHelper.showNotificationDialog(requireContext())
         }
 
+        NotificationHelper.setupNotificationBadge(viewLifecycleOwner, view.findViewById(R.id.tvNotificationBadge))
+
         // Robust Inset Handling: Use spacer for status bar
         val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->

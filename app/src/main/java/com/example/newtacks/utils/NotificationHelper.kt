@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.view.View
+import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.newtacks.R
@@ -151,6 +152,24 @@ object NotificationHelper {
         processedNotificationIds.clear()
     }
 
+    fun setupNotificationBadge(lifecycleOwner: androidx.lifecycle.LifecycleOwner, badgeView: TextView) {
+        val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+
+        db.collection("notifications")
+            .whereEqualTo("to", uid)
+            .whereEqualTo("read", false)
+            .addSnapshotListener { snapshots, _ ->
+                val count = snapshots?.size() ?: 0
+                if (count > 0) {
+                    badgeView.visibility = View.VISIBLE
+                    badgeView.text = if (count > 9) "9+" else count.toString()
+                } else {
+                    badgeView.visibility = View.GONE
+                }
+            }
+    }
+
     fun showNotificationDialog(context: Context) {
         val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return
         val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
@@ -210,9 +229,16 @@ object NotificationHelper {
                         .whereEqualTo("to", uid)
                         .get()
                         .addOnSuccessListener { sn ->
+                            if (sn.isEmpty) return@addOnSuccessListener
                             val batch = db.batch()
                             for (d in sn) batch.delete(d.reference)
-                            batch.commit()
+                            batch.commit().addOnSuccessListener {
+                                // Explicitly update UI immediately
+                                notifList.clear()
+                                adapter.notifyDataSetChanged()
+                                layoutEmpty.visibility = View.VISIBLE
+                                btnClearAll.visibility = View.GONE
+                            }
                         }
                 }
                 .setNegativeButton("Cancel", null)

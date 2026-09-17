@@ -59,6 +59,8 @@ class ClientHomeFragment : Fragment() {
             NotificationHelper.showNotificationDialog(requireContext())
         }
 
+        NotificationHelper.setupNotificationBadge(viewLifecycleOwner, view.findViewById(R.id.tvNotificationBadge))
+
         loadUserInfo()
         listenForActiveJob()
 

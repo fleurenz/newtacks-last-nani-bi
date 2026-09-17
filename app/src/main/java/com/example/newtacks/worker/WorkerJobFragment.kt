@@ -170,6 +170,8 @@ class WorkerJobFragment : Fragment() {
         view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
             NotificationHelper.showNotificationDialog(requireContext())
         }
+
+        NotificationHelper.setupNotificationBadge(viewLifecycleOwner, view.findViewById(R.id.tvNotificationBadge))
     }
 
     private fun listenForActiveJob() {

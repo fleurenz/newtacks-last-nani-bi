@@ -89,6 +89,8 @@ class CompanyApplicantsFragment : Fragment() {
             NotificationHelper.showNotificationDialog(requireContext())
         }
 
+        NotificationHelper.setupNotificationBadge(viewLifecycleOwner, view.findViewById(R.id.tvNotificationBadge))
+
         setupRecyclerView()
         setupTabs()
 
