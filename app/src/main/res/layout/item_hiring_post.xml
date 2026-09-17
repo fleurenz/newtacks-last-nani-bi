@@ -87,6 +87,18 @@
                     android:textColor="#F59E0B"
                     android:textSize="11sp"
                     android:textStyle="bold"
+                    android:layout_marginEnd="6dp" />                <!-- Tag Example -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_tab_selected"
+                    android:backgroundTint="#FFF1E2"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="4dp"
+                    android:text="Masonry"
+                    android:textColor="#F59E0B"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
                     android:layout_marginEnd="6dp" />
 
             </LinearLayout>

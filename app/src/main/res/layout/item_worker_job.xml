@@ -2,16 +2,15 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="16dp"
-    android:layout_marginEnd="16dp"
+    android:layout_marginHorizontal="16dp"
     android:layout_marginTop="12dp"
     android:layout_marginBottom="8dp"
-    style="@style/Widget.MaterialComponents.CardView"
-    app:cardBackgroundColor="#FFFFFF"
     app:cardCornerRadius="20dp"
-    app:cardElevation="6dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="#FFFFFF"
     app:strokeWidth="0dp">
 
     <LinearLayout
@@ -20,50 +19,58 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <TextView
-            android:id="@+id/tvSubtitle"
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Maison Baga • 13km away"
-            android:textColor="#000000"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="4dp" />
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/tvSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@+id/tvJobAmount"
+                android:textColor="#1E293B"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:text="Maison Baga • 13km away" />
+
+            <TextView
+                android:id="@+id/tvJobAmount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:textColor="#16A34A"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:text="₱750" />
+
+        </RelativeLayout>
 
         <TextView
             android:id="@+id/jobTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Plumbing Request"
-            android:textColor="#1E293B"
-            android:textSize="13sp"
-            android:layout_marginBottom="16dp" />
+            android:textColor="#64748B"
+            android:textSize="14sp"
+            android:lineSpacingExtra="2dp"
+            tools:text="Plumbing Request" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnAccept"
             android:layout_width="match_parent"
             android:layout_height="52dp"
+            android:layout_marginTop="20dp"
             android:text="View full details"
             android:textColor="#FFFFFF"
-            android:textSize="13sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:textAllCaps="false"
             app:backgroundTint="#0F325E"
-            app:cornerRadius="10dp"
+            app:cornerRadius="12dp"
+            app:elevation="4dp"
             android:insetTop="0dp"
             android:insetBottom="0dp" />
-
-        <!-- Hidden fields for compatibility if needed -->
-        <TextView
-            android:id="@+id/jobAmount"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
-        <TextView
-            android:id="@+id/jobLocation"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
 
     </LinearLayout>
 

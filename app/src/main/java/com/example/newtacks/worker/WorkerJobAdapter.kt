@@ -15,7 +15,7 @@ class WorkerJobAdapter(
     class JobViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.jobTitle)
         val subtitle: TextView = view.findViewById(R.id.tvSubtitle)
-        val acceptBtn: Button = view.findViewById(R.id.btnAccept)
+cceptBtn: Button = view.findViewById(R.id.btnAccept)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): JobViewHolder {
@@ -28,7 +28,6 @@ class WorkerJobAdapter(
         val opportunity = opportunities[position]
 
         holder.title.text = opportunity.title
-        
         val name = when (opportunity) {
             is FeedOpportunity.ClientJob -> opportunity.job.clientName
             is FeedOpportunity.CompanyHiring -> opportunity.post.companyName
