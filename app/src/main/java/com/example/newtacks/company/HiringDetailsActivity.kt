@@ -523,6 +523,17 @@ class HiringDetailsActivity : AppCompatActivity() {
             cgOther.visibility = View.GONE
         }
 
+        // Resume Section
+        val layoutResume = dialogView.findViewById<View>(R.id.layoutResumeViewDialog)
+        if (!worker.resumeUrl.isNullOrEmpty()) {
+            layoutResume.visibility = View.VISIBLE
+            layoutResume.setOnClickListener {
+                openFile(worker.resumeUrl)
+            }
+        } else {
+            layoutResume.visibility = View.GONE
+        }
+
         // General Certificates
         val tvCertsHeader = dialogView.findViewById<TextView>(R.id.tvCertificatesHeaderDialog)
         val rvCerts = dialogView.findViewById<RecyclerView>(R.id.rvOtherCertificatesDialog)
@@ -724,6 +735,17 @@ class HiringDetailsActivity : AppCompatActivity() {
             }
         }
         override fun getItemCount() = certs.size
+    }
+
+    private fun openFile(url: String) {
+        val isImage = url.contains(".jpg", true) || url.contains(".png", true) || url.contains(".jpeg", true)
+        if (isImage) {
+            ImageUtils.showFullscreenImage(this, url)
+        } else {
+            val viewerUrl = "https://docs.google.com/viewer?url=$url"
+            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(viewerUrl))
+            startActivity(intent)
+        }
     }
 
     private fun showScheduleInterviewDialog(worker: User) {

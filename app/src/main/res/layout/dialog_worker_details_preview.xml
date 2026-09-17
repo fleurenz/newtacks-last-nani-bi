@@ -150,6 +150,64 @@
             android:layout_marginBottom="20dp"
             app:chipSpacingHorizontal="6dp" />
 
+        <!-- Resume Section (Added) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/layoutResumeViewDialog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#F8FAFC"
+            app:strokeWidth="1dp"
+            app:strokeColor="#E2E8F0"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:visibility="gone"
+            tools:visibility="visible">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="12dp">
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_inbox"
+                    app:tint="#0F325E"
+                    android:background="@drawable/bg_circle"
+                    android:backgroundTint="#EBF2FF"
+                    android:padding="5dp" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="12dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Worker Resume"
+                        android:textColor="#1E293B"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Click to view resume"
+                        android:textColor="#94A3B8"
+                        android:textSize="10sp" />
+                </LinearLayout>
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_arrow_right"
+                    app:tint="#94A3B8" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- General Certificates Section (Visible only to Company) -->
         <TextView
             android:id="@+id/tvCertificatesHeaderDialog"

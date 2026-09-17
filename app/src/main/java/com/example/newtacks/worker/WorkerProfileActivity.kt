@@ -45,6 +45,7 @@ class WorkerProfileActivity : AppCompatActivity() {
     
     private lateinit var tvCertsHeader: TextView
     private lateinit var rvOtherCerts: RecyclerView
+    private lateinit var layoutResume: View
     
     private lateinit var tvReviewsHeader: TextView
     private lateinit var rvReviews: RecyclerView
@@ -99,6 +100,7 @@ class WorkerProfileActivity : AppCompatActivity() {
         
         tvCertsHeader = findViewById(R.id.tvCertificatesHeader)
         rvOtherCerts = findViewById(R.id.rvOtherCertificates)
+        layoutResume = findViewById(R.id.layoutResumeView)
 
         tvReviewsHeader = findViewById(R.id.tvReviewsHeader)
         rvReviews = findViewById(R.id.rvReviews)
@@ -187,8 +189,19 @@ class WorkerProfileActivity : AppCompatActivity() {
                         chipGroupOther.visibility = View.GONE
                     }
 
-                    // Certificates (Company Only)
+                    // Resume & Certificates (Company Only)
                     if (viewerRole == "COMPANY") {
+                        // 1. Resume
+                        if (!worker.resumeUrl.isNullOrEmpty()) {
+                            layoutResume.visibility = View.VISIBLE
+                            layoutResume.setOnClickListener {
+                                openFile(worker.resumeUrl)
+                            }
+                        } else {
+                            layoutResume.visibility = View.GONE
+                        }
+
+                        // 2. Other Certs
                         val certs = worker.otherCertificates
                         if (certs.isNotEmpty()) {
                             tvCertsHeader.visibility = View.VISIBLE
@@ -364,5 +377,16 @@ class WorkerProfileActivity : AppCompatActivity() {
         intent.putExtra("REPORTEE_ID", workerId)
         intent.putExtra("REPORTEE_NAME", tvName.text.toString())
         startActivity(intent)
+    }
+
+    private fun openFile(url: String) {
+        val isImage = url.contains(".jpg", true) || url.contains(".png", true) || url.contains(".jpeg", true)
+        if (isImage) {
+            com.example.newtacks.utils.ImageUtils.showFullscreenImage(this, url)
+        } else {
+            val viewerUrl = "https://docs.google.com/viewer?url=$url"
+            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(viewerUrl))
+            startActivity(intent)
+        }
     }
 }
