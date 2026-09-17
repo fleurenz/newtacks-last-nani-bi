@@ -13,3 +13,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+serviceAccountKey.json
+# Node.js
+node_modules/
+package-lock.json
+seedChatbot.js
+

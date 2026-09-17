@@ -21,46 +21,57 @@ class ChatViewModel : ViewModel() {
     fun sendMessage(text: String, role: String) {
         if (text.isBlank()) return
 
-        // 1. Add user message to UI
         val userMsg = ChatMessage(text, true)
         val currentList = messages.value ?: mutableListOf()
         currentList.add(userMsg)
         messages.value = currentList
 
-        // 2. Search Firestore for keywords filtered by ROLE
         isLoading.value = true
         val upperRole = role.uppercase(Locale.getDefault())
         
         db.collection("chatbot_knowledge").get().addOnSuccessListener { snapshots ->
-            var responseFound = false
             val userTextLower = text.lowercase(Locale.getDefault())
+            var bestResponse: String? = null
+            var longestMatchLength = 0
 
             for (doc in snapshots.documents) {
-                // Support both "role" and "Role" field names from Firestore
                 val docRole = (doc.getString("role") ?: doc.getString("Role") ?: "ALL").uppercase(Locale.getDefault())
-                
-                // Only process if it matches the current user's role or is for everyone
                 if (docRole != upperRole && docRole != "ALL") continue
 
                 val keywords = doc.get("keywords") as? List<String> ?: emptyList()
                 val response = doc.getString("response") ?: ""
 
-                // Check if any keyword matches within the user's sentence
-                if (keywords.any { userTextLower.contains(it.lowercase(Locale.getDefault())) }) {
-                    addBotMessage(response)
-                    responseFound = true
-                    break
+                for (keyword in keywords) {
+                    val kwLower = keyword.lowercase(Locale.getDefault())
+                    if (userTextLower.contains(kwLower)) {
+                        if (kwLower.length > longestMatchLength) {
+                            longestMatchLength = kwLower.length
+                            bestResponse = response
+                        }
+                    }
                 }
             }
 
-                if (!responseFound) {
-                    addBotMessage("I'm sorry, I don't have role-specific information on that. Try asking about payments, verification, or how to get started!")
-                }
-                isLoading.value = false
-            }.addOnFailureListener {
-                addBotMessage("I'm having trouble connecting to my knowledge base. Please try again later.")
-                isLoading.value = false
+            if (bestResponse != null) {
+                addBotMessage(bestResponse)
+            } else {
+                addBotMessage("I'm sorry, I don't have role-specific information on that. I've noted your question so I can learn the answer soon!")
+                logUnansweredQuestion(text, role)
             }
+            isLoading.value = false
+        }.addOnFailureListener {
+            addBotMessage("I'm having trouble connecting to my knowledge base. Please try again later.")
+            isLoading.value = false
+        }
+    }
+
+    private fun logUnansweredQuestion(text: String, role: String) {
+        val data = mapOf(
+            "question" to text,
+            "role" to role,
+            "timestamp" to System.currentTimeMillis()
+        )
+        db.collection("unanswered_questions").add(data)
     }
 
     private fun addBotMessage(text: String) {
