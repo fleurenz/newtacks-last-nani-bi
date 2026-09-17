@@ -129,7 +129,7 @@ class WorkerProfileActivity : AppCompatActivity() {
         workerId?.let { id ->
             firestore.collection("users").document(id).get()
                 .addOnSuccessListener { doc ->
-                    val worker = doc.toObject(User::class.java) ?: return@addOnSuccessListener
+                    val worker = User.fromSnapshot(doc) ?: return@addOnSuccessListener
                     
                     tvName.text = worker.name
                     tvAddress.text = worker.address

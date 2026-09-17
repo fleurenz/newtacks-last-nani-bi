@@ -138,7 +138,7 @@ class WorkerAccountFragment : Fragment() {
             .document(uid)
             .get()
             .addOnSuccessListener { doc ->
-                val user = doc.toObject(User::class.java)?.copy(uid = doc.id) ?: return@addOnSuccessListener
+                val user = User.fromSnapshot(doc)?.copy(uid = doc.id) ?: return@addOnSuccessListener
                 val name = user.name
                 val avg = doc.getDouble("ratingAverage") ?: user.rating
                 val count = doc.getLong("ratingCount") ?: user.totalRatings.toLong()

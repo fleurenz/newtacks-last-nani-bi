@@ -88,7 +88,7 @@ class WorkerVerificationActivity : AppCompatActivity() {
     private fun loadUserData() {
         val uid = auth.currentUser?.uid ?: return
         firestore.collection("users").document(uid).get().addOnSuccessListener { doc ->
-            currentUser = doc.toObject(User::class.java)
+            currentUser = User.fromSnapshot(doc)
             updateUI()
         }
     }
