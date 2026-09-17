@@ -139,7 +139,7 @@
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:src="@drawable/ic_inbox"
+                    android:src="@drawable/ic_requests"
                     app:tint="#0F325E" />
 
                 <TextView
@@ -178,6 +178,7 @@
             app:cardCornerRadius="12dp"
             app:cardElevation="4dp"
             app:strokeWidth="0dp"
+            android:backgroundTint="#FFFFFF"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
@@ -192,7 +193,7 @@
                     android:layout_width="56dp"
                     android:layout_height="56dp"
                     android:src="@drawable/ic_location"
-                    android:background="?attr/selectableItemBackground"
+                    android:backgroundTint="#FFFFFF"
                     app:tint="#EF4444" />
 
                 <View
@@ -206,7 +207,7 @@
                     android:layout_width="56dp"
                     android:layout_height="56dp"
                     android:src="@drawable/ic_plus"
-                    android:background="?attr/selectableItemBackground"
+                    android:backgroundTint="#FFFFFF"
                     app:tint="#000000" />
 
                 <View
@@ -220,7 +221,7 @@
                     android:layout_width="56dp"
                     android:layout_height="56dp"
                     android:src="@drawable/ic_minus"
-                    android:background="?attr/selectableItemBackground"
+                    android:backgroundTint="#FFFFFF"
                     app:tint="#000000" />
 
             </LinearLayout>
@@ -236,10 +237,10 @@
             android:layout_marginTop="100dp"
             android:layout_marginBottom="16dp"
             android:visibility="gone"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="8dp"
-            app:strokeColor="#0F325E"
-            app:strokeWidth="1.5dp"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="12dp"
+            app:cardBackgroundColor="#FFFFFF"
+            app:strokeWidth="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="@id/mapView">
 
@@ -248,18 +249,29 @@
                 android:layout_height="match_parent"
                 android:orientation="vertical">
 
+                <!-- Drag handle, gives it a bottom-sheet feel instead of a floating box -->
+                <View
+                    android:layout_width="36dp"
+                    android:layout_height="4dp"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="12dp"
+                    android:background="#E2E8F0" />
+
                 <com.google.android.material.tabs.TabLayout
                     android:id="@+id/tabLayoutFeed"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginHorizontal="20dp"
                     app:tabIndicatorColor="#0F325E"
                     app:tabSelectedTextColor="#0F325E"
-                    app:tabTextColor="#64748B"
+                    app:tabTextColor="#94A3B8"
                     app:tabRippleColor="@null"
                     app:tabIndicatorFullWidth="false"
                     app:tabIndicatorHeight="3dp"
-                    app:tabTextAppearance="@style/ToolbarTitleStyle">
+                    app:tabGravity="start"
+                    app:tabMode="scrollable"
+                    android:backgroundTint="#FFFFFF">
                     <com.google.android.material.tabs.TabItem
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -269,6 +281,11 @@
                         android:layout_height="wrap_content"
                         android:text="Job Hiring" />
                 </com.google.android.material.tabs.TabLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#F1F5F9" />
 
                 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
                     android:id="@+id/swipeRefreshFeed"

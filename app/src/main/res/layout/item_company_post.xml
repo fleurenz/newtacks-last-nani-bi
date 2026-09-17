@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    style="@style/Widget.MaterialComponents.CardView"
     app:cardCornerRadius="16dp"
     app:cardElevation="6dp"
     app:strokeWidth="0dp"
