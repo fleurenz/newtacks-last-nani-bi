@@ -31,24 +31,27 @@ class ChatViewModel : ViewModel() {
         isLoading.value = true
         val upperRole = role.uppercase(Locale.getDefault())
         
-        db.collection("chatbot_knowledge")
-            .whereIn("role", listOf(upperRole, "ALL")) // Filter by role or general info
-            .get()
-            .addOnSuccessListener { snapshots ->
-                var responseFound = false
-                val userTextLower = text.lowercase(Locale.getDefault())
+        db.collection("chatbot_knowledge").get().addOnSuccessListener { snapshots ->
+            var responseFound = false
+            val userTextLower = text.lowercase(Locale.getDefault())
 
-                for (doc in snapshots.documents) {
-                    val keywords = doc.get("keywords") as? List<String> ?: emptyList()
-                    val response = doc.getString("response") ?: ""
+            for (doc in snapshots.documents) {
+                // Support both "role" and "Role" field names from Firestore
+                val docRole = (doc.getString("role") ?: doc.getString("Role") ?: "ALL").uppercase(Locale.getDefault())
+                
+                // Only process if it matches the current user's role or is for everyone
+                if (docRole != upperRole && docRole != "ALL") continue
 
-                    // Check if any keyword matches within the user's sentence
-                    if (keywords.any { userTextLower.contains(it.lowercase(Locale.getDefault())) }) {
-                        addBotMessage(response)
-                        responseFound = true
-                        break
-                    }
+                val keywords = doc.get("keywords") as? List<String> ?: emptyList()
+                val response = doc.getString("response") ?: ""
+
+                // Check if any keyword matches within the user's sentence
+                if (keywords.any { userTextLower.contains(it.lowercase(Locale.getDefault())) }) {
+                    addBotMessage(response)
+                    responseFound = true
+                    break
                 }
+            }
 
                 if (!responseFound) {
                     addBotMessage("I'm sorry, I don't have role-specific information on that. Try asking about payments, verification, or how to get started!")
