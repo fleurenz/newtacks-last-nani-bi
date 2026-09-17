@@ -208,9 +208,22 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="20dp"
                 android:text="Don't have an account? Sign Up"
                 android:textColor="#94A3B8"
                 android:textSize="13sp" />
+
+            <!-- TERMS -->
+            <TextView
+                android:id="@+id/tvTerms"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:gravity="center"
+                android:lineSpacingExtra="2dp"
+                android:text="By continuing, you agree to our Terms of Service and Privacy Policy"
+                android:textColor="#94A3B8"
+                android:textSize="12sp" />
 
         </LinearLayout>
     </ScrollView>

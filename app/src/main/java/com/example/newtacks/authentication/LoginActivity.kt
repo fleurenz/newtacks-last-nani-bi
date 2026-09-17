@@ -70,7 +70,61 @@ class LoginActivity : AppCompatActivity() {
         btn.setOnClickListener { viewModel.login(email.text.toString(), password.text.toString()) }
         signUp.setOnClickListener { startActivity(Intent(this, RoleSelectionActivity::class.java)) }
 
+        setupTermsAndPrivacy()
+
         observeState()
+    }
+
+    private fun setupTermsAndPrivacy() {
+        findViewById<TextView>(R.id.tvTerms).apply {
+            val fullText  = "By continuing, you agree to our Terms of Service and Privacy Policy"
+            val spannable = android.text.SpannableString(fullText)
+            
+            val termsStart = fullText.indexOf("Terms of Service")
+            val termsEnd   = termsStart + "Terms of Service".length
+            
+            val privacyStart = fullText.indexOf("Privacy Policy")
+            val privacyEnd   = privacyStart + "Privacy Policy".length
+            
+            val blue = android.graphics.Color.parseColor("#1E88E5")
+            
+            // Terms link
+            spannable.setSpan(object : android.text.style.ClickableSpan() {
+                override fun onClick(widget: View) {
+                    com.example.newtacks.utils.LegalDocumentActivity.start(
+                        this@LoginActivity,
+                        com.example.newtacks.utils.LegalDocumentActivity.TITLE_TERMS,
+                        "Last updated: September 2026",
+                        com.example.newtacks.utils.PrivacySecurityActivity.TERMS_OF_SERVICE_TEXT
+                    )
+                }
+                override fun updateDrawState(ds: android.text.TextPaint) {
+                    ds.color = blue
+                    ds.isUnderlineText = true
+                    ds.isFakeBoldText = true
+                }
+            }, termsStart, termsEnd, 0)
+            
+            // Privacy link
+            spannable.setSpan(object : android.text.style.ClickableSpan() {
+                override fun onClick(widget: View) {
+                    com.example.newtacks.utils.LegalDocumentActivity.start(
+                        this@LoginActivity,
+                        com.example.newtacks.utils.LegalDocumentActivity.TITLE_PRIVACY,
+                        "Last updated: September 2026",
+                        com.example.newtacks.utils.PrivacySecurityActivity.PRIVACY_POLICY_TEXT
+                    )
+                }
+                override fun updateDrawState(ds: android.text.TextPaint) {
+                    ds.color = blue
+                    ds.isUnderlineText = true
+                    ds.isFakeBoldText = true
+                }
+            }, privacyStart, privacyEnd, 0)
+            
+            text = spannable
+            movementMethod = android.text.method.LinkMovementMethod.getInstance()
+        }
     }
 
     private fun handleMagicLink(intent: Intent?) {

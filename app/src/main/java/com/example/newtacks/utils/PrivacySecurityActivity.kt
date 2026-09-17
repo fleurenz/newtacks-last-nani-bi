@@ -144,7 +144,7 @@ class PrivacySecurityActivity : AppCompatActivity() {
 
     companion object {
         // TODO: Replace with your actual capstone-appropriate legal text before final submission.
-        private const val TERMS_OF_SERVICE_TEXT = """
+        const val TERMS_OF_SERVICE_TEXT = """
 By using this app, you agree to the following terms:
 
 1. Account Responsibility
@@ -165,7 +165,7 @@ We reserve the right to suspend or terminate accounts that violate these terms, 
 This is placeholder text for demonstration purposes as part of a capstone project and should be replaced with reviewed legal content before any public release.
         """
 
-        private const val PRIVACY_POLICY_TEXT = """
+        const val PRIVACY_POLICY_TEXT = """
 We collect and use your information only as described below:
 
 1. Information We Collect
