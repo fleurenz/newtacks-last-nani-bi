@@ -83,7 +83,6 @@
                 android:textSize="11sp"
                 tools:text="Posted August 26  •  ₱800/day" />
 
-
             <TextView
                 android:id="@+id/tvPostLocation"
                 android:layout_width="wrap_content"
