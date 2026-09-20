@@ -46,6 +46,12 @@ class ClientDashboardActivity : AppCompatActivity() {
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.clientBottomNav)
 
+        ViewCompat.setOnApplyWindowInsetsListener(bottomNav) { v, insets ->
+            val navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            v.updatePadding(bottom = navBars.bottom)
+            insets
+        }
+
         val fragmentToOpen = intent.getStringExtra(OPEN_FRAGMENT)
         val startId = intent.getStringExtra("OPEN_ID")
         
