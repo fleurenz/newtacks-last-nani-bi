@@ -23,11 +23,10 @@
             android:id="@+id/layoutHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="20dp"
-            android:paddingTop="12dp"
-            android:paddingBottom="12dp">
+            android:paddingHorizontal="24dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp">
 
-            <!-- Standard Title -->
             <TextView
                 android:id="@+id/tvHeaderTitle"
                 android:layout_width="wrap_content"
