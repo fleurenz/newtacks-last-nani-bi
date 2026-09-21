@@ -11,6 +11,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import com.example.newtacks.client.*
@@ -50,7 +51,17 @@ class ClientDashboardActivity : AppCompatActivity() {
 
         ViewCompat.setOnApplyWindowInsetsListener(bottomNav) { v, insets ->
             val navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            val statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            
             v.updatePadding(bottom = navBars.bottom)
+            
+            // DYNAMIC POSITIONING: Align with status bar + small padding
+            val btnNotif = findViewById<View>(R.id.btnFloatingNotifications)
+            btnNotif.updateLayoutParams<android.view.ViewGroup.MarginLayoutParams> {
+                // Perfect spot: Just below the status bar with 12dp of extra breathing room
+                topMargin = statusBars.top + (12 * resources.displayMetrics.density).toInt()
+            }
+
             insets
         }
 
@@ -119,7 +130,17 @@ class ClientDashboardActivity : AppCompatActivity() {
 
         ViewCompat.setOnApplyWindowInsetsListener(bottomNav) { v, insets ->
             val navBars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            val statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            
             v.updatePadding(bottom = navBars.bottom)
+            
+            // DYNAMIC POSITIONING: Align with status bar + small padding
+            val btnNotif = findViewById<View>(R.id.btnFloatingNotifications)
+            btnNotif.updateLayoutParams<android.view.ViewGroup.MarginLayoutParams> {
+                // Perfect spot: Just below the status bar with 12dp of extra breathing room
+                topMargin = statusBars.top + (12 * resources.displayMetrics.density).toInt()
+            }
+
             insets
         }
 

@@ -37,6 +37,7 @@
                     android:id="@+id/btnHelp"
                     android:layout_width="28dp"
                     android:layout_height="28dp"
+                    android:layout_marginEnd="35dp"
                     android:src="@drawable/ic_help_outline"
                     app:tint="#FFFFFF" />
             </LinearLayout>
