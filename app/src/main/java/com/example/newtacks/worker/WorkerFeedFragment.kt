@@ -163,12 +163,6 @@ class WorkerFeedFragment : Fragment() {
         view.findViewById<View>(R.id.btnHelp).setOnClickListener {
             Toast.makeText(requireContext(), "Support coming soon", Toast.LENGTH_SHORT).show()
         }
-        
-        view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
-            com.example.newtacks.utils.NotificationHelper.showNotificationDialog(requireContext())
-        }
-
-        com.example.newtacks.utils.NotificationHelper.setupNotificationBadge(viewLifecycleOwner, view.findViewById(R.id.tvNotificationBadge))
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = WorkerJobAdapter(combinedOpportunities) { opportunity -> 

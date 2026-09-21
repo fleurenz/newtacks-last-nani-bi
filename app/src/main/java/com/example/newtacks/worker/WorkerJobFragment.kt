@@ -166,12 +166,6 @@ class WorkerJobFragment : Fragment() {
                 (activity as? com.example.newtacks.WorkerDashboardActivity)?.focusMapOnLocation(job.latitude, job.longitude)
             }
         }
-
-        view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
-            NotificationHelper.showNotificationDialog(requireContext())
-        }
-
-        NotificationHelper.setupNotificationBadge(viewLifecycleOwner, view.findViewById(R.id.tvNotificationBadge))
     }
 
     private fun listenForActiveJob() {

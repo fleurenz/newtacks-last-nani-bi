@@ -69,12 +69,6 @@ class CompanyHiringFragment : Fragment() {
         setupRecyclerView()
         setupTabs()
         
-        view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
-            NotificationHelper.showNotificationDialog(requireContext())
-        }
-
-        NotificationHelper.setupNotificationBadge(viewLifecycleOwner, view.findViewById(R.id.tvNotificationBadge))
-        
         btnFilter.setOnClickListener {
             toggleSorting()
         }

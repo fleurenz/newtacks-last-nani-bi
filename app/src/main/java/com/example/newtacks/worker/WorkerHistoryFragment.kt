@@ -47,12 +47,6 @@ class WorkerHistoryFragment : Fragment() {
         }
         recyclerView.adapter = adapter
 
-        view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
-            NotificationHelper.showNotificationDialog(requireContext())
-        }
-
-        NotificationHelper.setupNotificationBadge(viewLifecycleOwner, view.findViewById(R.id.tvNotificationBadge))
-
         // Robust Inset Handling: Use spacer for status bar
         val statusBarSpacer = view.findViewById<View>(R.id.statusBarSpacer)
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->

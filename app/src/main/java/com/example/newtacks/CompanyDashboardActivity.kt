@@ -2,6 +2,8 @@ package com.example.newtacks
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -59,6 +61,10 @@ class CompanyDashboardActivity : AppCompatActivity() {
                 show(activeFragment!!)
             }.commit()
 
+            // Initial notification button state
+            findViewById<View>(R.id.btnFloatingNotifications).visibility = 
+                if (activeFragment == fragmentAccount) View.GONE else View.VISIBLE
+
             // Process specific ID navigation if needed
             if (!startId.isNullOrEmpty()) {
                 if (fragmentToOpen == "HIRING_DETAILS") {
@@ -86,6 +92,14 @@ class CompanyDashboardActivity : AppCompatActivity() {
 
         val fabChat = findViewById<FloatingActionButton>(R.id.fabChat)
         ChatbotUtils.setupChatbot(this, fabChat, "company")
+
+        val btnNotif = findViewById<View>(R.id.btnFloatingNotifications)
+        val tvNotifBadge = findViewById<TextView>(R.id.tvFloatingNotificationBadge)
+        btnNotif.setOnClickListener {
+            com.example.newtacks.utils.NotificationHelper.showNotificationDialog(this)
+        }
+        com.example.newtacks.utils.NotificationHelper.setupNotificationBadge(this, tvNotifBadge)
+        
         listenForUnreadMessages()
 
         ViewCompat.setOnApplyWindowInsetsListener(bottomNav) { v, insets ->
@@ -110,6 +124,10 @@ class CompanyDashboardActivity : AppCompatActivity() {
                 R.id.nav_company_account -> fragmentAccount
                 else             -> return@setOnItemSelectedListener false
             }
+
+            // Hide notification button on Account screen
+            findViewById<View>(R.id.btnFloatingNotifications).visibility = 
+                if (item.itemId == R.id.nav_company_account) View.GONE else View.VISIBLE
 
             if (target != null && target !== activeFragment) {
                 supportFragmentManager.beginTransaction()

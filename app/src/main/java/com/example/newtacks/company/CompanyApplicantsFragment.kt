@@ -85,12 +85,6 @@ class CompanyApplicantsFragment : Fragment() {
             insets
         }
 
-        view.findViewById<View>(R.id.btnNotifications).setOnClickListener {
-            NotificationHelper.showNotificationDialog(requireContext())
-        }
-
-        NotificationHelper.setupNotificationBadge(viewLifecycleOwner, view.findViewById(R.id.tvNotificationBadge))
-
         setupRecyclerView()
         setupTabs()
 
