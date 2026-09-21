@@ -160,9 +160,23 @@ class WorkerDashboardActivity : AppCompatActivity() {
                 else             -> return@setOnItemSelectedListener false
             }
 
-            // Hide notification button on Account screen
-            findViewById<View>(R.id.btnFloatingNotifications).visibility = 
-                if (item.itemId == R.id.nav_account) View.GONE else View.VISIBLE
+            // Hide notification button on Account screen with animation
+            val btnNotif = findViewById<View>(R.id.btnFloatingNotifications)
+            if (item.itemId == R.id.nav_account) {
+                if (btnNotif.visibility == View.VISIBLE) {
+                    btnNotif.animate().alpha(0f).scaleX(0.8f).scaleY(0.8f).setDuration(200).withEndAction {
+                        btnNotif.visibility = View.GONE
+                    }.start()
+                }
+            } else {
+                if (btnNotif.visibility == View.GONE) {
+                    btnNotif.visibility = View.VISIBLE
+                    btnNotif.alpha = 0f
+                    btnNotif.scaleX = 0.8f
+                    btnNotif.scaleY = 0.8f
+                    btnNotif.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(250).start()
+                }
+            }
 
             if (target != null && target !== activeFragment) {
                 supportFragmentManager.beginTransaction()
