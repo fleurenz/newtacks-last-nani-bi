@@ -73,8 +73,7 @@ class WorkerEditProfileActivity : AppCompatActivity() {
                     }
                 }
             } else if (result.resultCode == UCrop.RESULT_ERROR) {
-                val cropError = UCrop.getError(result.data!!)
-                Toast.makeText(this, "Crop error: ${cropError?.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Failed to crop photo. Please try again.", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -203,7 +202,7 @@ class WorkerEditProfileActivity : AppCompatActivity() {
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(this, "Failed to load data", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Unable to load profile data", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -229,7 +228,7 @@ class WorkerEditProfileActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(
                         this,
-                        "Could not get location. Ensure GPS is on.",
+                        "Could not detect location. Please check if GPS is enabled.",
                         Toast.LENGTH_SHORT
                     ).show()
                     switchRealTimeLocation.isChecked = false
@@ -237,7 +236,7 @@ class WorkerEditProfileActivity : AppCompatActivity() {
                 }
             }
             .addOnFailureListener {
-                Toast.makeText(this, "Location detection failed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Unable to detect location automatically.", Toast.LENGTH_SHORT).show()
                 switchRealTimeLocation.isChecked = false
                 etAddress.setText(profileAddress)
             }
@@ -251,11 +250,11 @@ class WorkerEditProfileActivity : AppCompatActivity() {
                 val address = addresses[0].getAddressLine(0)
                 etAddress.setText(address)
             } else {
-                etAddress.setText("Address not found")
+                etAddress.setText("Address details unavailable")
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            etAddress.setText("Coordinates found, but address unavailable")
+            etAddress.setText("Coordinates found, but address details unavailable")
         }
     }
 
@@ -265,7 +264,7 @@ class WorkerEditProfileActivity : AppCompatActivity() {
         val address = etAddress.text.toString().trim()
 
         if (name.isEmpty() || phone.isEmpty() || address.isEmpty()) {
-            Toast.makeText(this, "Please fill in all basic fields", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Please fill in all required profile fields.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -278,7 +277,7 @@ class WorkerEditProfileActivity : AppCompatActivity() {
 
     private fun uploadImageAndSave(uri: Uri) {
         loadingOverlay.visibility = View.VISIBLE
-        Toast.makeText(this, "Uploading image...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Uploading photo...", Toast.LENGTH_SHORT).show()
 
         MediaManager.get().upload(uri)
             .option("folder", "profile_images")
@@ -294,7 +293,7 @@ class WorkerEditProfileActivity : AppCompatActivity() {
                     loadingOverlay.visibility = View.GONE
                     Toast.makeText(
                         this@WorkerEditProfileActivity,
-                        "Upload failed: ${error?.description}",
+                        "Photo upload failed. Please check your internet connection.",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -339,12 +338,12 @@ class WorkerEditProfileActivity : AppCompatActivity() {
         firestore.collection("users").document(uid).update(updates)
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(this, "Profile updated successfully", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
                 finish()
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(this, "Update failed: ${it.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Failed to save profile changes. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
 }

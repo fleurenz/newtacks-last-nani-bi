@@ -318,7 +318,7 @@ class CreateJobActivity : AppCompatActivity() {
                 }
             }
             .addOnFailureListener {
-                Toast.makeText(this, "Failed to load user info", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Unable to load user profile information", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -363,14 +363,10 @@ class CreateJobActivity : AppCompatActivity() {
                 if (rates.contains(job.rateType)) {
                     spinnerRateType.setText(job.rateType, false)
                 }
-                
-                // Note: handling existing images for editing would require more logic (showing them as URLs)
-                // For now, we'll just keep it simple. If they add new images, they replace or add to the list?
-                // The user said "necessary ones", so let's focus on text data first.
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(this, "Failed to load job", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Unable to load job request details", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -534,14 +530,14 @@ class CreateJobActivity : AppCompatActivity() {
                     selectedLng = location.longitude
                     reverseGeocode(location.latitude, location.longitude)
                 } else {
-                    Toast.makeText(this, "Could not get location. Ensure GPS is on.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Could not detect location. Please check if GPS is enabled.", Toast.LENGTH_SHORT).show()
                     switchRealTimeLocation.isChecked = false
                     restoreProfileLocation()
                 }
             }
             .addOnFailureListener {
                 isDetectingLocation = false
-                Toast.makeText(this, "Location detection failed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Unable to detect location automatically. Please pick location on map.", Toast.LENGTH_SHORT).show()
                 switchRealTimeLocation.isChecked = false
                 restoreProfileLocation()
             }
@@ -554,11 +550,11 @@ class CreateJobActivity : AppCompatActivity() {
             if (addresses != null && addresses.isNotEmpty()) {
                 etClientAddress.setText(addresses[0].getAddressLine(0))
             } else {
-                etClientAddress.setText("Coordinates found, but address unavailable")
+                etClientAddress.setText("Coordinates found, but address details unavailable")
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            etClientAddress.setText("Coordinates found, but address unavailable")
+            etClientAddress.setText("Coordinates found, but address details unavailable")
         }
     }
 
@@ -591,12 +587,12 @@ class CreateJobActivity : AppCompatActivity() {
 
         val currentUser = auth.currentUser
         if (currentUser == null) {
-            Toast.makeText(this, "User not authenticated", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Session expired. Please log in again.", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (isDetectingLocation) {
-            Toast.makeText(this, "Still detecting location. Please wait.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Detecting your location. Please wait a moment...", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -614,18 +610,18 @@ class CreateJobActivity : AppCompatActivity() {
         }
 
         if (!validateForm()) {
-            Toast.makeText(this, "Please complete all fields", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Please fill in all required fields.", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (selectedLat == 0.0 || selectedLng == 0.0) {
-            Toast.makeText(this, "Location coordinates not found.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Please select a location on the map before continuing.", Toast.LENGTH_LONG).show()
             return
         }
 
         val offeredAmount = offerInput.toDoubleOrNull()
         if (offeredAmount == null) {
-            Toast.makeText(this, "Invalid number input", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Please enter a valid rate amount.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -633,13 +629,12 @@ class CreateJobActivity : AppCompatActivity() {
         loadingOverlay.visibility = View.VISIBLE
         
         if (editingJobId != null) {
-            tvLoadingMessage.text = "Updating job..."
-            // For updates, we skip the "active job check" because this IS the active job
+            tvLoadingMessage.text = "Updating request..."
             uploadImagesAndCreateJob(currentUser.uid, clientName, clientAddress, jobTitle, serviceCategory, offeredAmount, description, rateType, relationship)
             return
         }
 
-        tvLoadingMessage.text = "Checking for active jobs..."
+        tvLoadingMessage.text = "Checking for active requests..."
 
         firestore.collection("jobs")
             .whereEqualTo("clientId", currentUser.uid)
@@ -652,7 +647,7 @@ class CreateJobActivity : AppCompatActivity() {
                 }
 
                 if (hasActiveJob) {
-                    Toast.makeText(this, "You already have an active request", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "You already have an active job request in progress.", Toast.LENGTH_LONG).show()
                     isSubmitting = false
                     loadingOverlay.visibility = View.GONE
                     return@addOnSuccessListener
@@ -664,7 +659,7 @@ class CreateJobActivity : AppCompatActivity() {
             .addOnFailureListener {
                 isSubmitting = false
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(this, "Error checking active jobs", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Unable to check active requests. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -822,13 +817,13 @@ class CreateJobActivity : AppCompatActivity() {
             
             jobsRef.document(editingJobId!!).update(updates)
                 .addOnSuccessListener {
-                    Toast.makeText(this, "Job Updated Successfully", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Job request updated successfully!", Toast.LENGTH_SHORT).show()
                     finish()
                 }
                 .addOnFailureListener {
                     isSubmitting = false
                     loadingOverlay.visibility = View.GONE
-                    Toast.makeText(this, "Update failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Failed to update job request. Please try again.", Toast.LENGTH_SHORT).show()
                 }
             return
         }
@@ -838,7 +833,7 @@ class CreateJobActivity : AppCompatActivity() {
             val hasActiveJob = snapshots.documents.any { it.getString("status") in activeStatuses }
 
             if (hasActiveJob) {
-                Toast.makeText(this, "You already have an active request", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "You already have an active job request in progress.", Toast.LENGTH_LONG).show()
                 isSubmitting = false
                 loadingOverlay.visibility = View.GONE
                 return@addOnSuccessListener
@@ -867,7 +862,7 @@ class CreateJobActivity : AppCompatActivity() {
 
             jobsRef.document(jobId).set(job)
                 .addOnSuccessListener {
-                    Toast.makeText(this, "Job Submitted Successfully", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Your job request has been posted successfully!", Toast.LENGTH_SHORT).show()
                     val intent = Intent(this, ClientDashboardActivity::class.java)
                     intent.putExtra(ClientDashboardActivity.OPEN_FRAGMENT, "REQUESTS")
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -877,12 +872,12 @@ class CreateJobActivity : AppCompatActivity() {
                 .addOnFailureListener {
                     isSubmitting = false
                     loadingOverlay.visibility = View.GONE
-                    Toast.makeText(this, "Failed to submit job", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Failed to post job request. Please try again.", Toast.LENGTH_SHORT).show()
                 }
         }.addOnFailureListener {
             isSubmitting = false
             loadingOverlay.visibility = View.GONE
-            Toast.makeText(this, "Verification failed", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Location verification failed. Please pick a spot on the map.", Toast.LENGTH_SHORT).show()
         }
     }
 }

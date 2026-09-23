@@ -467,7 +467,7 @@ class SignupActivity : AppCompatActivity() {
                     signupProgress.visibility = View.GONE
                     btnRegister.isEnabled     = true
                     btnRegister.text          = "Register"
-                    Toast.makeText(this, "Account created", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Account created successfully! Please log in.", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this, LoginActivity::class.java))
                     finish()
                 }
@@ -475,7 +475,8 @@ class SignupActivity : AppCompatActivity() {
                     signupProgress.visibility = View.GONE
                     btnRegister.isEnabled     = true
                     btnRegister.text          = "Register"
-                    Toast.makeText(this, state.message, Toast.LENGTH_SHORT).show()
+                    val friendlyMsg = com.example.newtacks.utils.SecurityUtils.formatUserFriendlyErrorMessage(state.message)
+                    Toast.makeText(this, friendlyMsg, Toast.LENGTH_SHORT).show()
                 }
             }
         }

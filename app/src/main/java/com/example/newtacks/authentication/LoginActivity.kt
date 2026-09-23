@@ -159,7 +159,8 @@ class LoginActivity : AppCompatActivity() {
                                 }
                             }
                             is SignupState.Error -> {
-                                Toast.makeText(this, "Verification failed: ${state.message}", Toast.LENGTH_LONG).show()
+                                val friendlyMsg = com.example.newtacks.utils.SecurityUtils.formatUserFriendlyErrorMessage(state.message)
+                                Toast.makeText(this, friendlyMsg, Toast.LENGTH_LONG).show()
                                 findViewById<ProgressBar>(R.id.loginProgress).visibility = View.GONE
                             }
                             else -> {}
@@ -173,7 +174,8 @@ class LoginActivity : AppCompatActivity() {
                                 roleResult.onSuccess { role -> routeUser(role); finish() }
                             }
                         }.onFailure {
-                            Toast.makeText(this, "Login failed: ${it.message}", Toast.LENGTH_LONG).show()
+                            val friendlyMsg = com.example.newtacks.utils.SecurityUtils.formatUserFriendlyErrorMessage(it.message)
+                            Toast.makeText(this, friendlyMsg, Toast.LENGTH_LONG).show()
                             findViewById<ProgressBar>(R.id.loginProgress).visibility = View.GONE
                         }
                     }
@@ -199,7 +201,8 @@ class LoginActivity : AppCompatActivity() {
                 is LoginState.Error -> {
                     loginProgress.visibility = View.GONE
                     btnLogin.isEnabled = true; btnLogin.text = "Log In"
-                    Toast.makeText(this, state.message, Toast.LENGTH_SHORT).show()
+                    val friendlyMsg = com.example.newtacks.utils.SecurityUtils.formatUserFriendlyErrorMessage(state.message)
+                    Toast.makeText(this, friendlyMsg, Toast.LENGTH_SHORT).show()
                 }
                 else -> {}
             }

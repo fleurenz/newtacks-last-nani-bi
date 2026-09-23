@@ -388,11 +388,11 @@ class CompanyApplicantsFragment : Fragment() {
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
                 NotificationHelper.sendNotification(worker.uid, "Interview Scheduled", "You have an interview request for ${app.jobTitle}.", "HIRING_DETAILS", app.hiringId)
-                Toast.makeText(requireContext(), "Interview scheduled", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Interview scheduled successfully!", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(requireContext(), "Action failed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Unable to schedule interview. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -401,11 +401,11 @@ class CompanyApplicantsFragment : Fragment() {
         db.collection("applications").document(app.applicationId).update("status", "REJECTED")
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(requireContext(), "Applicant rejected", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Applicant rejected.", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(requireContext(), "Action failed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Unable to update applicant status. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -431,9 +431,14 @@ class CompanyApplicantsFragment : Fragment() {
             loadingOverlay.visibility = View.GONE
             NotificationHelper.sendNotification(worker.uid, "Status: Hired!", "You are officially hired for ${app.jobTitle}!", "HIRING")
             Toast.makeText(requireContext(), "Worker hired successfully!", Toast.LENGTH_SHORT).show()
-        }.addOnFailureListener {
+        }.addOnFailureListener { e ->
             loadingOverlay.visibility = View.GONE
-            Toast.makeText(requireContext(), "Hiring failed: ${it.message}", Toast.LENGTH_SHORT).show()
+            val userMsg = if (e.message?.contains("Vacancy full") == true) {
+                "This hiring post has already reached its maximum limit."
+            } else {
+                "Unable to complete hiring process. Please try again."
+            }
+            Toast.makeText(requireContext(), userMsg, Toast.LENGTH_SHORT).show()
         }
     }
 

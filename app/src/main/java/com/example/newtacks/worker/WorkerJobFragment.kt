@@ -38,6 +38,7 @@ class WorkerJobFragment : Fragment() {
     private lateinit var layoutEmptyState: View
     private lateinit var layoutHeader: View
     private lateinit var loadingOverlay: View
+    private lateinit var tvLoadingMessage: TextView
 
     // Header / Title Area
     private lateinit var tvJobTitle: TextView
@@ -101,6 +102,7 @@ class WorkerJobFragment : Fragment() {
         layoutEmptyState = view.findViewById(R.id.layoutEmptyState)
         layoutHeader = view.findViewById(R.id.layoutHeader)
         loadingOverlay = view.findViewById(R.id.loadingOverlay)
+        tvLoadingMessage = view.findViewById(R.id.tvLoadingMessage)
 
         tvJobTitle = view.findViewById(R.id.tvJobTitle)
         tvJobDateTop = view.findViewById(R.id.tvJobDateTop)
@@ -351,12 +353,27 @@ class WorkerJobFragment : Fragment() {
         }
     }
 
+    private fun showLoading(message: String = "Processing...") {
+        if (::loadingOverlay.isInitialized && ::tvLoadingMessage.isInitialized) {
+            tvLoadingMessage.text = message
+            loadingOverlay.visibility = View.VISIBLE
+        }
+    }
+
+    private fun hideLoading() {
+        if (::loadingOverlay.isInitialized) {
+            loadingOverlay.visibility = View.GONE
+        }
+    }
+
     private fun updateJobStatus(newStatus: String) {
         val jobId = currentJobId ?: return
-        loadingOverlay.visibility = View.VISIBLE
+        val statusLabel = if (newStatus == "HEADING_TO_CLIENT") "heading to destination" else "arriving at destination"
+        showLoading("Updating status to $statusLabel...")
+
         firestore.collection("jobs").document(jobId).update("status", newStatus)
             .addOnSuccessListener {
-                loadingOverlay.visibility = View.GONE
+                hideLoading()
                 val title = when (newStatus) {
                     "HEADING_TO_CLIENT" -> "Heading to You"
                     "ARRIVED" -> "Arrived"
@@ -368,20 +385,35 @@ class WorkerJobFragment : Fragment() {
                     else -> "Status changed to $newStatus"
                 }
                 currentJob?.let { NotificationHelper.sendNotification(it.clientId, title, msg, "REQUESTS") }
+
+                val toastMsg = if (newStatus == "HEADING_TO_CLIENT") {
+                    "Status updated: You are on your way!"
+                } else {
+                    "Status updated: You have arrived!"
+                }
+                Toast.makeText(requireContext(), toastMsg, Toast.LENGTH_SHORT).show()
             }
-            .addOnFailureListener { loadingOverlay.visibility = View.GONE }
+            .addOnFailureListener {
+                hideLoading()
+                Toast.makeText(requireContext(), "Unable to update job status. Please check your connection.", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun requestDone() {
         val jobId = currentJobId ?: return
-        loadingOverlay.visibility = View.VISIBLE
+        showLoading("Submitting job completion for client verification...")
+
         firestore.collection("jobs").document(jobId)
             .update(mapOf("status" to "PENDING_VERIFICATION", "completedAt" to System.currentTimeMillis()))
             .addOnSuccessListener {
-                loadingOverlay.visibility = View.GONE
+                hideLoading()
                 currentJob?.let { NotificationHelper.sendNotification(it.clientId, "Job Ready", "Please verify completion.", "REQUESTS") }
+                Toast.makeText(requireContext(), "Work completed! Submitted for client confirmation.", Toast.LENGTH_LONG).show()
             }
-            .addOnFailureListener { loadingOverlay.visibility = View.GONE }
+            .addOnFailureListener {
+                hideLoading()
+                Toast.makeText(requireContext(), "Unable to submit job completion. Please try again.", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun updateDistanceUI(lat: Double, lng: Double) {
@@ -462,12 +494,16 @@ class WorkerJobFragment : Fragment() {
 
     private fun cancelJob() {
         val jobId = currentJobId ?: return
-        loadingOverlay.visibility = View.VISIBLE
+        showLoading("Cancelling job request...")
         val update = mapOf("status" to "AVAILABLE", "workerId" to FieldValue.delete(), "workerName" to FieldValue.delete(), "acceptedAt" to FieldValue.delete())
         firestore.collection("jobs").document(jobId).update(update).addOnSuccessListener {
-            loadingOverlay.visibility = View.GONE
+            hideLoading()
+            Toast.makeText(requireContext(), "Job request cancelled and returned to feed.", Toast.LENGTH_SHORT).show()
             showEmptyState()
-        }.addOnFailureListener { loadingOverlay.visibility = View.GONE }
+        }.addOnFailureListener {
+            hideLoading()
+            Toast.makeText(requireContext(), "Unable to cancel job request. Please try again.", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun showRejectionDialog(job: Job) {

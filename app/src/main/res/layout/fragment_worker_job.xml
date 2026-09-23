@@ -640,11 +640,31 @@
         android:visibility="gone"
         android:clickable="true"
         android:focusable="true">
-        <ProgressBar
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:indeterminateTint="#FFFFFF" />
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="24dp"
+            android:background="@drawable/bg_card"
+            android:layout_gravity="center">
+
+            <ProgressBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:indeterminateTint="#0F325E"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/tvLoadingMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Processing..."
+                android:textColor="#1E293B"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
     </FrameLayout>
 
 </FrameLayout>

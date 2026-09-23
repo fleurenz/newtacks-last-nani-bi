@@ -61,6 +61,8 @@ class WorkerFeedFragment : Fragment() {
     private var mapLibreMap: MapLibreMap? = null
     private lateinit var tabLayoutFeed: TabLayout
     private lateinit var tvWorkerNameHeader: TextView
+    private lateinit var loadingOverlay: View
+    private lateinit var tvLoadingMessage: TextView
 
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private lateinit var bsView: View
@@ -135,6 +137,8 @@ class WorkerFeedFragment : Fragment() {
         mapView             = view.findViewById(R.id.mapView)
         tabLayoutFeed       = view.findViewById(R.id.tabLayoutFeed)
         tvWorkerNameHeader  = view.findViewById(R.id.tvWorkerNameHeader)
+        loadingOverlay      = view.findViewById(R.id.loadingOverlay)
+        tvLoadingMessage    = view.findViewById(R.id.tvLoadingMessage)
 
         bsView = view.findViewById(R.id.jobDetailsBottomSheet)
         bottomSheetBehavior = BottomSheetBehavior.from(bsView)
@@ -677,14 +681,29 @@ class WorkerFeedFragment : Fragment() {
         startActivity(intent)
     }
 
+    private fun showLoading(message: String = "Processing...") {
+        if (::loadingOverlay.isInitialized && ::tvLoadingMessage.isInitialized) {
+            tvLoadingMessage.text = message
+            loadingOverlay.visibility = View.VISIBLE
+        }
+    }
+
+    private fun hideLoading() {
+        if (::loadingOverlay.isInitialized) {
+            loadingOverlay.visibility = View.GONE
+        }
+    }
+
     private fun acceptJob(job: Job, onResult: (Boolean) -> Unit = {}) {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        showLoading("Checking requirements...")
         
         // 1. Check if resume is submitted
         db.collection("users").document(uid).get().addOnSuccessListener { doc ->
             val resumeUrl = doc.getString("resumeUrl")
             if (resumeUrl.isNullOrEmpty()) {
-                Toast.makeText(requireContext(), "You must upload a resume in Account tab to accept jobs.", Toast.LENGTH_LONG).show()
+                hideLoading()
+                Toast.makeText(requireContext(), "You must upload a resume in the Account tab before accepting jobs.", Toast.LENGTH_LONG).show()
                 onResult(false)
                 return@addOnSuccessListener
             }
@@ -692,6 +711,7 @@ class WorkerFeedFragment : Fragment() {
             // 2. Check location permissions
             if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) 
                 != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                hideLoading()
                 @Suppress("DEPRECATION")
                 requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1002)
                 onResult(false)
@@ -700,19 +720,30 @@ class WorkerFeedFragment : Fragment() {
 
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 if (location == null) {
-                    Toast.makeText(requireContext(), "Please turn on your GPS to accept jobs", Toast.LENGTH_LONG).show()
+                    hideLoading()
+                    Toast.makeText(requireContext(), "Please enable GPS/Location services to accept requests.", Toast.LENGTH_LONG).show()
                     onResult(false)
                     return@addOnSuccessListener
                 }
 
                 processJobAcceptance(job, location, onResult)
+            }.addOnFailureListener {
+                hideLoading()
+                Toast.makeText(requireContext(), "Unable to detect location. Please ensure GPS is enabled.", Toast.LENGTH_SHORT).show()
+                onResult(false)
             }
+        }.addOnFailureListener {
+            hideLoading()
+            Toast.makeText(requireContext(), "Unable to process request. Please check your internet connection.", Toast.LENGTH_SHORT).show()
+            onResult(false)
         }
     }
 
     private fun processJobAcceptance(job: Job, location: android.location.Location, onResult: (Boolean) -> Unit) {
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
         val workerId = currentUser.uid
+
+        showLoading("Accepting job request...")
 
         db.collection("jobs")
             .whereEqualTo("workerId", workerId)
@@ -726,10 +757,11 @@ class WorkerFeedFragment : Fragment() {
                 }
 
                 if (hasActiveJob) {
-                    android.widget.Toast.makeText(
+                    hideLoading()
+                    Toast.makeText(
                         requireContext(),
-                        "Finish your current job first",
-                        android.widget.Toast.LENGTH_LONG
+                        "Please finish your current active job request before accepting a new one.",
+                        Toast.LENGTH_LONG
                     ).show()
                     onResult(false)
                     return@addOnSuccessListener
@@ -768,22 +800,34 @@ class WorkerFeedFragment : Fragment() {
                                 "lastActive" to System.currentTimeMillis()
                             ))
                         }.addOnSuccessListener {
+                            hideLoading()
                             com.example.newtacks.utils.NotificationHelper.sendNotification(
                                 job.clientId,
                                 "Job Accepted",
                                 "A worker has accepted your ${job.jobTitle} request.",
                                 "REQUESTS"
                             )
+                            Toast.makeText(requireContext(), "Job request accepted! Navigating to job details...", Toast.LENGTH_SHORT).show()
                             onResult(true)
                             (activity as? com.example.newtacks.WorkerDashboardActivity)?.switchTab(R.id.nav_job)
                         }.addOnFailureListener { e ->
-                            Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                            hideLoading()
+                            val userMsg = if (e.message?.contains("Job already taken") == true) {
+                                "This job request has already been accepted by another worker."
+                            } else {
+                                "Unable to accept request. Please check your network connection and try again."
+                            }
+                            Toast.makeText(requireContext(), userMsg, Toast.LENGTH_LONG).show()
                             onResult(false)
                         }
                     }.addOnFailureListener {
+                        hideLoading()
+                        Toast.makeText(requireContext(), "Unable to verify worker account details. Please try again.", Toast.LENGTH_SHORT).show()
                         onResult(false)
                     }
             }.addOnFailureListener {
+                hideLoading()
+                Toast.makeText(requireContext(), "Unable to check active job status. Please try again.", Toast.LENGTH_SHORT).show()
                 onResult(false)
             }
     }

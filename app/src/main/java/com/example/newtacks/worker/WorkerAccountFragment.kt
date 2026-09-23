@@ -302,7 +302,7 @@ class WorkerAccountFragment : Fragment() {
                 }
                 override fun onError(requestId: String?, error: ErrorInfo?) {
                     loadingOverlay.visibility = View.GONE
-                    Toast.makeText(requireContext(), "Upload failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Failed to upload resume. Please check your connection.", Toast.LENGTH_SHORT).show()
                 }
                 override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
             }).dispatch()

@@ -268,12 +268,12 @@ class HiringDetailsActivity : AppCompatActivity() {
             .update("status", newStatus)
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(this, "Post marked as $newStatus", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Post status updated to $newStatus", Toast.LENGTH_SHORT).show()
                 // The listener (listenForPostUpdates) will handle the UI update
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(this, "Update failed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Failed to update post status. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -770,11 +770,11 @@ class HiringDetailsActivity : AppCompatActivity() {
                     "You have been invited for an interview for ${post.jobTitle} on ${java.text.SimpleDateFormat("MMM dd", Locale.getDefault()).format(timestamp)}.",
                     "HIRING"
                 )
-                Toast.makeText(this, "Interview scheduled", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Interview scheduled successfully!", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(this, "Failed to schedule", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Failed to schedule interview. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -793,7 +793,7 @@ class HiringDetailsActivity : AppCompatActivity() {
             .update("status", "REJECTED")
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(this, "Applicant rejected", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Applicant rejected.", Toast.LENGTH_SHORT).show()
                 
                 // Notify the worker
                 com.example.newtacks.utils.NotificationHelper.sendNotification(
@@ -805,7 +805,7 @@ class HiringDetailsActivity : AppCompatActivity() {
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(this, "Action failed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Unable to update applicant status. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -814,7 +814,7 @@ class HiringDetailsActivity : AppCompatActivity() {
         val currentAccepted = post.acceptedWorkers.size
         
         if (currentAccepted >= post.vacancies) {
-            Toast.makeText(this, "Threshold reached.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "This position has reached its maximum vacancy limit.", Toast.LENGTH_LONG).show()
             return
         }
 
@@ -850,9 +850,14 @@ class HiringDetailsActivity : AppCompatActivity() {
                 "Congratulations! You have been officially hired for ${post.jobTitle}.",
                 "HIRING"
             )
-        }.addOnFailureListener {
+        }.addOnFailureListener { e ->
             loadingOverlay.visibility = View.GONE
-            Toast.makeText(this, "Hiring failed: ${it.message}", Toast.LENGTH_SHORT).show()
+            val userMsg = if (e.message?.contains("Vacancy full") == true) {
+                "This position has already reached its vacancy limit."
+            } else {
+                "Failed to hire worker. Please try again."
+            }
+            Toast.makeText(this, userMsg, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -997,7 +1002,7 @@ class HiringDetailsActivity : AppCompatActivity() {
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(this, "Failed to update response", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Failed to update interview response. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -1008,7 +1013,7 @@ class HiringDetailsActivity : AppCompatActivity() {
         db.collection("users").document(uid).get().addOnSuccessListener { doc ->
             val resumeUrl = doc.getString("resumeUrl")
             if (resumeUrl.isNullOrEmpty()) {
-                Toast.makeText(this, "You must upload a resume in your profile to apply for jobs.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "You must upload a resume in your profile before applying for job hiring.", Toast.LENGTH_LONG).show()
                 return@addOnSuccessListener
             }
 
@@ -1041,13 +1046,13 @@ class HiringDetailsActivity : AppCompatActivity() {
                         "APPLICANTS",
                         post.hiringId
                     )
-                    Toast.makeText(this, "Application sent!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Your application was submitted successfully!", Toast.LENGTH_SHORT).show()
                     finish()
                 }
                 .addOnFailureListener {
                     loadingOverlay.visibility = View.GONE
                     btnApply.isEnabled = true
-                    Toast.makeText(this, "Application failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Failed to submit application. Please try again.", Toast.LENGTH_SHORT).show()
                 }
         }
     }

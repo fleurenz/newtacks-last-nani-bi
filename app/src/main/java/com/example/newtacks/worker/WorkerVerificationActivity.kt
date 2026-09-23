@@ -159,7 +159,7 @@ class WorkerVerificationActivity : AppCompatActivity() {
             val uri = selectedFileUri
             
             if (name.isEmpty() || uri == null) {
-                Toast.makeText(this, "Please fill all fields and select a file", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Please fill in all required fields and select a file.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             
@@ -186,7 +186,7 @@ class WorkerVerificationActivity : AppCompatActivity() {
                 }
                 override fun onError(requestId: String?, error: ErrorInfo?) {
                     loadingOverlay.visibility = View.GONE
-                    Toast.makeText(this@WorkerVerificationActivity, "Upload failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@WorkerVerificationActivity, "Failed to upload document. Please check your connection.", Toast.LENGTH_SHORT).show()
                 }
                 override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
             }).dispatch()
@@ -227,7 +227,7 @@ class WorkerVerificationActivity : AppCompatActivity() {
                 }
                 override fun onError(requestId: String?, error: ErrorInfo?) {
                     loadingOverlay.visibility = View.GONE
-                    Toast.makeText(this@WorkerVerificationActivity, "Upload failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@WorkerVerificationActivity, "Failed to upload document. Please check your connection.", Toast.LENGTH_SHORT).show()
                 }
                 override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
             }).dispatch()

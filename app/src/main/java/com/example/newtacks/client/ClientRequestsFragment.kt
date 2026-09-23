@@ -103,7 +103,7 @@ class ClientRequestsFragment : Fragment() {
             val method = result.data?.getStringExtra("PAYMENT_METHOD") ?: "CASH"
             confirmJob(method)
         } else {
-            Toast.makeText(requireContext(), "Payment cancelled or failed", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Payment was cancelled or could not be completed.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -458,14 +458,17 @@ class ClientRequestsFragment : Fragment() {
     private fun cancelJob() {
         val jobId = currentJobId ?: return
         loadingOverlay.visibility = View.VISIBLE
-        tvLoadingMessage.text = "Cancelling request..."
+        tvLoadingMessage.text = "Cancelling job request..."
         firestore.collection("jobs").document(jobId).delete()
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(requireContext(), "Cancelled successfully", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Your job request was cancelled successfully.", Toast.LENGTH_SHORT).show()
                 showEmptyState()
             }
-            .addOnFailureListener { loadingOverlay.visibility = View.GONE }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(requireContext(), "Unable to cancel request. Please check your connection.", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun startPaymentFlow() {
@@ -480,13 +483,16 @@ class ClientRequestsFragment : Fragment() {
     private fun confirmJob(paymentMethod: String) {
         val jobId = currentJobId ?: return
         loadingOverlay.visibility = View.VISIBLE
-        tvLoadingMessage.text = "Confirming job..."
+        tvLoadingMessage.text = "Confirming completion..."
         firestore.collection("jobs").document(jobId).update(mapOf("status" to "COMPLETED", "completedAt" to System.currentTimeMillis()))
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
                 fetchJobAndGenerateReceipt(jobId, paymentMethod)
             }
-            .addOnFailureListener { loadingOverlay.visibility = View.GONE }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                Toast.makeText(requireContext(), "Unable to confirm job completion. Please try again.", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun fetchJobAndGenerateReceipt(jobId: String, paymentMethod: String) {
@@ -519,6 +525,7 @@ class ClientRequestsFragment : Fragment() {
         firestore.collection("receipts").document(receiptId).set(receipt)
             .addOnSuccessListener {
                 com.example.newtacks.utils.NotificationHelper.sendNotification(workerId, "Job Confirmed", "Client has confirmed work.", "HISTORY", receiptId)
+                Toast.makeText(requireContext(), "Job completed and confirmed! Receipt generated.", Toast.LENGTH_SHORT).show()
                 ReceiptDetailActivity.open(requireContext(), receiptId, showReview = true)
                 showEmptyState()
             }

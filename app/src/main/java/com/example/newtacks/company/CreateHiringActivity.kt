@@ -93,8 +93,7 @@ class CreateHiringActivity : AppCompatActivity() {
                 updateImagesUI()
             }
         } else if (result.resultCode == UCrop.RESULT_ERROR) {
-            val cropError = UCrop.getError(result.data!!)
-            Toast.makeText(this, "Crop error: ${cropError?.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Failed to crop photo. Please try again.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -247,7 +246,7 @@ class CreateHiringActivity : AppCompatActivity() {
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(this, "Failed to load post", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Unable to load hiring post details", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -342,7 +341,7 @@ class CreateHiringActivity : AppCompatActivity() {
         }
 
         if (!validateForm()) {
-            Toast.makeText(this, "Please fill all required fields", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Please fill in all required fields.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -375,12 +374,12 @@ class CreateHiringActivity : AppCompatActivity() {
                 
                 db.collection("hiring").document(editingHiringId!!).update(updates)
                     .addOnSuccessListener {
-                        Toast.makeText(this, "Hiring post updated", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Hiring post updated successfully!", Toast.LENGTH_SHORT).show()
                         finish()
                     }
                     .addOnFailureListener {
                         loadingOverlay.visibility = View.GONE
-                        Toast.makeText(this, "Update failed", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Failed to update hiring post. Please try again.", Toast.LENGTH_SHORT).show()
                     }
             }
             return
@@ -417,7 +416,7 @@ class CreateHiringActivity : AppCompatActivity() {
 
                 db.collection("hiring").document(hiringId).set(post)
                     .addOnSuccessListener {
-                        Toast.makeText(this, if (status == "OPEN") "Hiring post published" else "Draft saved", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, if (status == "OPEN") "Hiring post published successfully!" else "Draft saved successfully!", Toast.LENGTH_SHORT).show()
                         val intent = Intent(this, CompanyDashboardActivity::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         startActivity(intent)
@@ -425,11 +424,11 @@ class CreateHiringActivity : AppCompatActivity() {
                     }
                     .addOnFailureListener {
                         loadingOverlay.visibility = View.GONE
-                        Toast.makeText(this, "Failed to post", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Failed to publish hiring post. Please try again.", Toast.LENGTH_SHORT).show()
                     }
             }.addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(this, "Failed to fetch company info", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Failed to retrieve company profile. Please try again.", Toast.LENGTH_SHORT).show()
             }
         }
     }

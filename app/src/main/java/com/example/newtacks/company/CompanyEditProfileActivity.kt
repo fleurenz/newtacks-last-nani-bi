@@ -65,8 +65,7 @@ class CompanyEditProfileActivity : AppCompatActivity() {
                 }
             }
         } else if (result.resultCode == UCrop.RESULT_ERROR) {
-            val cropError = UCrop.getError(result.data!!)
-            Toast.makeText(this, "Crop error: ${cropError?.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Failed to crop photo. Please try again.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -236,7 +235,7 @@ class CompanyEditProfileActivity : AppCompatActivity() {
 
     private fun uploadImageAndSave(uri: Uri) {
         loadingOverlay.visibility = View.VISIBLE
-        Toast.makeText(this, "Uploading image...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Uploading photo...", Toast.LENGTH_SHORT).show()
 
         MediaManager.get().upload(uri)
             .option("folder", "profile_images")
@@ -249,7 +248,7 @@ class CompanyEditProfileActivity : AppCompatActivity() {
                 }
                 override fun onError(requestId: String?, error: ErrorInfo?) {
                     loadingOverlay.visibility = View.GONE
-                    Toast.makeText(this@CompanyEditProfileActivity, "Upload failed: ${error?.description}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@CompanyEditProfileActivity, "Photo upload failed. Please check your connection.", Toast.LENGTH_SHORT).show()
                 }
                 override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
             }).dispatch()
@@ -278,12 +277,12 @@ class CompanyEditProfileActivity : AppCompatActivity() {
         firestore.collection("users").document(uid).update(updates)
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(this, "Company profile updated", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Company profile updated successfully!", Toast.LENGTH_SHORT).show()
                 finish()
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
-                Toast.makeText(this, "Update failed: ${it.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Failed to save profile changes. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
 }
