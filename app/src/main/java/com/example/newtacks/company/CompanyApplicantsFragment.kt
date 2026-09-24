@@ -230,9 +230,36 @@ class CompanyApplicantsFragment : Fragment() {
             }
             "HIRED" -> "Officially Hired"
             "REJECTED" -> "Application Rejected"
+            "CANCELLED" -> "Worker Cancelled"
             else -> app.status
         }
         tvDetailedStatus.text = statusText
+
+        val cardReason = dialogView.findViewById<com.google.android.material.card.MaterialCardView>(R.id.cardReasonDetails)
+        val tvReasonHeader = dialogView.findViewById<TextView>(R.id.tvReasonHeader)
+        val tvReasonTitle = dialogView.findViewById<TextView>(R.id.tvReasonTitle)
+        val tvReasonDesc = dialogView.findViewById<TextView>(R.id.tvReasonDescription)
+
+        val cancelDetails = app.cancellationDetails
+        val rejectDetails = app.rejectionDetails
+
+        if (app.status == "CANCELLED" || cancelDetails != null) {
+            cardReason.visibility = View.VISIBLE
+            tvReasonHeader.text = "Reason for Worker Cancellation"
+            val reason = cancelDetails?.get("reason") as? String ?: "Worker Withdrawn"
+            val desc = cancelDetails?.get("description") as? String ?: ""
+            tvReasonTitle.text = reason
+            tvReasonDesc.text = desc.ifEmpty { "No additional explanation provided." }
+        } else if (app.status == "REJECTED" || rejectDetails != null) {
+            cardReason.visibility = View.VISIBLE
+            tvReasonHeader.text = "Reason for Rejection"
+            val reason = rejectDetails?.get("reason") as? String ?: "Application Rejected"
+            val desc = rejectDetails?.get("description") as? String ?: ""
+            tvReasonTitle.text = reason
+            tvReasonDesc.text = desc.ifEmpty { "No additional explanation provided." }
+        } else {
+            cardReason.visibility = View.GONE
+        }
 
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogView)
@@ -253,12 +280,8 @@ class CompanyApplicantsFragment : Fragment() {
                 btnSecondary.visibility = View.VISIBLE
                 btnSecondary.text = "Reject Applicant"
                 btnSecondary.setOnClickListener { 
-                    AlertDialog.Builder(requireContext())
-                        .setTitle("Reject Applicant")
-                        .setMessage("Are you sure you want to reject this applicant?")
-                        .setPositiveButton("Reject") { _, _ -> dialog.dismiss(); rejectApplicant(worker, app) }
-                        .setNegativeButton("Cancel", null)
-                        .show()
+                    dialog.dismiss()
+                    showRejectReasonDialog(worker, app)
                 }
             }
             "INTERVIEW_SCHEDULED" -> {
@@ -275,12 +298,8 @@ class CompanyApplicantsFragment : Fragment() {
                 btnSecondary.visibility = View.VISIBLE
                 btnSecondary.text = "Reject Applicant"
                 btnSecondary.setOnClickListener { 
-                    AlertDialog.Builder(requireContext())
-                        .setTitle("Reject Applicant")
-                        .setMessage("Are you sure you want to reject this applicant?")
-                        .setPositiveButton("Reject") { _, _ -> dialog.dismiss(); rejectApplicant(worker, app) }
-                        .setNegativeButton("Cancel", null)
-                        .show()
+                    dialog.dismiss()
+                    showRejectReasonDialog(worker, app)
                 }
             }
         }
@@ -402,15 +421,76 @@ class CompanyApplicantsFragment : Fragment() {
             }
     }
 
-    private fun rejectApplicant(worker: User, app: Application) {
+    private fun showRejectReasonDialog(worker: User, app: Application) {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_submit_reason, null)
+        val dialog = AlertDialog.Builder(requireContext()).setView(dialogView).create()
+
+        dialogView.findViewById<TextView>(R.id.tvDialogTitle).text = "Reject Applicant"
+        dialogView.findViewById<TextView>(R.id.tvDialogSubtitle).text = "Select a reason for rejecting ${worker.name}'s application for ${app.jobTitle}."
+
+        val rb1 = dialogView.findViewById<RadioButton>(R.id.rbReason1).apply { text = "Position Filled / Vacancies Reached" }
+        val rb2 = dialogView.findViewById<RadioButton>(R.id.rbReason2).apply { text = "Qualifications / Experience Mismatch" }
+        val rb3 = dialogView.findViewById<RadioButton>(R.id.rbReason3).apply { text = "Schedule / Availability Mismatch" }
+        val rb4 = dialogView.findViewById<RadioButton>(R.id.rbReason4).apply { text = "Location / Distance Issue" }
+        val rbOthers = dialogView.findViewById<RadioButton>(R.id.rbReasonOthers).apply { text = "Others" }
+
+        val etDesc = dialogView.findViewById<EditText>(R.id.etReasonDescription)
+        val btnSubmit = dialogView.findViewById<Button>(R.id.btnSubmitReason)
+        val btnCancel = dialogView.findViewById<Button>(R.id.btnCancelDialog)
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        btnSubmit.setOnClickListener {
+            val rg = dialogView.findViewById<RadioGroup>(R.id.rgReasons)
+            val selectedId = rg.checkedRadioButtonId
+            if (selectedId == -1) {
+                Toast.makeText(requireContext(), "Please select a reason.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val reasonText = when (selectedId) {
+                R.id.rbReason1 -> rb1.text.toString()
+                R.id.rbReason2 -> rb2.text.toString()
+                R.id.rbReason3 -> rb3.text.toString()
+                R.id.rbReason4 -> rb4.text.toString()
+                else -> "Others"
+            }
+
+            val descText = etDesc.text.toString().trim()
+            if (selectedId == R.id.rbReasonOthers && descText.isEmpty()) {
+                Toast.makeText(requireContext(), "Please provide an explanation for Others.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            dialog.dismiss()
+            rejectApplicant(worker, app, reasonText, descText)
+        }
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.show()
+    }
+
+    private fun rejectApplicant(worker: User, app: Application, reason: String, description: String) {
         if (isProcessingAction) return
         isProcessingAction = true
         loadingOverlay.visibility = View.VISIBLE
 
-        db.collection("applications").document(app.applicationId).update("status", "REJECTED")
+        val details = mapOf(
+            "reason" to reason,
+            "description" to description,
+            "rejectedAt" to System.currentTimeMillis()
+        )
+
+        val updates = mapOf(
+            "status" to "REJECTED",
+            "rejectionDetails" to details
+        )
+
+        db.collection("applications").document(app.applicationId).update(updates)
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
                 isProcessingAction = false
+                NotificationHelper.sendNotification(worker.uid, "Application Update", "The company has updated your application status for ${app.jobTitle}.", "HIRING")
                 Toast.makeText(requireContext(), "Applicant rejected.", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener {

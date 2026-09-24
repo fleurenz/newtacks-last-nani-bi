@@ -104,7 +104,14 @@ class WorkerApplicationAdapter(
                 tvBadge.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FEE2E2"))
                 tvBadge.setTextColor(Color.parseColor("#991B1B"))
                 
-                tvMsg.text = "Did not meet the requirements"
+                val reason = app.rejectionDetails?.get("reason") as? String
+                val desc = app.rejectionDetails?.get("description") as? String
+                val reasonText = if (!reason.isNullOrBlank()) {
+                    "Reason: $reason${if (!desc.isNullOrBlank()) " • $desc" else ""}"
+                } else {
+                    "Did not meet the requirements"
+                }
+                tvMsg.text = reasonText
                 tvMsg.setTextColor(Color.parseColor("#991B1B"))
             }
             "CANCELLED" -> {
@@ -112,7 +119,14 @@ class WorkerApplicationAdapter(
                 tvBadge.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FEE2E2"))
                 tvBadge.setTextColor(Color.parseColor("#991B1B"))
                 
-                tvMsg.text = "Application withdrawn"
+                val reason = app.cancellationDetails?.get("reason") as? String
+                val desc = app.cancellationDetails?.get("description") as? String
+                val reasonText = if (!reason.isNullOrBlank()) {
+                    "Reason: $reason${if (!desc.isNullOrBlank()) " • $desc" else ""}"
+                } else {
+                    "Application withdrawn"
+                }
+                tvMsg.text = reasonText
                 tvMsg.setTextColor(Color.parseColor("#991B1B"))
             }
             else -> {

@@ -6,9 +6,11 @@ data class Application(
     val companyId: String = "",
     val workerId: String = "",
     val jobTitle: String = "",
-    val status: String = "APPLIED", // APPLIED, INTERVIEW_SCHEDULED, HIRED, REJECTED
+    val status: String = "APPLIED", // APPLIED, INTERVIEW_SCHEDULED, HIRED, REJECTED, CANCELLED
     val interviewDate: Long? = null,
     val interviewLocation: String? = null,
     val workerResponse: String? = null, // ACCEPTED, RESCHEDULE
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val cancellationDetails: Map<String, Any>? = null,
+    val rejectionDetails: Map<String, Any>? = null
 )
