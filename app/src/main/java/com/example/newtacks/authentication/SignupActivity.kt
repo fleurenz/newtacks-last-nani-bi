@@ -124,6 +124,7 @@ class SignupActivity : AppCompatActivity() {
         }
 
         btn.setOnClickListener {
+            btn.isEnabled = false
 
             val emailText = email.text.toString()
             val passwordText = password.text.toString()

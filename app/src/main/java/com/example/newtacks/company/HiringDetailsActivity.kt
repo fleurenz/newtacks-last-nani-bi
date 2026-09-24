@@ -85,6 +85,7 @@ class HiringDetailsActivity : AppCompatActivity() {
     private var themeColor: Int = "#0F325E".toColorInt() // Default to Worker
 
     private var currentImageIndex = 0
+    private var isProcessingAction = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -260,7 +261,13 @@ class HiringDetailsActivity : AppCompatActivity() {
     }
 
     private fun updatePostStatus(newStatus: String) {
-        val postId = hiringPost?.hiringId ?: return
+        if (isProcessingAction) return
+        isProcessingAction = true
+
+        val postId = hiringPost?.hiringId ?: run {
+            isProcessingAction = false
+            return
+        }
         loadingOverlay.visibility = View.VISIBLE
         tvLoadingMessage.text = "Updating status..."
 
@@ -268,11 +275,13 @@ class HiringDetailsActivity : AppCompatActivity() {
             .update("status", newStatus)
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
+                isProcessingAction = false
                 Toast.makeText(this, "Post status updated to $newStatus", Toast.LENGTH_SHORT).show()
                 // The listener (listenForPostUpdates) will handle the UI update
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
+                isProcessingAction = false
                 Toast.makeText(this, "Failed to update post status. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
@@ -764,6 +773,7 @@ class HiringDetailsActivity : AppCompatActivity() {
             ))
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
+                isProcessingAction = false
                 com.example.newtacks.utils.NotificationHelper.sendNotification(
                     worker.uid,
                     "Interview Scheduled",
@@ -774,15 +784,23 @@ class HiringDetailsActivity : AppCompatActivity() {
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
+                isProcessingAction = false
                 Toast.makeText(this, "Failed to schedule interview. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
 
     private fun rejectApplicant(worker: User) {
-        val app = applicationMap[worker.uid] ?: return
+        if (isProcessingAction) return
+        isProcessingAction = true
+
+        val app = applicationMap[worker.uid] ?: run {
+            isProcessingAction = false
+            return
+        }
         
         // Prevent infinite rejection if already rejected or in final status
         if (app.status == "REJECTED" || app.status == "CANCELLED" || app.status == "HIRED") {
+            isProcessingAction = false
             return
         }
 
@@ -793,6 +811,7 @@ class HiringDetailsActivity : AppCompatActivity() {
             .update("status", "REJECTED")
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
+                isProcessingAction = false
                 Toast.makeText(this, "Applicant rejected.", Toast.LENGTH_SHORT).show()
                 
                 // Notify the worker
@@ -805,15 +824,23 @@ class HiringDetailsActivity : AppCompatActivity() {
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
+                isProcessingAction = false
                 Toast.makeText(this, "Unable to update applicant status. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
 
     private fun confirmHiring(worker: User) {
-        val post = hiringPost ?: return
+        if (isProcessingAction) return
+        isProcessingAction = true
+
+        val post = hiringPost ?: run {
+            isProcessingAction = false
+            return
+        }
         val currentAccepted = post.acceptedWorkers.size
         
         if (currentAccepted >= post.vacancies) {
+            isProcessingAction = false
             Toast.makeText(this, "This position has reached its maximum vacancy limit.", Toast.LENGTH_LONG).show()
             return
         }
@@ -843,6 +870,7 @@ class HiringDetailsActivity : AppCompatActivity() {
             
         }.addOnSuccessListener {
             loadingOverlay.visibility = View.GONE
+            isProcessingAction = false
             Toast.makeText(this, "Worker hired successfully!", Toast.LENGTH_SHORT).show()
             com.example.newtacks.utils.NotificationHelper.sendNotification(
                 worker.uid,
@@ -852,6 +880,7 @@ class HiringDetailsActivity : AppCompatActivity() {
             )
         }.addOnFailureListener { e ->
             loadingOverlay.visibility = View.GONE
+            isProcessingAction = false
             val userMsg = if (e.message?.contains("Vacancy full") == true) {
                 "This position has already reached its vacancy limit."
             } else {
@@ -967,6 +996,8 @@ class HiringDetailsActivity : AppCompatActivity() {
     }
 
     private fun updateWorkerInterviewResponse(app: Application, response: String) {
+        if (isProcessingAction) return
+        isProcessingAction = true
         loadingOverlay.visibility = View.VISIBLE
         tvLoadingMessage.text = "Updating response..."
         
@@ -982,6 +1013,7 @@ class HiringDetailsActivity : AppCompatActivity() {
             .update(updates)
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
+                isProcessingAction = false
                 val toastMsg = if (response == "ACCEPTED") "Interview confirmed!" else "Application cancelled."
                 Toast.makeText(this, toastMsg, Toast.LENGTH_SHORT).show()
                 
@@ -1002,17 +1034,24 @@ class HiringDetailsActivity : AppCompatActivity() {
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
+                isProcessingAction = false
                 Toast.makeText(this, "Failed to update interview response. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
 
     private fun applyForHiring(post: HiringPost) {
-        val uid = auth.currentUser?.uid ?: return
+        if (isProcessingAction) return
+        isProcessingAction = true
+        val uid = auth.currentUser?.uid ?: run {
+            isProcessingAction = false
+            return
+        }
         
         // Check for resume first
         db.collection("users").document(uid).get().addOnSuccessListener { doc ->
             val resumeUrl = doc.getString("resumeUrl")
             if (resumeUrl.isNullOrEmpty()) {
+                isProcessingAction = false
                 Toast.makeText(this, "You must upload a resume in your profile before applying for job hiring.", Toast.LENGTH_LONG).show()
                 return@addOnSuccessListener
             }
@@ -1039,6 +1078,7 @@ class HiringDetailsActivity : AppCompatActivity() {
                         .update("applicants", FieldValue.arrayUnion(uid))
 
                     loadingOverlay.visibility = View.GONE
+                    isProcessingAction = false
                     com.example.newtacks.utils.NotificationHelper.sendNotification(
                         post.companyId,
                         "New Job Applicant",
@@ -1051,9 +1091,12 @@ class HiringDetailsActivity : AppCompatActivity() {
                 }
                 .addOnFailureListener {
                     loadingOverlay.visibility = View.GONE
+                    isProcessingAction = false
                     btnApply.isEnabled = true
                     Toast.makeText(this, "Failed to submit application. Please try again.", Toast.LENGTH_SHORT).show()
                 }
+        }.addOnFailureListener {
+            isProcessingAction = false
         }
     }
 

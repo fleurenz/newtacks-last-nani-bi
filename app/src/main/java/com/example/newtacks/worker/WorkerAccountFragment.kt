@@ -61,6 +61,7 @@ class WorkerAccountFragment : Fragment() {
     private lateinit var tvResumeStatus: TextView
     private lateinit var ivResumeIcon: ImageView
     private var currentResumeUrl: String? = null
+    private var isUploadingResume = false
 
     private val pickResume =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -282,7 +283,13 @@ class WorkerAccountFragment : Fragment() {
     }
 
     private fun uploadResume(uri: Uri) {
-        val uid = auth.currentUser?.uid ?: return
+        if (isUploadingResume) return
+        isUploadingResume = true
+
+        val uid = auth.currentUser?.uid ?: run {
+            isUploadingResume = false
+            return
+        }
         loadingOverlay.visibility = View.VISIBLE
         Toast.makeText(requireContext(), "Uploading resume...", Toast.LENGTH_SHORT).show()
 
@@ -296,12 +303,18 @@ class WorkerAccountFragment : Fragment() {
                     firestore.collection("users").document(uid).update("resumeUrl", url)
                         .addOnSuccessListener {
                             loadingOverlay.visibility = View.GONE
+                            isUploadingResume = false
                             Toast.makeText(requireContext(), "Resume uploaded successfully!", Toast.LENGTH_SHORT).show()
                             loadProfile()
+                        }
+                        .addOnFailureListener {
+                            loadingOverlay.visibility = View.GONE
+                            isUploadingResume = false
                         }
                 }
                 override fun onError(requestId: String?, error: ErrorInfo?) {
                     loadingOverlay.visibility = View.GONE
+                    isUploadingResume = false
                     Toast.makeText(requireContext(), "Failed to upload resume. Please check your connection.", Toast.LENGTH_SHORT).show()
                 }
                 override fun onReschedule(requestId: String?, error: ErrorInfo?) {}

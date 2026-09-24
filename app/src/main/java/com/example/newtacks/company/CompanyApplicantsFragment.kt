@@ -55,6 +55,7 @@ class CompanyApplicantsFragment : Fragment() {
     
     private var currentTab = "ALL"
     private var selectedJobFilterId: String? = null
+    private var isProcessingAction = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -382,35 +383,48 @@ class CompanyApplicantsFragment : Fragment() {
     }
 
     private fun scheduleInterview(worker: User, app: Application, timestamp: Long) {
+        if (isProcessingAction) return
+        isProcessingAction = true
         loadingOverlay.visibility = View.VISIBLE
+
         db.collection("applications").document(app.applicationId)
             .update(mapOf("status" to "INTERVIEW_SCHEDULED", "interviewDate" to timestamp, "workerResponse" to null))
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
+                isProcessingAction = false
                 NotificationHelper.sendNotification(worker.uid, "Interview Scheduled", "You have an interview request for ${app.jobTitle}.", "HIRING_DETAILS", app.hiringId)
                 Toast.makeText(requireContext(), "Interview scheduled successfully!", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
+                isProcessingAction = false
                 Toast.makeText(requireContext(), "Unable to schedule interview. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
 
     private fun rejectApplicant(worker: User, app: Application) {
+        if (isProcessingAction) return
+        isProcessingAction = true
         loadingOverlay.visibility = View.VISIBLE
+
         db.collection("applications").document(app.applicationId).update("status", "REJECTED")
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
+                isProcessingAction = false
                 Toast.makeText(requireContext(), "Applicant rejected.", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
+                isProcessingAction = false
                 Toast.makeText(requireContext(), "Unable to update applicant status. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
 
     private fun confirmHiring(worker: User, app: Application) {
+        if (isProcessingAction) return
+        isProcessingAction = true
         loadingOverlay.visibility = View.VISIBLE
+
         db.runTransaction { transaction ->
             val ref = db.collection("hiring").document(app.hiringId)
             val post = transaction.get(ref).toObject(HiringPost::class.java) ?: throw Exception("Post not found")
@@ -429,10 +443,12 @@ class CompanyApplicantsFragment : Fragment() {
             transaction.update(db.collection("applications").document(app.applicationId), mapOf("status" to "HIRED"))
         }.addOnSuccessListener {
             loadingOverlay.visibility = View.GONE
+            isProcessingAction = false
             NotificationHelper.sendNotification(worker.uid, "Status: Hired!", "You are officially hired for ${app.jobTitle}!", "HIRING")
             Toast.makeText(requireContext(), "Worker hired successfully!", Toast.LENGTH_SHORT).show()
         }.addOnFailureListener { e ->
             loadingOverlay.visibility = View.GONE
+            isProcessingAction = false
             val userMsg = if (e.message?.contains("Vacancy full") == true) {
                 "This hiring post has already reached its maximum limit."
             } else {

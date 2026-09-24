@@ -97,12 +97,15 @@ class ClientRequestsFragment : Fragment() {
     private var currentJobId: String? = null
     private var lastCancelTime: Long = 0
     private var messageListener: ListenerRegistration? = null
+    private var isProcessingAction = false
 
     private val paymentLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             val method = result.data?.getStringExtra("PAYMENT_METHOD") ?: "CASH"
             confirmJob(method)
         } else {
+            isProcessingAction = false
+            btnConfirm.isEnabled = true
             Toast.makeText(requireContext(), "Payment was cancelled or could not be completed.", Toast.LENGTH_SHORT).show()
         }
     }
@@ -456,23 +459,39 @@ class ClientRequestsFragment : Fragment() {
     }
 
     private fun cancelJob() {
-        val jobId = currentJobId ?: return
+        if (isProcessingAction) return
+        isProcessingAction = true
+
+        val jobId = currentJobId ?: run {
+            isProcessingAction = false
+            return
+        }
         loadingOverlay.visibility = View.VISIBLE
         tvLoadingMessage.text = "Cancelling job request..."
         firestore.collection("jobs").document(jobId).delete()
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
+                isProcessingAction = false
                 Toast.makeText(requireContext(), "Your job request was cancelled successfully.", Toast.LENGTH_SHORT).show()
                 showEmptyState()
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
+                isProcessingAction = false
                 Toast.makeText(requireContext(), "Unable to cancel request. Please check your connection.", Toast.LENGTH_SHORT).show()
             }
     }
 
     private fun startPaymentFlow() {
-        val job = currentJob ?: return
+        if (isProcessingAction) return
+        isProcessingAction = true
+        btnConfirm.isEnabled = false
+
+        val job = currentJob ?: run {
+            isProcessingAction = false
+            btnConfirm.isEnabled = true
+            return
+        }
         val intent = Intent(requireContext(), PaymentActivity::class.java)
         intent.putExtra("AMOUNT", job.offeredAmount)
         intent.putExtra("JOB_TITLE", job.jobTitle)
@@ -481,7 +500,11 @@ class ClientRequestsFragment : Fragment() {
     }
 
     private fun confirmJob(paymentMethod: String) {
-        val jobId = currentJobId ?: return
+        val jobId = currentJobId ?: run {
+            isProcessingAction = false
+            btnConfirm.isEnabled = true
+            return
+        }
         loadingOverlay.visibility = View.VISIBLE
         tvLoadingMessage.text = "Confirming completion..."
         firestore.collection("jobs").document(jobId).update(mapOf("status" to "COMPLETED", "completedAt" to System.currentTimeMillis()))
@@ -491,6 +514,8 @@ class ClientRequestsFragment : Fragment() {
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
+                isProcessingAction = false
+                btnConfirm.isEnabled = true
                 Toast.makeText(requireContext(), "Unable to confirm job completion. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
@@ -499,12 +524,25 @@ class ClientRequestsFragment : Fragment() {
         firestore.collection("jobs").document(jobId).get()
             .addOnSuccessListener { doc ->
                 val job = doc.toObject(Job::class.java)
-                if (job != null) generateReceipt(job, paymentMethod)
+                if (job != null) {
+                    generateReceipt(job, paymentMethod)
+                } else {
+                    isProcessingAction = false
+                    btnConfirm.isEnabled = true
+                }
+            }
+            .addOnFailureListener {
+                isProcessingAction = false
+                btnConfirm.isEnabled = true
             }
     }
 
     private fun generateReceipt(job: Job, paymentMethod: String) {
-        val workerId = job.workerId ?: return
+        val workerId = job.workerId ?: run {
+            isProcessingAction = false
+            btnConfirm.isEnabled = true
+            return
+        }
         val receiptId = firestore.collection("receipts").document().id
         val refNum = (10000000..99999999).random().toString()
         val receipt = Receipt(
@@ -524,10 +562,16 @@ class ClientRequestsFragment : Fragment() {
         )
         firestore.collection("receipts").document(receiptId).set(receipt)
             .addOnSuccessListener {
+                isProcessingAction = false
+                btnConfirm.isEnabled = true
                 com.example.newtacks.utils.NotificationHelper.sendNotification(workerId, "Job Confirmed", "Client has confirmed work.", "HISTORY", receiptId)
                 Toast.makeText(requireContext(), "Job completed and confirmed! Receipt generated.", Toast.LENGTH_SHORT).show()
                 ReceiptDetailActivity.open(requireContext(), receiptId, showReview = true)
                 showEmptyState()
+            }
+            .addOnFailureListener {
+                isProcessingAction = false
+                btnConfirm.isEnabled = true
             }
     }
 

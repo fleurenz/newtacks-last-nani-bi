@@ -63,6 +63,7 @@ class WorkerFeedFragment : Fragment() {
     private lateinit var tvWorkerNameHeader: TextView
     private lateinit var loadingOverlay: View
     private lateinit var tvLoadingMessage: TextView
+    private var isAcceptingJob = false
 
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private lateinit var bsView: View
@@ -311,6 +312,7 @@ class WorkerFeedFragment : Fragment() {
         }
 
         btnAccept.setOnClickListener {
+            if (isAcceptingJob) return@setOnClickListener
             btnAccept.isEnabled = false
             acceptJob(job) { success ->
                 if (success) {
@@ -695,7 +697,13 @@ class WorkerFeedFragment : Fragment() {
     }
 
     private fun acceptJob(job: Job, onResult: (Boolean) -> Unit = {}) {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        if (isAcceptingJob) return
+        isAcceptingJob = true
+
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: run {
+            isAcceptingJob = false
+            return
+        }
         showLoading("Checking requirements...")
         
         // 1. Check if resume is submitted
@@ -703,6 +711,7 @@ class WorkerFeedFragment : Fragment() {
             val resumeUrl = doc.getString("resumeUrl")
             if (resumeUrl.isNullOrEmpty()) {
                 hideLoading()
+                isAcceptingJob = false
                 Toast.makeText(requireContext(), "You must upload a resume in the Account tab before accepting jobs.", Toast.LENGTH_LONG).show()
                 onResult(false)
                 return@addOnSuccessListener
@@ -712,6 +721,7 @@ class WorkerFeedFragment : Fragment() {
             if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) 
                 != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 hideLoading()
+                isAcceptingJob = false
                 @Suppress("DEPRECATION")
                 requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1002)
                 onResult(false)
@@ -721,6 +731,7 @@ class WorkerFeedFragment : Fragment() {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 if (location == null) {
                     hideLoading()
+                    isAcceptingJob = false
                     Toast.makeText(requireContext(), "Please enable GPS/Location services to accept requests.", Toast.LENGTH_LONG).show()
                     onResult(false)
                     return@addOnSuccessListener
@@ -729,11 +740,13 @@ class WorkerFeedFragment : Fragment() {
                 processJobAcceptance(job, location, onResult)
             }.addOnFailureListener {
                 hideLoading()
+                isAcceptingJob = false
                 Toast.makeText(requireContext(), "Unable to detect location. Please ensure GPS is enabled.", Toast.LENGTH_SHORT).show()
                 onResult(false)
             }
         }.addOnFailureListener {
             hideLoading()
+            isAcceptingJob = false
             Toast.makeText(requireContext(), "Unable to process request. Please check your internet connection.", Toast.LENGTH_SHORT).show()
             onResult(false)
         }
@@ -758,6 +771,7 @@ class WorkerFeedFragment : Fragment() {
 
                 if (hasActiveJob) {
                     hideLoading()
+                    isAcceptingJob = false
                     Toast.makeText(
                         requireContext(),
                         "Please finish your current active job request before accepting a new one.",
@@ -801,6 +815,7 @@ class WorkerFeedFragment : Fragment() {
                             ))
                         }.addOnSuccessListener {
                             hideLoading()
+                            isAcceptingJob = false
                             com.example.newtacks.utils.NotificationHelper.sendNotification(
                                 job.clientId,
                                 "Job Accepted",
@@ -812,6 +827,7 @@ class WorkerFeedFragment : Fragment() {
                             (activity as? com.example.newtacks.WorkerDashboardActivity)?.switchTab(R.id.nav_job)
                         }.addOnFailureListener { e ->
                             hideLoading()
+                            isAcceptingJob = false
                             val userMsg = if (e.message?.contains("Job already taken") == true) {
                                 "This job request has already been accepted by another worker."
                             } else {
@@ -822,11 +838,13 @@ class WorkerFeedFragment : Fragment() {
                         }
                     }.addOnFailureListener {
                         hideLoading()
+                        isAcceptingJob = false
                         Toast.makeText(requireContext(), "Unable to verify worker account details. Please try again.", Toast.LENGTH_SHORT).show()
                         onResult(false)
                     }
             }.addOnFailureListener {
                 hideLoading()
+                isAcceptingJob = false
                 Toast.makeText(requireContext(), "Unable to check active job status. Please try again.", Toast.LENGTH_SHORT).show()
                 onResult(false)
             }

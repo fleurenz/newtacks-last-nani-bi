@@ -67,7 +67,10 @@ class LoginActivity : AppCompatActivity() {
         val btn      = findViewById<Button>(R.id.btnLogin)
         val signUp   = findViewById<TextView>(R.id.goToSignup)
 
-        btn.setOnClickListener { viewModel.login(email.text.toString(), password.text.toString()) }
+        btn.setOnClickListener {
+            btn.isEnabled = false
+            viewModel.login(email.text.toString(), password.text.toString())
+        }
         signUp.setOnClickListener { startActivity(Intent(this, RoleSelectionActivity::class.java)) }
 
         setupTermsAndPrivacy()

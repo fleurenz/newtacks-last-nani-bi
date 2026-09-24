@@ -78,6 +78,7 @@ class CreateHiringActivity : AppCompatActivity() {
     private var profileLng = 0.0
     private var expiresAtTimestamp: Long = 0
     private var editingHiringId: String? = null
+    private var isSubmitting = false
     
     private val selectedImageUris = mutableListOf<Uri>()
 
@@ -319,6 +320,8 @@ class CreateHiringActivity : AppCompatActivity() {
     }
 
     private fun submitHiring(status: String) {
+        if (isSubmitting) return
+
         val title = etHiringTitle.text.toString().trim()
         val rateText = etDailyRate.text.toString().trim()
         
@@ -352,6 +355,9 @@ class CreateHiringActivity : AppCompatActivity() {
         val responsibilities = etResponsibilities.text.toString().trim()
         val uid = auth.currentUser?.uid ?: return
         
+        isSubmitting = true
+        btnSubmit.isEnabled = false
+        btnDraft.isEnabled = false
         loadingOverlay.visibility = View.VISIBLE
         
         if (editingHiringId != null) {
@@ -378,6 +384,9 @@ class CreateHiringActivity : AppCompatActivity() {
                         finish()
                     }
                     .addOnFailureListener {
+                        isSubmitting = false
+                        btnSubmit.isEnabled = true
+                        btnDraft.isEnabled = true
                         loadingOverlay.visibility = View.GONE
                         Toast.makeText(this, "Failed to update hiring post. Please try again.", Toast.LENGTH_SHORT).show()
                     }
@@ -423,10 +432,16 @@ class CreateHiringActivity : AppCompatActivity() {
                         finish()
                     }
                     .addOnFailureListener {
+                        isSubmitting = false
+                        btnSubmit.isEnabled = true
+                        btnDraft.isEnabled = true
                         loadingOverlay.visibility = View.GONE
                         Toast.makeText(this, "Failed to publish hiring post. Please try again.", Toast.LENGTH_SHORT).show()
                     }
             }.addOnFailureListener {
+                isSubmitting = false
+                btnSubmit.isEnabled = true
+                btnDraft.isEnabled = true
                 loadingOverlay.visibility = View.GONE
                 Toast.makeText(this, "Failed to retrieve company profile. Please try again.", Toast.LENGTH_SHORT).show()
             }

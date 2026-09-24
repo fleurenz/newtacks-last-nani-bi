@@ -148,7 +148,11 @@ class CreateJobActivity : AppCompatActivity() {
         setupTimePicker()
 
         btnCancel.setOnClickListener { handleBackPress() }
-        btnSubmit.setOnClickListener { submitJob() }
+        btnSubmit.setOnClickListener {
+            if (isSubmitting) return@setOnClickListener
+            btnSubmit.isEnabled = false
+            submitJob()
+        }
 
         setupValidationListeners()
 
@@ -822,6 +826,7 @@ class CreateJobActivity : AppCompatActivity() {
                 }
                 .addOnFailureListener {
                     isSubmitting = false
+                    btnSubmit.isEnabled = true
                     loadingOverlay.visibility = View.GONE
                     Toast.makeText(this, "Failed to update job request. Please try again.", Toast.LENGTH_SHORT).show()
                 }
@@ -835,6 +840,7 @@ class CreateJobActivity : AppCompatActivity() {
             if (hasActiveJob) {
                 Toast.makeText(this, "You already have an active job request in progress.", Toast.LENGTH_LONG).show()
                 isSubmitting = false
+                btnSubmit.isEnabled = true
                 loadingOverlay.visibility = View.GONE
                 return@addOnSuccessListener
             }
@@ -871,11 +877,13 @@ class CreateJobActivity : AppCompatActivity() {
                 }
                 .addOnFailureListener {
                     isSubmitting = false
+                    btnSubmit.isEnabled = true
                     loadingOverlay.visibility = View.GONE
                     Toast.makeText(this, "Failed to post job request. Please try again.", Toast.LENGTH_SHORT).show()
                 }
         }.addOnFailureListener {
             isSubmitting = false
+            btnSubmit.isEnabled = true
             loadingOverlay.visibility = View.GONE
             Toast.makeText(this, "Location verification failed. Please pick a spot on the map.", Toast.LENGTH_SHORT).show()
         }

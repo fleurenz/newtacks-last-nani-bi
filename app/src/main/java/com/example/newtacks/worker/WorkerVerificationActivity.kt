@@ -43,6 +43,7 @@ class WorkerVerificationActivity : AppCompatActivity() {
     private var pendingSkill: String? = null
     
     private var selectedFileUri: Uri? = null
+    private var isUploading = false
     private var tvFileNameLabel: TextView? = null
 
     private var requestsListener: ListenerRegistration? = null
@@ -171,7 +172,13 @@ class WorkerVerificationActivity : AppCompatActivity() {
     }
 
     private fun uploadSkillCertificate(uri: Uri) {
-        val skill = pendingSkill ?: return
+        if (isUploading) return
+        isUploading = true
+
+        val skill = pendingSkill ?: run {
+            isUploading = false
+            return
+        }
         loadingOverlay.visibility = View.VISIBLE
         Toast.makeText(this, "Uploading $skill certificate...", Toast.LENGTH_SHORT).show()
 
@@ -186,6 +193,7 @@ class WorkerVerificationActivity : AppCompatActivity() {
                 }
                 override fun onError(requestId: String?, error: ErrorInfo?) {
                     loadingOverlay.visibility = View.GONE
+                    isUploading = false
                     Toast.makeText(this@WorkerVerificationActivity, "Failed to upload document. Please check your connection.", Toast.LENGTH_SHORT).show()
                 }
                 override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
@@ -193,7 +201,10 @@ class WorkerVerificationActivity : AppCompatActivity() {
     }
 
     private fun saveSkillRequest(skill: String, url: String) {
-        val uid = auth.currentUser?.uid ?: return
+        val uid = auth.currentUser?.uid ?: run {
+            isUploading = false
+            return
+        }
         val requestId = firestore.collection("verification_requests").document().id
         val request = VerificationRequest(
             requestId = requestId,
@@ -208,11 +219,19 @@ class WorkerVerificationActivity : AppCompatActivity() {
         firestore.collection("verification_requests").document(requestId).set(request)
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
+                isUploading = false
                 Toast.makeText(this, "$skill verification submitted for review!", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                isUploading = false
             }
     }
 
     private fun uploadGenericCertificate(uri: Uri, name: String, type: String) {
+        if (isUploading) return
+        isUploading = true
+
         loadingOverlay.visibility = View.VISIBLE
         Toast.makeText(this, "Uploading $name...", Toast.LENGTH_SHORT).show()
 
@@ -227,6 +246,7 @@ class WorkerVerificationActivity : AppCompatActivity() {
                 }
                 override fun onError(requestId: String?, error: ErrorInfo?) {
                     loadingOverlay.visibility = View.GONE
+                    isUploading = false
                     Toast.makeText(this@WorkerVerificationActivity, "Failed to upload document. Please check your connection.", Toast.LENGTH_SHORT).show()
                 }
                 override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
@@ -234,7 +254,10 @@ class WorkerVerificationActivity : AppCompatActivity() {
     }
 
     private fun saveGenericRequest(name: String, type: String, url: String) {
-        val uid = auth.currentUser?.uid ?: return
+        val uid = auth.currentUser?.uid ?: run {
+            isUploading = false
+            return
+        }
         val requestId = firestore.collection("verification_requests").document().id
         val request = VerificationRequest(
             requestId = requestId,
@@ -250,7 +273,12 @@ class WorkerVerificationActivity : AppCompatActivity() {
         firestore.collection("verification_requests").document(requestId).set(request)
             .addOnSuccessListener {
                 loadingOverlay.visibility = View.GONE
+                isUploading = false
                 Toast.makeText(this, "Certificate submitted for review!", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                loadingOverlay.visibility = View.GONE
+                isUploading = false
             }
     }
 

@@ -39,6 +39,7 @@ class WorkerJobFragment : Fragment() {
     private lateinit var layoutHeader: View
     private lateinit var loadingOverlay: View
     private lateinit var tvLoadingMessage: TextView
+    private var isProcessingAction = false
 
     // Header / Title Area
     private lateinit var tvJobTitle: TextView
@@ -367,13 +368,23 @@ class WorkerJobFragment : Fragment() {
     }
 
     private fun updateJobStatus(newStatus: String) {
-        val jobId = currentJobId ?: return
+        if (isProcessingAction) return
+        isProcessingAction = true
+        btnMainAction.isEnabled = false
+
+        val jobId = currentJobId ?: run {
+            isProcessingAction = false
+            btnMainAction.isEnabled = true
+            return
+        }
         val statusLabel = if (newStatus == "HEADING_TO_CLIENT") "heading to destination" else "arriving at destination"
         showLoading("Updating status to $statusLabel...")
 
         firestore.collection("jobs").document(jobId).update("status", newStatus)
             .addOnSuccessListener {
                 hideLoading()
+                isProcessingAction = false
+                btnMainAction.isEnabled = true
                 val title = when (newStatus) {
                     "HEADING_TO_CLIENT" -> "Heading to You"
                     "ARRIVED" -> "Arrived"
@@ -395,23 +406,37 @@ class WorkerJobFragment : Fragment() {
             }
             .addOnFailureListener {
                 hideLoading()
+                isProcessingAction = false
+                btnMainAction.isEnabled = true
                 Toast.makeText(requireContext(), "Unable to update job status. Please check your connection.", Toast.LENGTH_SHORT).show()
             }
     }
 
     private fun requestDone() {
-        val jobId = currentJobId ?: return
+        if (isProcessingAction) return
+        isProcessingAction = true
+        btnMainAction.isEnabled = false
+
+        val jobId = currentJobId ?: run {
+            isProcessingAction = false
+            btnMainAction.isEnabled = true
+            return
+        }
         showLoading("Submitting job completion for client verification...")
 
         firestore.collection("jobs").document(jobId)
             .update(mapOf("status" to "PENDING_VERIFICATION", "completedAt" to System.currentTimeMillis()))
             .addOnSuccessListener {
                 hideLoading()
+                isProcessingAction = false
+                btnMainAction.isEnabled = true
                 currentJob?.let { NotificationHelper.sendNotification(it.clientId, "Job Ready", "Please verify completion.", "REQUESTS") }
                 Toast.makeText(requireContext(), "Work completed! Submitted for client confirmation.", Toast.LENGTH_LONG).show()
             }
             .addOnFailureListener {
                 hideLoading()
+                isProcessingAction = false
+                btnMainAction.isEnabled = true
                 Toast.makeText(requireContext(), "Unable to submit job completion. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }
@@ -493,15 +518,23 @@ class WorkerJobFragment : Fragment() {
     }
 
     private fun cancelJob() {
-        val jobId = currentJobId ?: return
+        if (isProcessingAction) return
+        isProcessingAction = true
+
+        val jobId = currentJobId ?: run {
+            isProcessingAction = false
+            return
+        }
         showLoading("Cancelling job request...")
         val update = mapOf("status" to "AVAILABLE", "workerId" to FieldValue.delete(), "workerName" to FieldValue.delete(), "acceptedAt" to FieldValue.delete())
         firestore.collection("jobs").document(jobId).update(update).addOnSuccessListener {
             hideLoading()
+            isProcessingAction = false
             Toast.makeText(requireContext(), "Job request cancelled and returned to feed.", Toast.LENGTH_SHORT).show()
             showEmptyState()
         }.addOnFailureListener {
             hideLoading()
+            isProcessingAction = false
             Toast.makeText(requireContext(), "Unable to cancel job request. Please try again.", Toast.LENGTH_SHORT).show()
         }
     }

@@ -43,6 +43,7 @@ class ClientEditProfileActivity : AppCompatActivity() {
     private lateinit var etAddress: EditText
     private lateinit var switchRealTimeLocation: SwitchMaterial
     private lateinit var loadingOverlay: View
+    private var isSaving = false
 
     private var selectedLat: Double = 0.0
     private var selectedLng: Double = 0.0
@@ -213,6 +214,8 @@ class ClientEditProfileActivity : AppCompatActivity() {
     }
 
     private fun checkAndSave() {
+        if (isSaving) return
+
         val name = etName.text.toString().trim()
         val phone = etPhone.text.toString().trim()
         val address = etAddress.text.toString().trim()
@@ -221,6 +224,8 @@ class ClientEditProfileActivity : AppCompatActivity() {
             Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
             return
         }
+
+        isSaving = true
 
         if (selectedImageUri != null) {
             uploadImageAndSave(selectedImageUri!!)
@@ -244,6 +249,7 @@ class ClientEditProfileActivity : AppCompatActivity() {
                 }
                 override fun onError(requestId: String?, error: ErrorInfo?) {
                     loadingOverlay.visibility = View.GONE
+                    isSaving = false
                     Toast.makeText(this@ClientEditProfileActivity, "Photo upload failed. Please check your connection.", Toast.LENGTH_SHORT).show()
                 }
                 override fun onReschedule(requestId: String?, error: ErrorInfo?) {}
@@ -251,7 +257,10 @@ class ClientEditProfileActivity : AppCompatActivity() {
     }
 
     private fun saveData(imageUrl: String) {
-        val uid = auth.currentUser?.uid ?: return
+        val uid = auth.currentUser?.uid ?: run {
+            isSaving = false
+            return
+        }
         loadingOverlay.visibility = View.VISIBLE
         
         val name = etName.text.toString().trim()
@@ -275,6 +284,7 @@ class ClientEditProfileActivity : AppCompatActivity() {
             }
             .addOnFailureListener {
                 loadingOverlay.visibility = View.GONE
+                isSaving = false
                 Toast.makeText(this, "Failed to save profile changes. Please try again.", Toast.LENGTH_SHORT).show()
             }
     }

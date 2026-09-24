@@ -37,6 +37,7 @@ class TransactionChatActivity : AppCompatActivity() {
     private var workerId: String = "" // The current worker involved in the job
     private var otherUserId: String = ""
     private var jobTitle: String = ""
+    private var isSending = false
     
     private var myProfileUrl: String? = null
     private var otherProfileUrl: String? = null
@@ -232,10 +233,16 @@ class TransactionChatActivity : AppCompatActivity() {
     }
 
     private fun sendMessage() {
+        if (isSending) return
+
         val text = etMessage.text.toString().trim()
         if (text.isEmpty()) return
 
         val currentUid = auth.currentUser?.uid ?: return
+        isSending = true
+        btnSend.isEnabled = false
+        etMessage.setText("")
+
         val messageId = db.collection("chats").document().id
         val message = ChatMessage(
             messageId = messageId,
@@ -247,9 +254,10 @@ class TransactionChatActivity : AppCompatActivity() {
             timestamp = System.currentTimeMillis()
         )
 
-        etMessage.setText("")
         db.collection("chats").document(messageId).set(message)
             .addOnSuccessListener {
+                isSending = false
+                btnSend.isEnabled = true
                 // Check if the other user is already in this room before sending notification
                 db.collection("users").document(otherUserId).get().addOnSuccessListener { doc ->
                     val otherActiveRoom = doc.getString("activeRoomId")
@@ -266,6 +274,8 @@ class TransactionChatActivity : AppCompatActivity() {
                 }
             }
             .addOnFailureListener {
+                isSending = false
+                btnSend.isEnabled = true
                 Toast.makeText(this, "Failed to send message", Toast.LENGTH_SHORT).show()
             }
     }
