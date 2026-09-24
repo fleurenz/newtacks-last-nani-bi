@@ -470,8 +470,14 @@ class CreateJobActivity : AppCompatActivity() {
                 calendar.get(Calendar.MONTH),
                 calendar.get(Calendar.DAY_OF_MONTH)
             )
-            // Prevent selecting past dates
-            dialog.datePicker.minDate = System.currentTimeMillis() - 1000
+            // Prevent selecting past dates (set minDate to start of today)
+            val todayMidnight = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            dialog.datePicker.minDate = todayMidnight.timeInMillis
             dialog.show()
         }
     }
@@ -494,11 +500,18 @@ class CreateJobActivity : AppCompatActivity() {
                     val todayStr = "${today.get(Calendar.MONTH) + 1}/${today.get(Calendar.DAY_OF_MONTH)}/${today.get(Calendar.YEAR)}"
                     
                     if (selectedDate == todayStr) {
-                        val selectedCal = Calendar.getInstance()
-                        selectedCal.set(Calendar.HOUR_OF_DAY, hour)
-                        selectedCal.set(Calendar.MINUTE, minute)
+                        val selectedCal = Calendar.getInstance().apply {
+                            set(Calendar.HOUR_OF_DAY, hour)
+                            set(Calendar.MINUTE, minute)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }
                         
-                        if (selectedCal.before(today)) {
+                        val graceTime = Calendar.getInstance().apply {
+                            add(Calendar.MINUTE, -2)
+                        }
+                        
+                        if (selectedCal.before(graceTime)) {
                             Toast.makeText(this, "Cannot select a past time for today", Toast.LENGTH_SHORT).show()
                             return@TimePickerDialog
                         }
