@@ -27,6 +27,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
+import coil.load
+import coil.transform.RoundedCornersTransformation
 import com.example.newtacks.chatbot.presentation.ui.ChatActivity
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -102,9 +104,9 @@ class CreateJobActivity : AppCompatActivity() {
             uris.forEach { uri ->
                 if (selectedImages.size < 5) {
                     selectedImages.add(uri)
-                    addImagePreview(uri)
                 }
             }
+            updateImagesUI()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -587,14 +589,55 @@ class CreateJobActivity : AppCompatActivity() {
             else switchRealTimeLocation.isChecked = false
         }
     
-    private fun addImagePreview(uri: Uri) {
-        val imageView = ImageView(this)
-        val params = LinearLayout.LayoutParams(250, 250)
-        params.setMargins(0, 0, 16, 0)
-        imageView.layoutParams = params
-        imageView.scaleType = ImageView.ScaleType.CENTER_CROP
-        imageView.setImageURI(uri)
-        layoutImages.addView(imageView)
+    private fun updateImagesUI() {
+        layoutImages.removeAllViews()
+        selectedImages.forEachIndexed { index, uri ->
+            val container = FrameLayout(this).apply {
+                val params = LinearLayout.LayoutParams(220, 220)
+                params.setMargins(0, 0, 16, 0)
+                layoutParams = params
+            }
+
+            val imageView = ImageView(this).apply {
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT
+                )
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                load(uri) {
+                    transformations(RoundedCornersTransformation(12f))
+                }
+            }
+
+            val deleteBadge = ImageView(this).apply {
+                val badgeSize = (28 * resources.displayMetrics.density).toInt()
+                val badgeParams = FrameLayout.LayoutParams(badgeSize, badgeSize).apply {
+                    gravity = android.view.Gravity.TOP or android.view.Gravity.END
+                    topMargin = (4 * resources.displayMetrics.density).toInt()
+                    marginEnd = (4 * resources.displayMetrics.density).toInt()
+                }
+                layoutParams = badgeParams
+                setImageResource(R.drawable.ic_close)
+                imageTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE)
+                setBackgroundResource(R.drawable.bg_circle)
+                backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#DC2626"))
+                setPadding(8, 8, 8, 8)
+                elevation = 6f
+            }
+
+            val removeListener = View.OnClickListener {
+                if (index in selectedImages.indices) {
+                    selectedImages.removeAt(index)
+                    updateImagesUI()
+                }
+            }
+
+            container.addView(imageView)
+            container.addView(deleteBadge)
+            container.setOnClickListener(removeListener)
+
+            layoutImages.addView(container)
+        }
     }
 
     // ---------------- SUBMIT JOB ----------------

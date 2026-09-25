@@ -764,10 +764,32 @@ class HiringDetailsActivity : AppCompatActivity() {
 
     private fun showScheduleInterviewDialog(worker: User) {
         val cal = Calendar.getInstance()
-        val dialog = DatePickerDialog(this, { _, y, m, d ->
-            val interviewCal = Calendar.getInstance()
-            interviewCal.set(y, m, d, 10, 0) // Default 10 AM
-            scheduleInterview(worker, interviewCal.timeInMillis)
+        val dateDialog = DatePickerDialog(this, { _, y, m, d ->
+            val now = Calendar.getInstance()
+            val defaultHour = if (y == now.get(Calendar.YEAR) && m == now.get(Calendar.MONTH) && d == now.get(Calendar.DAY_OF_MONTH)) {
+                (now.get(Calendar.HOUR_OF_DAY) + 1).coerceAtMost(23)
+            } else {
+                10
+            }
+
+            android.app.TimePickerDialog(this, { _, hour, minute ->
+                val interviewCal = Calendar.getInstance().apply {
+                    set(y, m, d, hour, minute, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+
+                val graceTime = Calendar.getInstance().apply {
+                    add(Calendar.MINUTE, -1)
+                }
+
+                if (interviewCal.before(graceTime)) {
+                    Toast.makeText(this, "Cannot schedule an interview for a past time.", Toast.LENGTH_SHORT).show()
+                    return@TimePickerDialog
+                }
+
+                scheduleInterview(worker, interviewCal.timeInMillis)
+            }, defaultHour, 0, false).show()
+
         }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
         
         // Prevent past dates (set minDate to start of today)
@@ -777,8 +799,8 @@ class HiringDetailsActivity : AppCompatActivity() {
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }
-        dialog.datePicker.minDate = todayMidnight.timeInMillis
-        dialog.show()
+        dateDialog.datePicker.minDate = todayMidnight.timeInMillis
+        dateDialog.show()
     }
 
     private fun scheduleInterview(worker: User, timestamp: Long) {

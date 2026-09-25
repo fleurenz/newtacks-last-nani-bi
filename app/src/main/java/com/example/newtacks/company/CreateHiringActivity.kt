@@ -198,21 +198,51 @@ class CreateHiringActivity : AppCompatActivity() {
     private fun updateImagesUI() {
         layoutSelectedImages.removeAllViews()
         selectedImageUris.forEachIndexed { index, uri ->
-            val imageView = ImageView(this)
-            val params = LinearLayout.LayoutParams(160, 160)
-            params.setMargins(0, 0, 16, 0)
-            imageView.layoutParams = params
-            imageView.scaleType = ImageView.ScaleType.CENTER_CROP
-            imageView.load(uri) {
-                transformations(RoundedCornersTransformation(8f))
+            val container = FrameLayout(this).apply {
+                val params = LinearLayout.LayoutParams(180, 180)
+                params.setMargins(0, 0, 16, 0)
+                layoutParams = params
             }
-            
-            imageView.setOnClickListener {
-                selectedImageUris.removeAt(index)
-                updateImagesUI()
+
+            val imageView = ImageView(this).apply {
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT
+                )
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                load(uri) {
+                    transformations(RoundedCornersTransformation(10f))
+                }
             }
-            
-            layoutSelectedImages.addView(imageView)
+
+            val deleteBadge = ImageView(this).apply {
+                val badgeSize = (24 * resources.displayMetrics.density).toInt()
+                val badgeParams = FrameLayout.LayoutParams(badgeSize, badgeSize).apply {
+                    gravity = android.view.Gravity.TOP or android.view.Gravity.END
+                    topMargin = (4 * resources.displayMetrics.density).toInt()
+                    marginEnd = (4 * resources.displayMetrics.density).toInt()
+                }
+                layoutParams = badgeParams
+                setImageResource(R.drawable.ic_close)
+                imageTintList = ColorStateList.valueOf(Color.WHITE)
+                setBackgroundResource(R.drawable.bg_circle)
+                backgroundTintList = ColorStateList.valueOf(Color.parseColor("#DC2626"))
+                setPadding(6, 6, 6, 6)
+                elevation = 6f
+            }
+
+            val removeListener = View.OnClickListener {
+                if (index in selectedImageUris.indices) {
+                    selectedImageUris.removeAt(index)
+                    updateImagesUI()
+                }
+            }
+
+            container.addView(imageView)
+            container.addView(deleteBadge)
+            container.setOnClickListener(removeListener)
+
+            layoutSelectedImages.addView(container)
         }
     }
 
