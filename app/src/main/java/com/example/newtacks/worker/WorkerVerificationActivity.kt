@@ -184,6 +184,7 @@ class WorkerVerificationActivity : AppCompatActivity() {
 
         MediaManager.get().upload(uri)
             .option("folder", "worker_skill_certificates")
+            .option("resource_type", "auto")
             .callback(object : UploadCallback {
                 override fun onStart(requestId: String?) {}
                 override fun onProgress(requestId: String?, bytes: Long, totalBytes: Long) {}
@@ -237,6 +238,7 @@ class WorkerVerificationActivity : AppCompatActivity() {
 
         MediaManager.get().upload(uri)
             .option("folder", "worker_other_certificates")
+            .option("resource_type", "auto")
             .callback(object : UploadCallback {
                 override fun onStart(requestId: String?) {}
                 override fun onProgress(requestId: String?, bytes: Long, totalBytes: Long) {}
@@ -377,14 +379,7 @@ class WorkerVerificationActivity : AppCompatActivity() {
     }
 
     private fun openFile(url: String) {
-        val isImage = url.contains(".jpg", true) || url.contains(".png", true) || url.contains(".jpeg", true)
-        if (isImage) {
-            ImageUtils.showFullscreenImage(this, url)
-        } else {
-            val viewerUrl = "https://docs.google.com/viewer?url=$url"
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(viewerUrl))
-            startActivity(intent)
-        }
+        com.example.newtacks.utils.DocumentViewerUtils.openDocument(this, url)
     }
 
     override fun onDestroy() {

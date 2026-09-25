@@ -263,15 +263,7 @@ class WorkerAccountFragment : Fragment() {
         view.findViewById<View>(R.id.btnViewResume).setOnClickListener {
             dialog.dismiss()
             val url = currentResumeUrl ?: return@setOnClickListener
-            val isImage = url.contains(".jpg", true) || url.contains(".png", true) || url.contains(".jpeg", true)
-            
-            if (isImage) {
-                com.example.newtacks.utils.ImageUtils.showFullscreenImage(requireContext(), url)
-            } else {
-                val viewerUrl = "https://docs.google.com/viewer?url=$url"
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(viewerUrl))
-                startActivity(intent)
-            }
+            com.example.newtacks.utils.DocumentViewerUtils.openDocument(requireContext(), url)
         }
 
         view.findViewById<View>(R.id.btnUpdateResume).setOnClickListener {
@@ -295,6 +287,7 @@ class WorkerAccountFragment : Fragment() {
 
         MediaManager.get().upload(uri)
             .option("folder", "worker_resumes")
+            .option("resource_type", "auto")
             .callback(object : UploadCallback {
                 override fun onStart(requestId: String?) {}
                 override fun onProgress(requestId: String?, bytes: Long, totalBytes: Long) {}

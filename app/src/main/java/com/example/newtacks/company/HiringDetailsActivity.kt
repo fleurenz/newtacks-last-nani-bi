@@ -737,29 +737,14 @@ class HiringDetailsActivity : AppCompatActivity() {
             holder.btnAction.text = "View"
             holder.btnAction.setIconResource(R.drawable.ic_check_circle)
             holder.btnAction.setOnClickListener {
-                val url = cert.url
-                val isImage = url.contains(".jpg", true) || url.contains(".png", true) || url.contains(".jpeg", true)
-                if (isImage) {
-                    ImageUtils.showFullscreenImage(this@HiringDetailsActivity, url)
-                } else {
-                    val viewerUrl = "https://docs.google.com/viewer?url=$url"
-                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(viewerUrl))
-                    startActivity(intent)
-                }
+                openFile(cert.url)
             }
         }
         override fun getItemCount() = certs.size
     }
 
     private fun openFile(url: String) {
-        val isImage = url.contains(".jpg", true) || url.contains(".png", true) || url.contains(".jpeg", true)
-        if (isImage) {
-            ImageUtils.showFullscreenImage(this, url)
-        } else {
-            val viewerUrl = "https://docs.google.com/viewer?url=$url"
-            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(viewerUrl))
-            startActivity(intent)
-        }
+        com.example.newtacks.utils.DocumentViewerUtils.openDocument(this, url)
     }
 
     private fun showScheduleInterviewDialog(worker: User) {
